@@ -1,11 +1,18 @@
 //! Optimizer for qcc.
 
-pub(crate) struct OptConfig {
-    pub(crate) level: u8, // 0, 1, 2
+#[derive(Debug)]
+pub struct OptConfig {
+    pub level: u8, // 0, 1, 2
 }
 
 impl OptConfig {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         OptConfig { level: 0 }
+    }
+}
+
+impl Default for OptConfig {
+    fn default() -> Self {
+        Self::new()
     }
 }

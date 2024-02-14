@@ -2,9 +2,10 @@
 use crate::analyzer::AnalyzerConfig;
 use crate::opt::OptConfig;
 
-pub(crate) struct Config {
-    pub(crate) optimizer: OptConfig,
-    pub(crate) analyzer: AnalyzerConfig,
+#[derive(Debug)]
+pub struct Config {
+    pub optimizer: OptConfig,
+    pub analyzer: AnalyzerConfig,
 }
 
 impl Config {

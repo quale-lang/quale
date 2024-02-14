@@ -2,12 +2,12 @@
 // This function will be the entrypoint for program, and will be responsible
 // for collapsing of quantum states through measurement operator.
 #[deter]
-main () {
+fn main () {
     foo()
 }
 
 // non-deterministic quantum function
 #[nondeter]
-foo () {
+fn foo () {
     42
 }
