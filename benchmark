@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+import os
+import subprocess
+
+def gather_tests():
+    tests = []
+    for root, dirs, files in os.walk("./tests"):
+        for filename in files:
+            if filename.lower().endswith(".ql"):
+                tests.append(os.path.join(root, filename))
+    return tests
+
+def bench(tests):
+    cmd = ''
+    for each in tests:
+        cmd += '"cargo run --release -- ' + each + '" '
+    cmd = "hyperfine -i -w 5 " + cmd
+    subprocess.run([cmd], shell=True)
+
+
+if __name__ == "__main__":
+    tests = gather_tests()
+    bench(tests)

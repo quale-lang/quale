@@ -1,6 +1,7 @@
 //! quale compiler framework
 mod analyzer;
 mod ast;
+mod attributes;
 mod config;
 mod error;
 mod lexer;
@@ -10,13 +11,41 @@ mod types;
 mod utils;
 
 use crate::error::Result;
-use crate::parser::{parse_cmdline, parse_src};
+use crate::parser::Parser;
 
 fn main() -> Result<()> {
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    if let Some(config) = parse_cmdline(args)? {
-        let _ast = parse_src(&config.analyzer.src)?;
+  let args: Vec<String> = std::env::args().skip(1).collect();
+  let parser: Parser = Default::default();
+
+  if let Some(config) = parser.parse_cmdline(args)? {
+    let qast = parser.parse(&config.analyzer.src)?;
+    println!("got the following ast =\n{}", qast);
+
+    // Run the analyzer
+    if config.analyzer.status {
+      config.analyzer.analyze();
+    }
+    /* let _ast = parse_src(&config.analyzer.src)?; */
+  }
+
+  Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn check_main() -> Result<()> {
+    let path = String::from("./tests/test1.ql");
+    let args = vec![path.clone(), "--analyze".into()];
+    let parser: Parser = Default::default();
+
+    if let Some(config) = parser.parse_cmdline(args)? {
+      let qast = parser.parse(&config.analyzer.src)?;
+      println!("{qast}");
     }
 
     Ok(())
+  }
 }

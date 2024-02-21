@@ -1,5 +1,6 @@
 mod analyzer;
 mod ast;
+mod attributes;
 mod config;
 pub mod error;
 mod lexer;
