@@ -16,7 +16,7 @@ impl Parser {
     /// configuration persists for an entire compilation session.
     pub fn parse_cmdline(&self, args: Vec<String>) -> Result<Option<Config>> {
         if args.len() < 1 {
-            Err(QccErrorKind::NoFile)?;
+            Err(QccErrorKind::InvalidArgs)?;
         }
 
         let mut config = Config::new();
@@ -42,7 +42,7 @@ impl Parser {
                         usage();
                         return Ok(None);
                     }
-                    _ => unreachable!(),
+                    _ => Err(QccErrorKind::NoSuchArg)?,
                 }
             } else {
                 config.analyzer.src = option;
@@ -55,7 +55,7 @@ impl Parser {
         }
 
         if !Path::new(&path).is_file() {
-            Err(format!("{path} doesn't exist"))?;
+            Err(QccErrorKind::NoFile)?;
         }
 
         Ok(Some(config))
@@ -94,7 +94,7 @@ impl Parser {
                 }
                 Token::Literal => {}
                 Token::Attribute => {
-                    attrs = lexer.identifier().parse::<Attributes>().unwrap();
+                    attrs = lexer.identifier().parse::<Attributes>()?;
                     attr_assoc = false;
                 }
                 Token::Function => {

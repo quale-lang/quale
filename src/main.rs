@@ -21,9 +21,7 @@ fn main() -> Result<()> {
         Ok(Some(config)) => {
             let parsed = parser.parse(&config.analyzer.src);
             match parsed {
-                Ok(qast) => {
-                    println!("Parsed AST=\n{}", qast);
-                }
+                Ok(qast) => println!("{}", qast),
                 Err(e) => eprintln!("{}", e),
             }
 

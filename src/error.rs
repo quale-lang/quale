@@ -2,22 +2,14 @@
 use std::error::Error;
 use std::fmt::{Debug, Display};
 
-// TODO: Box<> will be replaced by QccError,
 pub(crate) type Result<T> = std::result::Result<T, QccError>;
 
-// pub(crate) trait Error: Debug + Display {}
-
-// pub fn eprintln<T>(result: Result<T>) {
-//     match result {
-//         Ok(_) => unreachable!(),
-//         Err(e) => eprintln!("qcc: {e}"),
-//     }
-// }
-
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) enum QccErrorKind {
+    InvalidArgs,
+    NoSuchArg,
     NoFile,
-    AttributeMissing,
+    UnexpectedAttr,
 }
 
 impl QccErrorKind {
@@ -25,8 +17,10 @@ impl QccErrorKind {
         use QccErrorKind::*;
 
         match *self {
+            InvalidArgs => "invalid number of arguments",
+            NoSuchArg => "no such argument",
             NoFile => "no such file",
-            AttributeMissing => "missing attribute",
+            UnexpectedAttr => "unexpected attribute",
         }
     }
 }
@@ -37,8 +31,7 @@ impl Display for QccErrorKind {
     }
 }
 
-// TODO: Custom error type.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct QccError(pub(crate) QccErrorKind);
 
 impl Display for QccError {
@@ -81,10 +74,10 @@ mod tests {
     fn check_errors() -> Result<()> {
         use QccErrorKind::*;
 
-        let e1: Result<()> = Err(QccError(AttributeMissing));
+        let e1: Result<()> = Err(QccError(UnexpectedAttr));
         match e1 {
             Ok(_) => unreachable!(),
-            Err(ref e) => assert_eq!(e.to_string(), "qcc: missing attribute"),
+            Err(ref e) => assert_eq!(e.to_string(), "qcc: unexpected attribute"),
         }
 
         let e2: Result<()> = Err(QccError(NoFile));

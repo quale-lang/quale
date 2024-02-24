@@ -12,12 +12,6 @@ pub(crate) enum Token {
     Function = -4,
 }
 
-// // TODO
-// pub(crate) enum Kind {}
-// /// Some(_) => A valid `Kind`
-// /// None => EOF
-// pub(crate) type NewToken = Option<Kind>;
-
 // Design of Qast
 // --------------
 // We will target OpenQASM and our high-level IR for now is simply a classic
