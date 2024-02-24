@@ -93,10 +93,13 @@ impl Parser {
                     }
                 }
                 Token::Literal => {}
-                Token::Attribute => {
-                    attrs = lexer.identifier().parse::<Attributes>()?;
-                    attr_assoc = false;
-                }
+                Token::Attribute => match lexer.identifier().parse::<Attributes>() {
+                    Ok(a) => {
+                        attrs = a;
+                        attr_assoc = false;
+                    }
+                    Err(e) => eprintln!("{} {}", e, lexer.location),
+                },
                 Token::Function => {
                     is_fn = true;
                 }

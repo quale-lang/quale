@@ -10,6 +10,7 @@ pub(crate) enum QccErrorKind {
     NoSuchArg,
     NoFile,
     UnexpectedAttr,
+    ExpectedAttr,
 }
 
 impl QccErrorKind {
@@ -21,6 +22,7 @@ impl QccErrorKind {
             NoSuchArg => "no such argument",
             NoFile => "no such file",
             UnexpectedAttr => "unexpected attribute",
+            ExpectedAttr => "expected #[attribute]",
         }
     }
 }

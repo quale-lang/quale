@@ -19,8 +19,7 @@ fn main() -> Result<()> {
 
     match parser.parse_cmdline(args) {
         Ok(Some(config)) => {
-            let parsed = parser.parse(&config.analyzer.src);
-            match parsed {
+            match parser.parse(&config.analyzer.src) {
                 Ok(qast) => println!("{}", qast),
                 Err(e) => eprintln!("{}", e),
             }

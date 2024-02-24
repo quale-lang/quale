@@ -1,5 +1,6 @@
 //! Lexer for qcc
 use crate::ast::Token;
+use crate::error::QccErrorKind;
 use std::fmt;
 
 #[derive(Clone)]
@@ -121,6 +122,12 @@ impl<'a> Lexer<'a> {
         if self.buffer[self.current] == '#' as u8 {
             self.current += 1;
             if self.buffer[self.current] != '[' as u8 {
+                // TODO: Incorporate in QccErrorKind
+                // @test: lexer error: expected attribute
+                /// ```
+                /// #[attribute
+                /// ```
+                // return Err(QccErrorKind::ExpectedAttr).ok()?;
                 eprintln!("qcc: expected '[attribute]' after '#'");
             }
             while self.buffer[self.current] != ']' as u8 {

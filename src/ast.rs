@@ -72,13 +72,13 @@ impl std::fmt::Display for FunctionAST {
         if self.attrs.0.len() == 0 {
             write!(
                 f,
-                "fn {} ({}) -> {} {{\t// {}\n}}",
+                "fn {} ({}) -> {} {{  // {}\n}}",
                 self.name, self.input_type, self.output_type, self.location
             )?;
         } else {
             write!(
                 f,
-                "fn [[{}]] {} ({}) -> {} {{\t// {}\n}}",
+                "fn [[{}]] {} ({}) -> {} {{  // {}\n}}",
                 self.attrs, self.name, self.input_type, self.output_type, self.location
             )?;
         }
