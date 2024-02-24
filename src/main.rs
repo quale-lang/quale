@@ -14,38 +14,45 @@ use crate::error::Result;
 use crate::parser::Parser;
 
 fn main() -> Result<()> {
-  let args: Vec<String> = std::env::args().skip(1).collect();
-  let parser: Parser = Default::default();
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let parser: Parser = Default::default();
 
-  if let Some(config) = parser.parse_cmdline(args)? {
-    let qast = parser.parse(&config.analyzer.src)?;
-    println!("got the following ast =\n{}", qast);
+    match parser.parse_cmdline(args) {
+        Ok(Some(config)) => {
+            let parsed = parser.parse(&config.analyzer.src);
+            match parsed {
+                Ok(qast) => {
+                    println!("Parsed AST=\n{}", qast);
+                }
+                Err(e) => eprintln!("{}", e),
+            }
 
-    // Run the analyzer
-    if config.analyzer.status {
-      config.analyzer.analyze();
+            if config.analyzer.status {
+                config.analyzer.analyze();
+            }
+        }
+        Ok(None) => {}
+        Err(e) => eprintln!("{}", e),
     }
-    /* let _ast = parse_src(&config.analyzer.src)?; */
-  }
 
-  Ok(())
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+    use super::*;
 
-  #[test]
-  fn check_main() -> Result<()> {
-    let path = String::from("./tests/test1.ql");
-    let args = vec![path.clone(), "--analyze".into()];
-    let parser: Parser = Default::default();
+    #[test]
+    fn check_main() -> Result<()> {
+        let path = String::from("./tests/test1.ql");
+        let args = vec![path.clone(), "--analyze".into()];
+        let parser: Parser = Default::default();
 
-    if let Some(config) = parser.parse_cmdline(args)? {
-      let qast = parser.parse(&config.analyzer.src)?;
-      println!("{qast}");
+        if let Some(config) = parser.parse_cmdline(args)? {
+            let qast = parser.parse(&config.analyzer.src)?;
+            println!("{qast}");
+        }
+
+        Ok(())
     }
-
-    Ok(())
-  }
 }
