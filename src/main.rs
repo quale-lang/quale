@@ -18,17 +18,18 @@ fn main() -> Result<()> {
     let parser: Parser = Default::default();
 
     match parser.parse_cmdline(args) {
-        Ok(Some(config)) => {
-            match parser.parse(&config.analyzer.src) {
-                Ok(qast) => println!("{}", qast),
-                Err(e) => eprintln!("{}", e),
-            }
+        Ok(Some(config)) => match parser.parse(&config.analyzer.src) {
+            Ok(qast) => {
+                #[cfg(debug_assertions)]
+                println!("{}", qast);
 
-            if config.analyzer.status {
-                config.analyzer.analyze();
+                if config.analyzer.status {
+                    config.analyzer.analyze(&qast);
+                }
             }
-        }
-        Ok(None) => {}
+            Err(e) => eprintln!("{}", e),
+        },
+        Ok(None) => {} /* help asked, no errors */
         Err(e) => eprintln!("{}", e),
     }
 
