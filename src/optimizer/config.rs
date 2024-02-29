@@ -1,4 +1,4 @@
-//! Optimizer for qcc.
+//! Configuration for Quale optimizer.
 
 #[derive(Debug)]
 pub struct OptConfig {

@@ -1,10 +1,11 @@
 mod analyzer;
 mod ast;
 mod attributes;
+mod codegen;
 mod config;
 pub mod error;
 mod lexer;
-mod opt;
+mod optimizer;
 pub mod parser;
 mod types;
 mod utils;

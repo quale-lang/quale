@@ -1,6 +1,6 @@
 //! Configuration file for compilation session in qcc.
-use crate::analyzer::AnalyzerConfig;
-use crate::opt::OptConfig;
+use crate::analyzer::config::*;
+use crate::optimizer::config::*;
 
 #[derive(Debug)]
 pub struct Config {
