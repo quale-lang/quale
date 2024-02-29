@@ -15,7 +15,7 @@ impl AnalyzerConfig {
         }
     }
 
-    pub(crate) fn analyze(&self, ast: &Qast) {
+    pub(crate) fn analyze(&self, _ast: &Qast) {
         println!("Analyzing ...{}", self.src);
     }
 }

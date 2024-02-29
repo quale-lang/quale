@@ -3,7 +3,7 @@
 use crate::ast::{Qast, Token};
 use crate::attributes::Attributes;
 use crate::config::*;
-use crate::error::{QccError, QccErrorKind, Result};
+use crate::error::{QccErrorKind, Result};
 use crate::lexer::Lexer;
 use crate::utils::usage;
 use std::path::Path;

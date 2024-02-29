@@ -1,6 +1,6 @@
 //! Lexer for qcc
 use crate::ast::Token;
-use crate::error::QccErrorKind;
+
 use std::fmt;
 
 #[derive(Clone)]

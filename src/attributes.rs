@@ -1,7 +1,7 @@
 //! Attributes: Function definitions can have certain attributes associated to
 //! them. What are these attributes and what they function isn't defined right
 //! now.
-use crate::error::{QccError, QccErrorKind, Result};
+use crate::error::{QccError, QccErrorKind};
 
 #[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub(crate) enum Attribute {
