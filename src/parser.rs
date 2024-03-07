@@ -3,8 +3,8 @@
 use crate::ast::{Qast, Token};
 use crate::attributes::Attributes;
 use crate::config::*;
-use crate::error::{QccErrorKind, Result};
-use crate::lexer::Lexer;
+use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
+use crate::lexer::{Lexer, Location};
 use crate::utils::usage;
 use std::path::Path;
 
@@ -98,7 +98,41 @@ impl Parser {
                         attrs = a;
                         attr_assoc = false;
                     }
-                    Err(e) => eprintln!("{} {}", e, lexer.location),
+
+                    Err(partial_err) => {
+                        let row = lexer.location.row();
+                        let mut col = partial_err.get_loc().borrow().col();
+                        let row_s = format!("{}", row);
+
+                        let loc = Location::new(
+                            lexer.location.path().as_str(),
+                            lexer.location.row(),
+                            col,
+                        );
+
+                        let full_err: QccErrorLoc = (partial_err, loc).into();
+                        eprintln!("{full_err}");
+
+                        let builder = format!("\t{}\t{}", row_s, lexer.identifier());
+                        eprintln!("{builder}");
+
+                        col += 2 + row_s.len(); // for inserted tabs
+
+                        for c in builder.chars() {
+                            if col > 0 {
+                                col -= 1;
+                            } else {
+                                eprintln!("^");
+                                break;
+                            }
+                            if c.is_whitespace() {
+                                eprint!("{c}");
+                            } else {
+                                eprint!(" ");
+                            }
+                        }
+                        // assert!(col == 0);
+                    }
                 },
                 Token::Function => {
                     is_fn = true;

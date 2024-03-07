@@ -3,18 +3,50 @@ use crate::ast::Token;
 
 use std::fmt;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub(crate) struct Location {
     path: String,
     row: usize,
     col: usize,
 }
-// pub(crate) type Location = std::rc::Rc<std::cell::RefCell<Location>>;
+
+impl Location {
+    pub(crate) fn new(path: &str, row: usize, col: usize) -> Self {
+        Self {
+            path: path.into(),
+            row,
+            col,
+        }
+    }
+
+    pub(crate) fn path(&self) -> String {
+        self.path.clone()
+    }
+
+    pub(crate) fn row(&self) -> usize {
+        self.row
+    }
+
+    pub(crate) fn col(&self) -> usize {
+        self.col
+    }
+}
+
+impl Default for Location {
+    fn default() -> Self {
+        Self {
+            path: "unknown".into(),
+            row: 0,
+            col: 0,
+        }
+    }
+}
 
 impl fmt::Display for Location {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let basename = *self.path.split('/').collect::<Vec<_>>().last().unwrap();
-        write!(f, "@{}:{}:{}", basename, self.row, self.col)
+        // NOTE: +1 because we index from 0 and printing cols should be from 1.
+        write!(f, "@{}:{}:{}", basename, self.row + 1, self.col + 1)
     }
 }
 
@@ -71,11 +103,7 @@ impl<'a> Lexer<'a> {
 
     /// Returns current identifier contained in `self.prev` and `self.current`.
     pub(crate) fn identifier(&self) -> String {
-        let mut identifier: String = Default::default();
-        for byte in &self.buffer[self.prev..self.current - 1] {
-            identifier.push(*byte as char);
-        }
-        identifier
+        self.slice(self.prev, self.current - 1)
     }
 
     /// Utility function to dump vector of bytes in string format.
@@ -104,9 +132,13 @@ impl<'a> Lexer<'a> {
         while self.buffer[self.current].is_ascii_whitespace() {
             self.current += 1;
             self.location.col += 1;
+
+            // If only whitespaces are present, ask for next line.
+            if self.current == self.end {
+                self.next_line()?;
+            }
         }
 
-        // print!("{}\t", self.location);
         self.prev = self.current;
 
         if self.buffer[self.current].is_ascii_alphanumeric() {
@@ -124,9 +156,9 @@ impl<'a> Lexer<'a> {
             if self.buffer[self.current] != '[' as u8 {
                 // TODO: Incorporate in QccErrorKind
                 // @test: lexer error: expected attribute
-                /// ```
-                /// #[attribute
-                /// ```
+                // ```
+                // #[attribute
+                // ```
                 // return Err(QccErrorKind::ExpectedAttr).ok()?;
                 eprintln!("qcc: expected '[attribute]' after '#'");
             }
