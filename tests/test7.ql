@@ -1,4 +1,4 @@
-#[deter, nondeter]
+#[deter, idontknow, nondeter]
 fn main() {
   foo()
 }

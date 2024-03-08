@@ -1,3 +1,4 @@
+use qcc::error::QccErrorKind;
 use qcc::parser::Parser;
 
 #[test]
@@ -15,8 +16,10 @@ fn compile() -> Result<(), Box<dyn std::error::Error>> {
         let args = vec![path];
         let parser: Parser = Default::default();
         if let Some(config) = parser.parse_cmdline(args)? {
-            let ast = parser.parse(&config.analyzer.src)?;
-            println!("{ast}");
+            match parser.parse(&config.analyzer.src) {
+                Ok(ast) => println!("{ast}"),
+                Err(err) => assert_eq!(err, QccErrorKind::ParseError.into()),
+            }
         }
     }
 

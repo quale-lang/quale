@@ -46,7 +46,7 @@ impl fmt::Display for Location {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let basename = *self.path.split('/').collect::<Vec<_>>().last().unwrap();
         // NOTE: +1 because we index from 0 and printing cols should be from 1.
-        write!(f, "@{}:{}:{}", basename, self.row + 1, self.col + 1)
+        write!(f, "@{}:{}:{}", basename, self.row, self.col + 1)
     }
 }
 

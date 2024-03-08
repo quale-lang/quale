@@ -37,6 +37,12 @@ impl std::fmt::Display for Attribute {
 #[derive(Default, Debug, Clone, PartialEq)]
 pub(crate) struct Attributes(pub(crate) Vec<Attribute>);
 
+impl Attributes {
+    pub(crate) fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
 impl std::str::FromStr for Attributes {
     type Err = QccErrorLoc; // we can only infer a partial location for this
                             // error (along with its kind, which we get from

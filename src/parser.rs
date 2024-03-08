@@ -70,6 +70,7 @@ impl Parser {
         let mut attr_assoc = false; // Has the parsed attribute been
                                     // associated with a function yet?
         let mut is_fn = false;
+        let mut seen_errors = false;
 
         while let Some(token) = lexer.next_token() {
             match lexer.last_token.unwrap() {
@@ -100,6 +101,7 @@ impl Parser {
                     }
 
                     Err(partial_err) => {
+                        seen_errors = true;
                         let row = lexer.location.row();
                         let mut col = partial_err.get_loc().borrow().col();
                         let row_s = format!("{}", row);
@@ -131,7 +133,6 @@ impl Parser {
                                 eprint!(" ");
                             }
                         }
-                        // assert!(col == 0);
                     }
                 },
                 Token::Function => {
@@ -141,6 +142,18 @@ impl Parser {
             lexer.consume(token);
         }
 
-        Ok(qast)
+        // If there is at least one attribute which is not associated with any
+        // function, it is a semantic error.
+        if !attr_assoc && !attrs.is_empty() {
+            let err = QccErrorLoc::new(QccErrorKind::ExpectedFnForAttr, lexer.location);
+            eprintln!("{err}");
+            Err(QccErrorKind::ParseError)?
+        }
+
+        if seen_errors {
+            Err(QccErrorKind::ParseError)?
+        } else {
+            Ok(qast)
+        }
     }
 }

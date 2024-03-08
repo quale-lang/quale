@@ -24,29 +24,28 @@ pub(crate) type Result<T> = std::result::Result<T, QccError>;
 pub(crate) type LocationRef = std::cell::RefCell<Location>;
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum QccErrorKind {
+pub enum QccErrorKind {
     InvalidArgs,
     NoSuchArg,
     NoFile,
     UnexpectedAttr,
-}
-
-impl QccErrorKind {
-    pub(crate) fn as_str(&self) -> &'static str {
-        use QccErrorKind::*;
-
-        match *self {
-            InvalidArgs => "invalid number of arguments",
-            NoSuchArg => "no such argument",
-            NoFile => "no such file",
-            UnexpectedAttr => "unexpected attribute",
-        }
-    }
+    ParseError,
+    ExpectedFnForAttr,
 }
 
 impl Display for QccErrorKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.as_str())
+        f.write_str((|kind: &Self| {
+            use QccErrorKind::*;
+            match kind {
+                InvalidArgs => "invalid number of arguments",
+                NoSuchArg => "no such argument",
+                NoFile => "no such file",
+                UnexpectedAttr => "unexpected attribute",
+                ParseError => "could not parse source",
+                ExpectedFnForAttr => "expected a function for attribute",
+            }
+        })(self))
     }
 }
 
