@@ -60,6 +60,52 @@ impl fmt::Debug for Location {
     }
 }
 
+/// `Pointer` is a movable reference into a buffer.
+#[derive(Debug)]
+pub(crate) struct Pointer {
+    start: usize,
+    prev: usize,
+    current: usize,
+    end: usize,
+}
+
+impl Pointer {
+    /// Create a new `Pointer`.
+    pub(crate) fn new() -> Self {
+        Self {
+            start: 0,
+            prev: 0,
+            current: 0,
+            end: 0,
+        }
+    }
+
+    /// Align all indices to `Pointer.start`
+    pub(crate) fn reset(&self) -> Self {
+        Self {
+            start: self.start,
+            prev: self.start,
+            current: self.start,
+            end: self.start,
+        }
+    }
+
+    /// Move all indices forward to `Pointer.end`.
+    pub(crate) fn forward(&self) -> Self {
+        Self {
+            start: self.end,
+            prev: self.end,
+            current: self.end,
+            end: self.end,
+        }
+    }
+
+    /// Get the entire range start `Pointer.start` to `Pointer.end`.
+    pub(crate) fn range(&self) -> std::ops::Range<usize> {
+        self.start..self.end
+    }
+}
+
 /// It maintains a pointer to the source buffer, one pointing to the current
 /// byte, and a const pointing to end.
 #[derive(Debug)]
@@ -67,10 +113,7 @@ pub(crate) struct Lexer<'a> {
     // stores the entire buffer this is never over-written, only read
     buffer: &'a Vec<u8>,
     // stores the next index in buffer, from where to resume reading buffer
-    start: usize,
-    end: usize,
-    prev: usize,
-    current: usize,
+    ptr: Pointer,
     pub(crate) location: Location,
     pub(crate) last_token: Option<Token>, // stores last token
 }
@@ -79,10 +122,7 @@ impl<'a> Lexer<'a> {
     pub(crate) fn new(buffer: &'a Vec<u8>, path: &'a String) -> Self {
         Self {
             buffer,
-            start: 0,
-            end: 0,
-            prev: 0,
-            current: 0,
+            ptr: Pointer::new(),
             location: Location {
                 path: path.to_string(),
                 row: 0,
@@ -103,13 +143,13 @@ impl<'a> Lexer<'a> {
 
     /// Returns current identifier contained in `self.prev` and `self.current`.
     pub(crate) fn identifier(&self) -> String {
-        self.slice(self.prev, self.current - 1)
+        self.slice(self.ptr.prev, self.ptr.current - 1)
     }
 
     /// Utility function to dump vector of bytes in string format.
     pub(crate) fn dump(&self) {
         print!("> ");
-        for byte in &self.buffer[self.prev..self.current] {
+        for byte in &self.buffer[self.ptr.prev..self.ptr.current] {
             print!("{}", std::ascii::escape_default(*byte));
         }
         println!();
@@ -121,39 +161,39 @@ impl<'a> Lexer<'a> {
     /// character at end, so we must keep calling `next_line` until a non-empty
     /// `self.line` is returned.
     pub(crate) fn next_token(&mut self) -> Option<Token> {
-        while self.current == self.end
-            || self.buffer[self.start..].starts_with(&[0x2f, 0x2f])
-            || self.buffer[self.start..self.end] == [0xa]
+        while self.ptr.current == self.ptr.end
+            || self.buffer[self.ptr.start..].starts_with(&[0x2f, 0x2f])
+            || self.buffer[self.ptr.range()] == [0xa]
         {
             self.next_line()?;
         }
 
         // Skip all whitespaces
-        while self.buffer[self.current].is_ascii_whitespace() {
-            self.current += 1;
+        while self.buffer[self.ptr.current].is_ascii_whitespace() {
+            self.ptr.current += 1;
             self.location.col += 1;
 
             // If only whitespaces are present, ask for next line.
-            if self.current == self.end {
+            if self.ptr.current == self.ptr.end {
                 self.next_line()?;
             }
         }
 
-        self.prev = self.current;
+        self.ptr.prev = self.ptr.current;
 
-        if self.buffer[self.current].is_ascii_alphanumeric() {
-            if self.buffer[self.current].is_ascii_alphabetic() {
-                if self.slice(self.current, self.current + 2) == "fn" {
-                    self.current += 2;
+        if self.buffer[self.ptr.current].is_ascii_alphanumeric() {
+            if self.buffer[self.ptr.current].is_ascii_alphabetic() {
+                if self.slice(self.ptr.current, self.ptr.current + 2) == "fn" {
+                    self.ptr.current += 2;
                     self.last_token = Some(Token::Function);
                     return self.last_token;
                 }
             }
-            if self.buffer[self.current].is_ascii_digit() {}
+            if self.buffer[self.ptr.current].is_ascii_digit() {}
         }
-        if self.buffer[self.current] == '#' as u8 {
-            self.current += 1;
-            if self.buffer[self.current] != '[' as u8 {
+        if self.buffer[self.ptr.current] == '#' as u8 {
+            self.ptr.current += 1;
+            if self.buffer[self.ptr.current] != '[' as u8 {
                 // TODO: Incorporate in QccErrorKind
                 // @test: lexer error: expected attribute
                 // ```
@@ -162,25 +202,25 @@ impl<'a> Lexer<'a> {
                 // return Err(QccErrorKind::ExpectedAttr).ok()?;
                 eprintln!("qcc: expected '[attribute]' after '#'");
             }
-            while self.buffer[self.current] != ']' as u8 {
-                self.current += 1;
+            while self.buffer[self.ptr.current] != ']' as u8 {
+                self.ptr.current += 1;
             }
-            self.current += 1; // for consuming ']'
-            self.current += 1; // for consuming whitespace (this has to be err)
-                               // FIXME: I don't like manually incrementing to
-                               // skip whitespaces. Something somewhere has gone
-                               // wrong!
+            self.ptr.current += 1; // for consuming ']'
+            self.ptr.current += 1; // for consuming whitespace (this has to be err)
+                                   // FIXME: I don't like manually incrementing to
+                                   // skip whitespaces. Something somewhere has gone
+                                   // wrong!
 
             self.last_token = Some(Token::Attribute);
             // self.dump();
             return self.last_token;
         }
 
-        while !self.buffer[self.current].is_ascii_whitespace() {
-            self.current += 1;
+        while !self.buffer[self.ptr.current].is_ascii_whitespace() {
+            self.ptr.current += 1;
         }
-        self.current += 1; // skip whitespace
-                           // self.dump();
+        self.ptr.current += 1; // skip whitespace
+                               // self.dump();
 
         self.last_token = Some(Token::Identifier);
         Some(Token::Identifier)
@@ -196,25 +236,23 @@ impl<'a> Lexer<'a> {
         if let Some(last_token) = &self.last_token {
             // Failure on consuming EOF (None). Should it be?
             assert_eq!(token, *last_token);
-            self.location.col += self.current - self.prev;
-            self.prev = self.current;
+            self.location.col += self.ptr.current - self.ptr.prev;
+            self.ptr.prev = self.ptr.current;
         }
     }
 
     /// Reads the next line updating `self.line_start` and `self.line_end`.
     fn next_line(&mut self) -> Option<()> {
-        if self.buffer[self.end..].is_empty() {
+        if self.buffer[self.ptr.end..].is_empty() {
             return None;
         }
 
-        self.start = self.end;
-        self.prev = self.start;
-        self.current = self.prev;
+        self.ptr = self.ptr.forward();
 
-        while self.buffer[self.end] != /* newline */0xa {
-            self.end += 1;
+        while self.buffer[self.ptr.end] != '\n' as u8 {
+            self.ptr.end += 1;
         }
-        self.end += 1;
+        self.ptr.end += 1;
 
         self.location.row += 1;
         self.location.col = 1;
