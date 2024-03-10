@@ -22,6 +22,10 @@ pub struct Qast {
 }
 
 impl Qast {
+    pub(crate) fn new(functions: Vec<FunctionAST>) -> Self {
+        Self { functions }
+    }
+
     pub(crate) fn append(&mut self, function: FunctionAST) -> &mut Self {
         self.functions.push(function);
         self
@@ -34,6 +38,10 @@ impl Qast {
         attrs: Attributes,
     ) -> &mut Self {
         self.append(FunctionAST::new(name, location, attrs))
+    }
+
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &FunctionAST> + '_ {
+        self.functions.iter()
     }
 }
 
@@ -64,6 +72,31 @@ impl FunctionAST {
             output_type: Default::default(),
             attrs,
         }
+    }
+
+    #[inline]
+    pub(crate) fn get_name(&self) -> &Ident {
+        &self.name
+    }
+
+    #[inline]
+    pub(crate) fn get_loc(&self) -> &Location {
+        &self.location
+    }
+
+    #[inline]
+    pub(crate) fn get_input_type(&self) -> &Type {
+        &self.input_type
+    }
+
+    #[inline]
+    pub(crate) fn get_output_type(&self) -> &Type {
+        &self.output_type
+    }
+
+    #[inline]
+    pub(crate) fn get_attrs(&self) -> &Attributes {
+        &self.attrs
     }
 }
 

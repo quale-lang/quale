@@ -109,17 +109,17 @@ impl Pointer {
 /// It maintains a pointer to the source buffer, one pointing to the current
 /// byte, and a const pointing to end.
 #[derive(Debug)]
-pub(crate) struct Lexer<'a> {
+pub(crate) struct Lexer {
     // stores the entire buffer this is never over-written, only read
-    buffer: &'a Vec<u8>,
+    buffer: Vec<u8>,
     // stores the next index in buffer, from where to resume reading buffer
     ptr: Pointer,
     pub(crate) location: Location,
     pub(crate) last_token: Option<Token>, // stores last token
 }
 
-impl<'a> Lexer<'a> {
-    pub(crate) fn new(buffer: &'a Vec<u8>, path: &'a String) -> Self {
+impl Lexer {
+    pub(crate) fn new(buffer: Vec<u8>, path: String) -> Self {
         Self {
             buffer,
             ptr: Pointer::new(),

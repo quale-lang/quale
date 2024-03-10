@@ -10,12 +10,13 @@ mod tests {
     fn check_analyzer() -> Result<()> {
         let path = "tests/test1.ql".into();
         let args = vec![path];
-        let parser: Parser = Default::default();
-        if let Some(config) = parser.parse_cmdline(args)? {
-            let ast = parser.parse(&config.analyzer.src)?;
-            println!("{ast}");
-            config.analyzer.analyze(&ast);
-        }
+        let parser = Parser::new(args)?.unwrap();
+
+        let config = parser.get_config();
+        let qast = parser.parse(&config.analyzer.src)?;
+        println!("{qast}");
+        config.analyzer.analyze(&qast)?;
+
         Ok(())
     }
 }

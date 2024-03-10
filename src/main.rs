@@ -15,23 +15,29 @@ use crate::error::Result;
 use crate::parser::Parser;
 
 fn main() -> Result<()> {
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    let parser: Parser = Default::default();
+    let args = std::env::args().skip(1).collect::<Vec<String>>();
+    let args = args.iter().map(|s| s.as_str()).collect();
 
-    match parser.parse_cmdline(args) {
-        Ok(Some(config)) => match parser.parse(&config.analyzer.src) {
-            Ok(qast) => {
-                #[cfg(debug_assertions)]
-                println!("{}", qast);
+    let session = Parser::new(args);
 
-                if config.analyzer.status {
-                    config.analyzer.analyze(&qast);
+    match session {
+        Ok(Some(parser)) => {
+            let config = parser.get_config();
+
+            match parser.parse(&config.analyzer.src) {
+                Ok(qast) => {
+                    #[cfg(debug_assertions)]
+                    println!("{qast}");
+
+                    if config.analyzer.status {
+                        config.analyzer.analyze(&qast)?;
+                    }
                 }
+                Err(err) => eprintln!("{err}"),
             }
-            Err(e) => eprintln!("{}", e),
-        },
+        }
         Ok(None) => {} /* help asked, no errors */
-        Err(e) => eprintln!("{}", e),
+        Err(err) => eprintln!("{err}"),
     }
 
     Ok(())
@@ -43,15 +49,25 @@ mod tests {
 
     #[test]
     fn check_main() -> Result<()> {
-        let path = String::from("./tests/test1.ql");
-        let args = vec![path.clone(), "--analyze".into()];
-        let parser: Parser = Default::default();
-
-        if let Some(config) = parser.parse_cmdline(args)? {
-            let qast = parser.parse(&config.analyzer.src)?;
-            println!("{qast}");
-        }
+        let path = "./tests/test1.ql";
+        let args = vec![path, "--analyze"];
+        let parser = Parser::new(args)?.unwrap();
+        let config = parser.get_config();
+        let qast = parser.parse(&config.analyzer.src)?;
+        println!("{qast}");
 
         Ok(())
+    }
+
+    #[test]
+    fn check_wrong_parser_uses() -> Result<()> {
+        use crate::error::QccErrorKind::NoFile;
+
+        let path = "non_existing_src.ql";
+        let args = vec![path];
+        Ok(match Parser::new(args) {
+            Ok(_) => unreachable!(),
+            Err(err) => assert_eq!(err, NoFile.into()),
+        })
     }
 }

@@ -13,13 +13,15 @@ fn compile() -> Result<(), Box<dyn std::error::Error>> {
         if !path.ends_with(".ql") {
             continue;
         }
-        let args = vec![path];
-        let parser: Parser = Default::default();
-        if let Some(config) = parser.parse_cmdline(args)? {
-            match parser.parse(&config.analyzer.src) {
-                Ok(ast) => println!("{ast}"),
-                Err(err) => assert_eq!(err, QccErrorKind::ParseError.into()),
-            }
+
+        let args = vec![path.as_str()];
+
+        let parser = Parser::new(args)?.unwrap();
+        let config = parser.get_config();
+
+        match parser.parse(&config.analyzer.src) {
+            Ok(ast) => println!("{ast}"),
+            Err(err) => assert_eq!(err, QccErrorKind::ParseError.into()),
         }
     }
 
@@ -35,9 +37,8 @@ fn cmdline() -> Result<(), Box<dyn std::error::Error>> {
         if !path.ends_with(".ql") {
             continue;
         }
-        let args = vec![path, "-O2".into(), "--analyze".into()];
-        let parser: Parser = Default::default();
-        let _opts = parser.parse_cmdline(args)?;
+        let args = vec![path.as_str(), "-O2", "--analyze"];
+        let _config = Parser::parse_cmdline(args)?.unwrap();
     }
 
     Ok(())
@@ -45,16 +46,35 @@ fn cmdline() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn non_existing_src() -> Result<(), Box<dyn std::error::Error>> {
-    let path = String::from("./tests/test-non-existent.ql");
-    let args = vec![path.clone(), "--analyze".into()];
-    let parser: Parser = Default::default();
-    let _parsed = parser.parse_cmdline(args).unwrap_err();
-    // FIXME:
-    /* assert_eq!(parsed, Err(format!("{path} doesn't exist"))); */
-    /* assert_eq!(parse_cmdline(args)?, */
-    /*     Err(format!("{path} doesn't exist"))?); */
-    /* if let Some(config) = parse_cmdline(args)? { */
-    /*     let _ast = parser.parse(&config.analyzer.src)?; */
-    /* } */
+    let path = "./tests/test-non-existent.ql";
+    let args = vec![path, "--analyze"];
+    match Parser::new(args) {
+        Ok(_) => unreachable!(),
+        Err(err) => assert_eq!(err, QccErrorKind::NoFile.into()),
+    }
+    Ok(())
+}
+
+#[test]
+fn analyzer() -> Result<(), Box<dyn std::error::Error>> {
+    let paths = std::fs::read_dir("./tests")?;
+
+    for p in paths {
+        let path = p.unwrap().path().into_os_string().into_string().unwrap();
+        if !path.ends_with(".ql") {
+            continue;
+        }
+        let args = vec![path.as_str(), "--analyze"];
+        let parser = Parser::new(args)?.unwrap();
+        let config = parser.get_config();
+
+        match parser.parse(&config.analyzer.src) {
+            Ok(ast) => {
+                config.analyzer.analyze(&ast)?;
+            }
+            Err(err) => assert_eq!(err, QccErrorKind::ParseError.into()),
+        }
+    }
+
     Ok(())
 }

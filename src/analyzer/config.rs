@@ -1,5 +1,6 @@
 //! Configuration for Quale Analyzer
 use crate::ast::Qast;
+use crate::error::Result;
 
 #[derive(Debug)]
 pub struct AnalyzerConfig {
@@ -15,8 +16,9 @@ impl AnalyzerConfig {
         }
     }
 
-    pub(crate) fn analyze(&self, _ast: &Qast) {
-        println!("Analyzing ...{}", self.src);
+    pub fn analyze(&self, ast: &Qast) -> Result<()> {
+        for _fn in ast.iter() {}
+        Ok(())
     }
 }
 
