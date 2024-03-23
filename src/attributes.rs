@@ -89,16 +89,14 @@ impl std::str::FromStr for Attributes {
 
 impl std::fmt::Display for Attributes {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.iter().fold(true, |first, elem| {
-            // FIXME: perhaps needs try_for_*
-            if !first {
-                write!(f, ", ").unwrap();
-            }
-            write!(f, "{}", elem).unwrap();
-            false
-        });
+        let attrs = self
+            .0
+            .iter()
+            .map(|p| p.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
 
-        Ok(())
+        write!(f, "{attrs}")
     }
 }
 

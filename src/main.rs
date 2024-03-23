@@ -11,6 +11,7 @@ mod parser;
 mod types;
 mod utils;
 
+use crate::codegen::qasm;
 use crate::error::Result;
 use crate::parser::Parser;
 
@@ -32,6 +33,12 @@ fn main() -> Result<()> {
                     if config.analyzer.status {
                         config.analyzer.analyze(&qast)?;
                     }
+
+                    let asm = qasm::QasmModule::translate(qast)?;
+                    asm.generate(&config.analyzer.src.replace(".ql", ".s"))?;
+
+                    #[cfg(debug_assertions)]
+                    println!("{}", asm);
                 }
                 Err(err) => eprintln!("{err}"),
             }

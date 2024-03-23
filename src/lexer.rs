@@ -223,6 +223,8 @@ impl Lexer {
                                // self.dump();
 
         self.last_token = Some(Token::Identifier);
+        // FIXME: Separation through space may include parenthesis and
+        // parameters in function def.
         Some(Token::Identifier)
     }
 
