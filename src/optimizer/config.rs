@@ -2,18 +2,16 @@
 
 #[derive(Debug)]
 pub struct OptConfig {
+    pub asm: String,
     pub level: u8, // 0, 1, 2
 }
 
 impl OptConfig {
-    pub fn new(level: u8) -> Self {
-        OptConfig { level }
-    }
-}
-
-impl Default for OptConfig {
-    fn default() -> Self {
-        Self::new(0)
+    pub fn new() -> Self {
+        OptConfig {
+            asm: "".into(),
+            level: 0,
+        }
     }
 }
 

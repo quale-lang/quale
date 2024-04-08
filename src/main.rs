@@ -35,7 +35,7 @@ fn main() -> Result<()> {
                     }
 
                     let asm = qasm::QasmModule::translate(qast)?;
-                    asm.generate(&config.analyzer.src.replace(".ql", ".s"))?;
+                    asm.generate(&config.optimizer.asm)?;
 
                     #[cfg(debug_assertions)]
                     println!("{}", asm);

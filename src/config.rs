@@ -11,7 +11,7 @@ pub struct Config {
 impl Config {
     pub(crate) fn new() -> Self {
         Self {
-            optimizer: Default::default(),
+            optimizer: OptConfig::new(),
             analyzer: AnalyzerConfig::new(),
         }
     }

@@ -51,6 +51,8 @@ impl Parser {
         }
 
         let mut config = Config::new();
+        let mut output_provided = false;
+        let mut output_consumed = false;
 
         // Parse cmdline options
         for option in args {
@@ -69,6 +71,7 @@ impl Parser {
                     "-O1" => config.optimizer.level = 1,
                     "-O2" => config.optimizer.level = 2,
                     "-Og" => config.optimizer.level = 3,
+                    "-o" => output_provided = true,
                     "-h" => {
                         usage();
                         return Ok(None);
@@ -76,7 +79,16 @@ impl Parser {
                     _ => Err(QccErrorKind::NoSuchArg)?,
                 }
             } else {
-                config.analyzer.src = option.into();
+                if output_provided && !output_consumed {
+                    config.optimizer.asm = option.into();
+                    output_provided = false;
+                    output_consumed = true;
+                } else {
+                    config.analyzer.src = option.into();
+                    if !output_consumed {
+                        config.optimizer.asm = option.replace(".ql", ".s");
+                    }
+                }
             }
         }
 
