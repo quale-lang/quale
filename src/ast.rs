@@ -58,6 +58,7 @@ pub(crate) struct FunctionAST {
     name: Ident,
     location: Location,
     // description: String,
+    params: Vec<(Ident, Type)>,
     input_type: Type,
     output_type: Type,
     attrs: Attributes,
@@ -68,6 +69,7 @@ impl FunctionAST {
         Self {
             name,
             location,
+            params: Default::default(),
             input_type: Default::default(),
             output_type: Default::default(),
             attrs,

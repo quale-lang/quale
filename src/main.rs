@@ -11,7 +11,7 @@ mod parser;
 mod types;
 mod utils;
 
-use crate::codegen::qasm;
+use crate::codegen::{qasm, Translator};
 use crate::error::Result;
 use crate::parser::Parser;
 

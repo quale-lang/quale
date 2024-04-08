@@ -1,6 +1,7 @@
 //! OpenQASM Codegen Backend
 use crate::ast::{FunctionAST, Ident, Qast};
 use crate::attributes::Attribute;
+use crate::codegen::Translator;
 use crate::error::Result;
 use std::fmt;
 use std::fmt::Display;
@@ -48,10 +49,21 @@ impl QasmModule {
         }
     }
 
+    /// It outputs the translated `QasmModule` to a file at `path`.
+    pub(crate) fn generate(&self, path: &str) -> Result<()> {
+        // TODO: Process the QasmModule to generate a qasm file at @path. This
+        // requires pasting all `include` directives in the output qasm file.
+        let mut asm_path = std::fs::File::create(path)?;
+        asm_path.write(self.to_string().as_bytes())?;
+        Ok(())
+    }
+}
+
+impl Translator<Qast> for QasmModule {
     /// Translator for qasm codegen.
     /// It takes a `Qast` object and translates it recursively into a
     /// `QasmModule`.
-    pub(crate) fn translate(ast: Qast) -> Result<QasmModule> {
+    fn translate(ast: Qast) -> Result<Self> {
         let mut gates: Vec<QasmGate> = vec![];
         for f in ast.iter() {
             let attrs = f.get_attrs();
@@ -60,15 +72,6 @@ impl QasmModule {
             }
         }
         Ok(gates.into())
-    }
-
-    /// It outputs the translated `QasmModule` to a file at `path`.
-    pub(crate) fn generate(&self, path: &str) -> Result<()> {
-        // TODO: Process the QasmModule to generate a qasm file at @path. This
-        // requires pasting all `include` directives in the output qasm file.
-        let mut asm_path = std::fs::File::create(path)?;
-        asm_path.write(self.to_string().as_bytes())?;
-        Ok(())
     }
 }
 
