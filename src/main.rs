@@ -15,36 +15,39 @@ use crate::codegen::{qasm, Translator};
 use crate::error::Result;
 use crate::parser::Parser;
 
+fn init_session(args: Vec<&str>) -> Result<()> {
+    let session = Parser::new(args)?;
+
+    match session {
+        Some(parser) => {
+            let config = parser.get_config();
+
+            let qast = parser.parse(&config.analyzer.src)?;
+            #[cfg(debug_assertions)]
+            println!("{qast}");
+
+            if config.analyzer.status {
+                config.analyzer.analyze(&qast)?;
+            }
+
+            let asm = qasm::QasmModule::translate(qast)?;
+            asm.generate(&config.optimizer.asm)?;
+
+            #[cfg(debug_assertions)]
+            println!("{asm}");
+        }
+        None => {} /* help was asked, no errors */
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let args = std::env::args().skip(1).collect::<Vec<String>>();
     let args = args.iter().map(|s| s.as_str()).collect();
 
-    let session = Parser::new(args);
-
-    match session {
-        Ok(Some(parser)) => {
-            let config = parser.get_config();
-
-            match parser.parse(&config.analyzer.src) {
-                Ok(qast) => {
-                    #[cfg(debug_assertions)]
-                    println!("{qast}");
-
-                    if config.analyzer.status {
-                        config.analyzer.analyze(&qast)?;
-                    }
-
-                    let asm = qasm::QasmModule::translate(qast)?;
-                    asm.generate(&config.optimizer.asm)?;
-
-                    #[cfg(debug_assertions)]
-                    println!("{}", asm);
-                }
-                Err(err) => eprintln!("{err}"),
-            }
-        }
-        Ok(None) => {} /* help asked, no errors */
-        Err(err) => eprintln!("{err}"),
+    if let Err(err) = init_session(args) {
+        eprintln!("{err}");
     }
 
     Ok(())
