@@ -120,6 +120,10 @@ impl Parser {
     /* TODO: If we have more than one quale file in a parsing session
      * (inside Config), then we can select which one to parse via here */
     pub fn parse(&self, src: &String) -> Result<Qast> {
+        if !src.ends_with(".ql") {
+            Err(QccErrorKind::ParseError)?
+        }
+
         let mut qast: Qast = Default::default();
         let mut attrs: Attributes = Default::default();
         let mut attr_assoc = false; // Has the parsed attribute been
