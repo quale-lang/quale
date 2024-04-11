@@ -3,7 +3,7 @@
 use crate::ast::{FunctionAST, Qast, Token};
 use crate::attributes::Attributes;
 use crate::config::*;
-use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
+use crate::error::{QccErrorKind, QccErrorLoc, Result};
 use crate::lexer::{Lexer, Location};
 use crate::utils::usage;
 use std::path::Path;
@@ -51,8 +51,7 @@ impl Parser {
         }
 
         let mut config = Config::new();
-        let mut output_provided = false;
-        let mut output_consumed = false;
+        let mut output_direct: u8 = 0x0;
 
         // Parse cmdline options
         for option in args {
@@ -67,11 +66,11 @@ impl Parser {
             } else if option.starts_with('-') {
                 // Parse opt level
                 match option {
-                    "-O0" => config.optimizer.level = 0,
-                    "-O1" => config.optimizer.level = 1,
-                    "-O2" => config.optimizer.level = 2,
-                    "-Og" => config.optimizer.level = 3,
-                    "-o" => output_provided = true,
+                    "-O0" => config.optimizer.level = 0x0,
+                    "-O1" => config.optimizer.level = 0x1,
+                    "-O2" => config.optimizer.level = 0x2,
+                    "-Og" => config.optimizer.level = 0x3,
+                    "-o" => output_direct |= 0x1,
                     "-h" => {
                         usage();
                         return Ok(None);
@@ -79,13 +78,12 @@ impl Parser {
                     _ => Err(QccErrorKind::NoSuchArg)?,
                 }
             } else {
-                if output_provided && !output_consumed {
+                if output_direct == 0x1 {
                     config.optimizer.asm = option.into();
-                    output_provided = false;
-                    output_consumed = true;
+                    output_direct <<= 0x1;
                 } else {
                     config.analyzer.src = option.into();
-                    if !output_consumed {
+                    if output_direct == 0x0 {
                         config.optimizer.asm = option.replace(".ql", ".s");
                     }
                 }

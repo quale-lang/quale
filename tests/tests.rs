@@ -78,3 +78,56 @@ fn analyzer() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[test]
+fn check_output_directives() -> Result<(), Box<dyn std::error::Error>> {
+    let paths = std::fs::read_dir("./tests")?;
+    for p in paths {
+        let path = p.unwrap().path().into_os_string().into_string().unwrap();
+        let path = path.as_str();
+        let temp = "temp.s";
+
+        {
+            let arg = vec!["-o", temp, path];
+            let parser = Parser::new(arg)?.unwrap();
+            let config = parser.get_config();
+            assert_eq!(config.analyzer.src, path);
+            assert_eq!(config.optimizer.asm, temp);
+        }
+
+        {
+            let arg = vec![path, "-o", temp];
+            let parser = Parser::new(arg)?.unwrap();
+            let config = parser.get_config();
+            assert_eq!(config.analyzer.src, path);
+            assert_eq!(config.optimizer.asm, temp);
+        }
+
+        {
+            let arg = vec![path];
+            let parser = Parser::new(arg)?.unwrap();
+            let config = parser.get_config();
+            assert_eq!(config.analyzer.src, path);
+            assert_eq!(config.optimizer.asm, path.replace(".ql", ".s"));
+        }
+
+        {
+            let arg = vec![path, "-o", "-o", temp];
+            let parser = Parser::new(arg)?.unwrap();
+            let config = parser.get_config();
+            assert_eq!(config.analyzer.src, path);
+            assert_eq!(config.optimizer.asm, temp);
+        }
+
+        {
+            let arg = vec![path, "-o"];
+            let parser = Parser::new(arg)?.unwrap();
+            let config = parser.get_config();
+            assert_eq!(config.analyzer.src, path);
+            assert_eq!(config.optimizer.asm, path.replace(".ql", ".s"));
+        }
+
+        break;
+    }
+    Ok(())
+}

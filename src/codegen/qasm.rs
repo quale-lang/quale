@@ -51,8 +51,6 @@ impl QasmModule {
 
     /// It outputs the translated `QasmModule` to a file at `path`.
     pub(crate) fn generate(&self, path: &str) -> Result<()> {
-        // TODO: Process the QasmModule to generate a qasm file at @path. This
-        // requires pasting all `include` directives in the output qasm file.
         let mut asm_path = std::fs::File::create(path)?;
         asm_path.write(self.to_string().as_bytes())?;
         Ok(())
