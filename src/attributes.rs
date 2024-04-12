@@ -1,7 +1,7 @@
 //! Attributes: Function definitions can have certain attributes associated to
 //! them. What are these attributes and what they function isn't defined right
 //! now.
-use crate::error::{QccError, QccErrorKind, QccErrorLoc};
+use crate::error::{QccErrorKind, QccErrorLoc};
 use crate::lexer::Location;
 
 #[derive(Default, Debug, Copy, Clone, PartialEq)]

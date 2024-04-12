@@ -4,7 +4,7 @@ use crate::attributes::Attribute;
 use crate::codegen::Translator;
 use crate::error::Result;
 use std::fmt;
-use std::fmt::Display;
+
 use std::io::Write;
 
 pub(crate) enum QasmVersion {

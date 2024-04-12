@@ -121,7 +121,7 @@ impl QccErrorLoc {
     }
 
     // TODO
-    pub(crate) fn set_path(&mut self, path: &str) {}
+    pub(crate) fn set_path(&mut self, _path: &str) {}
 
     /// Takes a mutable reference `QccErrorLoc` and replaces its row in
     /// location.

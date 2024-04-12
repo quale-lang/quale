@@ -129,7 +129,7 @@ impl Parser {
         let mut is_fn = false;
         let mut seen_errors = false;
 
-        let mut fns: Vec<FunctionAST> = vec![];
+        let _fns: Vec<FunctionAST> = vec![];
         let mut lexer = self.lexer.borrow_mut();
 
         // // TODO:
