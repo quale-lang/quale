@@ -28,7 +28,9 @@ pub enum QccErrorKind {
     InvalidArgs,
     NoSuchArg,
     NoFile,
+    ExpectedAttr,
     UnexpectedAttr,
+    LexerError,
     ParseError,
     ExpectedFnForAttr,
 }
@@ -41,7 +43,9 @@ impl Display for QccErrorKind {
                 InvalidArgs => "invalid number of arguments",
                 NoSuchArg => "no such argument",
                 NoFile => "no such file",
+                ExpectedAttr => "expected attribute list as #[<attr>]",
                 UnexpectedAttr => "unexpected attribute",
+                LexerError => "lexer failed to tokenize",
                 ParseError => "could not parse source",
                 ExpectedFnForAttr => "expected a function for attribute",
             }

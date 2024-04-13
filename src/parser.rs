@@ -139,7 +139,7 @@ impl Parser {
         // }
         // return Ok(Qast::new(fns));
 
-        while let Some(token) = lexer.next_token() {
+        while let Some(token) = lexer.next_token()? {
             match lexer.last_token.unwrap() {
                 Token::Identifier => {
                     if is_fn {
@@ -168,6 +168,8 @@ impl Parser {
                     }
 
                     Err(partial_err) => {
+                        // TODO: Move this to a standalone mechanism. That is,
+                        // the source location dumping alongside error.
                         seen_errors = true;
                         let row = lexer.location.row();
                         let mut col = partial_err.get_loc().borrow().col();

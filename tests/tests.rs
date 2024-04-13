@@ -1,5 +1,6 @@
 use qcc::error::QccErrorKind;
 use qcc::parser::Parser;
+use qcc::{assert_eq_all, assert_eq_any};
 
 #[test]
 fn compile() -> Result<(), Box<dyn std::error::Error>> {
@@ -21,7 +22,7 @@ fn compile() -> Result<(), Box<dyn std::error::Error>> {
 
         match parser.parse(&config.analyzer.src) {
             Ok(ast) => println!("{ast}"),
-            Err(err) => assert_eq!(err, QccErrorKind::ParseError.into()),
+            Err(err) => assert_eq_any!(err, [QccErrorKind::LexerError, QccErrorKind::ParseError]),
         }
     }
 
@@ -72,7 +73,7 @@ fn analyzer() -> Result<(), Box<dyn std::error::Error>> {
             Ok(ast) => {
                 config.analyzer.analyze(&ast)?;
             }
-            Err(err) => assert_eq!(err, QccErrorKind::ParseError.into()),
+            Err(err) => assert_eq_any!(err, [QccErrorKind::LexerError, QccErrorKind::ParseError]),
         }
     }
 

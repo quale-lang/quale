@@ -1,5 +1,6 @@
 //! Lexer for qcc
 use crate::ast::Token;
+use crate::error::{QccErrorKind, Result};
 
 use std::fmt;
 
@@ -160,17 +161,20 @@ impl Lexer {
     /// it is empty then we need next line. Note, `next_line` trims the newline
     /// character at end, so we must keep calling `next_line` until a non-empty
     /// `self.line` is returned.
-    pub(crate) fn next_token(&mut self) -> Option<Token> {
+    pub(crate) fn next_token(&mut self) -> Result<Option<Token>> {
         while self.ptr.current == self.ptr.end
             || self.buffer[self.ptr.start..].starts_with(&[0x2f, 0x2f])
             || self.buffer[self.ptr.range()] == [0xa]
         {
-            self.next_line()?;
+            // TODO: FromResidual trait impl (but nightly) to use ?
+            if self.next_line() == None {
+                return Ok(None);
+            }
 
             // If there is no EOF then only fetch next line as long as
             // everything is already lexemed.
             if self.ptr.prev == self.ptr.end {
-                return None;
+                return Ok(None);
             }
         }
 
@@ -181,7 +185,10 @@ impl Lexer {
 
             // If only whitespaces are present, ask for next line.
             if self.ptr.current == self.ptr.end {
-                self.next_line()?;
+                // self.next_line();
+                if self.next_line() == None {
+                    return Ok(None);
+                }
             }
         }
 
@@ -192,7 +199,7 @@ impl Lexer {
                 if self.slice(self.ptr.current, self.ptr.current + 2) == "fn" {
                     self.ptr.current += 2;
                     self.last_token = Some(Token::Function);
-                    return self.last_token;
+                    return Ok(self.last_token);
                 }
             }
             if self.buffer[self.ptr.current].is_ascii_digit() {}
@@ -205,8 +212,12 @@ impl Lexer {
                 // ```
                 // #[attribute
                 // ```
-                // return Err(QccErrorKind::ExpectedAttr).ok()?;
-                eprintln!("qcc: expected '[attribute]' after '#'");
+                // TODO: dump location, as this err inside lexer is first class,
+                // but in parser it is a second class err.
+                let err = QccErrorKind::ExpectedAttr;
+                eprintln!("{} {}", err, self.location);
+                return Err(QccErrorKind::LexerError)?;
+                // eprintln!("qcc: expected '[attribute]' after '#'");
             }
             while self.buffer[self.ptr.current] != ']' as u8 {
                 self.ptr.current += 1;
@@ -219,7 +230,7 @@ impl Lexer {
 
             self.last_token = Some(Token::Attribute);
             // self.dump();
-            return self.last_token;
+            return Ok(self.last_token);
         }
 
         while !self.buffer[self.ptr.current].is_ascii_whitespace() {
@@ -233,7 +244,7 @@ impl Lexer {
         self.last_token = Some(Token::Identifier);
         // FIXME: Separation through space may include parenthesis and
         // parameters in function def.
-        Some(Token::Identifier)
+        Ok(Some(Token::Identifier))
     }
 
     /// Get the curren token.
