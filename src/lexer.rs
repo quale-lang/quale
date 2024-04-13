@@ -166,6 +166,12 @@ impl Lexer {
             || self.buffer[self.ptr.range()] == [0xa]
         {
             self.next_line()?;
+
+            // If there is no EOF then only fetch next line as long as
+            // everything is already lexemed.
+            if self.ptr.prev == self.ptr.end {
+                return None;
+            }
         }
 
         // Skip all whitespaces
@@ -219,6 +225,8 @@ impl Lexer {
         while !self.buffer[self.ptr.current].is_ascii_whitespace() {
             self.ptr.current += 1;
         }
+        // FIXME: Don't need to skip whitespaces specifically! They will be
+        // skipped in the starting at the next call.
         self.ptr.current += 1; // skip whitespace
                                // self.dump();
 
@@ -252,6 +260,11 @@ impl Lexer {
         self.ptr = self.ptr.forward();
 
         while self.buffer[self.ptr.end] != '\n' as u8 {
+            if self.ptr.end == self.buffer.len() - 1 {
+                self.location.row += 1;
+
+                return Some(());
+            }
             self.ptr.end += 1;
         }
         self.ptr.end += 1;
