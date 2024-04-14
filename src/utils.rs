@@ -29,15 +29,21 @@ macro_rules! assert_eq_all {
 pub(crate) fn usage() {
     print!(
         "usage: qcc [options] <quale-file>
-    {:10}\t{:<20}
-    {:10}\t{:<20}
-    {:10}\t{:<20}
-    {:10}\t{:<20}
-    {:10}\t{:<20}
-    {:10}\t{:<20}
+    {:14}\t{:<20}
+    {:14}\t{:<20}
+    {:14}\t{:<20}
+    {:14}\t{:<20}
+    {:14}\t{:<20}
+    {:14}\t{:<20}
+    {:14}\t{:<20}
+    {:14}\t{:<20}
 ",
         "--help",
         "show this page",
+        "--dump-ast",
+        "print AST",
+        "--dump-qasm",
+        "print OpenQASM IR",
         "--analyze",
         "run static analyzer",
         "-O0",

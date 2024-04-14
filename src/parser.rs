@@ -66,6 +66,9 @@ impl Parser {
                 if option == "--dump-ast" {
                     config.dump_ast = true;
                 }
+                if option == "--dump-qasm" {
+                    config.dump_qasm = true;
+                }
             } else if option.starts_with('-') {
                 // Parse opt level
                 match option {

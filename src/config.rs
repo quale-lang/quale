@@ -5,6 +5,7 @@ use crate::optimizer::config::*;
 #[derive(Debug)]
 pub struct Config {
     pub(crate) dump_ast: bool,
+    pub(crate) dump_qasm: bool,
     pub analyzer: AnalyzerConfig,
     pub optimizer: OptConfig,
 }
@@ -13,6 +14,7 @@ impl Config {
     pub(crate) fn new() -> Self {
         Self {
             dump_ast: false,
+            dump_qasm: false,
             optimizer: OptConfig::new(),
             analyzer: AnalyzerConfig::new(),
         }

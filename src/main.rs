@@ -23,7 +23,6 @@ fn init_session(args: Vec<&str>) -> Result<()> {
             let config = parser.get_config();
 
             let qast = parser.parse(&config.analyzer.src)?;
-
             if config.dump_ast {
                 println!("{qast}");
             }
@@ -33,10 +32,10 @@ fn init_session(args: Vec<&str>) -> Result<()> {
             }
 
             let asm = qasm::QasmModule::translate(qast)?;
+            if config.dump_qasm {
+                println!("{asm}");
+            }
             asm.generate(&config.optimizer.asm)?;
-
-            #[cfg(debug_assertions)]
-            println!("{asm}");
         }
         None => {} /* help was asked, no errors */
     }
