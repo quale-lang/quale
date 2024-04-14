@@ -23,8 +23,10 @@ fn init_session(args: Vec<&str>) -> Result<()> {
             let config = parser.get_config();
 
             let qast = parser.parse(&config.analyzer.src)?;
-            #[cfg(debug_assertions)]
-            println!("{qast}");
+
+            if config.dump_ast {
+                println!("{qast}");
+            }
 
             if config.analyzer.status {
                 config.analyzer.analyze(&qast)?;

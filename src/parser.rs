@@ -56,12 +56,15 @@ impl Parser {
         // Parse cmdline options
         for option in args {
             if option.starts_with("--") {
-                if option == "--analyze" {
-                    config.analyzer.status = true;
-                }
                 if option == "--help" || option == "-h" {
                     usage();
                     return Ok(None);
+                }
+                if option == "--analyze" {
+                    config.analyzer.status = true;
+                }
+                if option == "--dump-ast" {
+                    config.dump_ast = true;
                 }
             } else if option.starts_with('-') {
                 // Parse opt level
