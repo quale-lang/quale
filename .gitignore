@@ -3,3 +3,5 @@
 /TODO.md
 /*.vim
 /.gdb_history
+/tmp
+/bugs
