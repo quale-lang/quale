@@ -47,11 +47,11 @@ pub(crate) fn usage() {
         "--analyze",
         "run static analyzer",
         "-O0",
-        "disable optimizations",
+        "disable optimizations (NA)",
         "-O1",
-        "enable first-level optimizations",
+        "enable first-level optimizations (NA)",
         "-Og",
-        "enable all optimizations",
+        "enable all optimizations (NA)",
         "-o",
         "compiled output"
     );
