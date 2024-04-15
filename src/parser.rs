@@ -66,6 +66,9 @@ impl Parser {
                 if option == "--dump-ast" {
                     config.dump_ast = true;
                 }
+                if option == "--dump-ast-only" {
+                    config.dump_ast_only = true;
+                }
                 if option == "--dump-qasm" {
                     config.dump_qasm = true;
                 }

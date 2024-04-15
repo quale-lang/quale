@@ -37,11 +37,14 @@ pub(crate) fn usage() {
     {:14}\t{:<20}
     {:14}\t{:<20}
     {:14}\t{:<20}
+    {:14}\t{:<20}
 ",
         "--help",
         "show this page",
         "--dump-ast",
         "print AST",
+        "--dump-ast-only",
+        "print AST without translating to assemmbly",
         "--dump-qasm",
         "print OpenQASM IR",
         "--analyze",
