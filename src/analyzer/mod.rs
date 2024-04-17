@@ -10,7 +10,7 @@ mod tests {
     fn check_analyzer() -> Result<()> {
         let path = "tests/test1.ql".into();
         let args = vec![path];
-        let parser = Parser::new(args)?.unwrap();
+        let mut parser = Parser::new(args)?.unwrap();
 
         let config = parser.get_config();
         let qast = parser.parse(&config.analyzer.src)?;

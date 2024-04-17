@@ -19,10 +19,11 @@ fn init_session(args: Vec<&str>) -> Result<()> {
     let session = Parser::new(args)?;
 
     match session {
-        Some(parser) => {
+        Some(mut parser) => {
             let config = parser.get_config();
 
             let qast = parser.parse(&config.analyzer.src)?;
+
             if config.dump_ast_only {
                 println!("{qast}");
                 return Ok(());
@@ -66,7 +67,7 @@ mod tests {
     fn check_main() -> Result<()> {
         let path = "./tests/test1.ql";
         let args = vec![path, "--analyze"];
-        let parser = Parser::new(args)?.unwrap();
+        let mut parser = Parser::new(args)?.unwrap();
         let config = parser.get_config();
         let qast = parser.parse(&config.analyzer.src)?;
         println!("{qast}");

@@ -2,7 +2,7 @@
 use crate::ast::Qast;
 use crate::error::Result;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AnalyzerConfig {
     pub(crate) status: bool,
     pub src: String,

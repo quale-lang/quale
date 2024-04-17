@@ -38,8 +38,14 @@ impl std::fmt::Display for Attribute {
 pub(crate) struct Attributes(pub(crate) Vec<Attribute>);
 
 impl Attributes {
+    /// Check if object contains no attributes.
     pub(crate) fn is_empty(&self) -> bool {
         self.0.is_empty()
+    }
+
+    /// Push a single `Attribute` to the `Attributes` object.
+    pub(crate) fn push(&mut self, attr: Attribute) {
+        self.0.push(attr);
     }
 }
 

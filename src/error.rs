@@ -100,6 +100,7 @@ impl From<&str> for QccError {
 /// reporting". This doesn't show up at the end of stage processing, like
 /// parsing. It is only used by the parser, say, for reporting errors in the
 /// compilation unit.
+// TODO: Add source code string too.
 #[derive(Debug, PartialEq)]
 pub struct QccErrorLoc(QccError, LocationRef);
 

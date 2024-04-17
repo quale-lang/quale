@@ -9,5 +9,5 @@ fn main () {
 // non-deterministic quantum function
 #[nondeter]
 fn foo () {
-    42
+    42.4265
 }

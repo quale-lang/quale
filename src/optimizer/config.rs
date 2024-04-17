@@ -1,6 +1,6 @@
 //! Configuration for Quale optimizer.
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OptConfig {
     pub asm: String,
     pub level: u8, // 0, 1, 2

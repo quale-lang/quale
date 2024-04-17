@@ -351,7 +351,7 @@ mod tests {
 
     #[test]
     fn check_qasm_translate() -> Result<()> {
-        let parser = Parser::new(vec!["tests/test1.ql"])?.unwrap();
+        let mut parser = Parser::new(vec!["tests/test1.ql"])?.unwrap();
         let config = parser.get_config();
         let ast = parser.parse(&config.analyzer.src)?;
         let ir = QasmModule::translate(ast)?;

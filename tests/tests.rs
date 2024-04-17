@@ -17,7 +17,7 @@ fn compile() -> Result<(), Box<dyn std::error::Error>> {
 
         let args = vec![path.as_str()];
 
-        let parser = Parser::new(args)?.unwrap();
+        let mut parser = Parser::new(args)?.unwrap();
         let config = parser.get_config();
 
         match parser.parse(&config.analyzer.src) {
@@ -66,7 +66,7 @@ fn analyzer() -> Result<(), Box<dyn std::error::Error>> {
             continue;
         }
         let args = vec![path.as_str(), "--analyze"];
-        let parser = Parser::new(args)?.unwrap();
+        let mut parser = Parser::new(args)?.unwrap();
         let config = parser.get_config();
 
         match parser.parse(&config.analyzer.src) {

@@ -5,11 +5,27 @@ use crate::types::Type;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub(crate) enum Token {
+    Hash = '#' as isize,
+    OBracket = '[' as isize,
+    CBracket = ']' as isize,
+    OParenth = '(' as isize,
+    CParenth = ')' as isize,
+    OCurly = '{' as isize,
+    CCurly = '}' as isize,
+    Comma = ',' as isize,
+
+    Add = '+' as isize,
+    Sub = '-' as isize,
+    Mul = '*' as isize,
+    Div = '/' as isize,
+
     /* Eof      = 0, // is replaced by None, Option<Token> is used. */
     Identifier = -1,
     Literal = -2,
     Attribute = -3,
     Function = -4,
+    Multi = -5, // token comprises of more than one chars
+    Digit = -6,
 }
 
 // Design of Qast

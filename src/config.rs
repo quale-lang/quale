@@ -2,7 +2,7 @@
 use crate::analyzer::config::*;
 use crate::optimizer::config::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Config {
     pub(crate) dump_ast: bool,
     pub(crate) dump_ast_only: bool,
