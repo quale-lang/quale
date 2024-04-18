@@ -56,21 +56,16 @@ impl Parser {
         // Parse cmdline options
         for option in args {
             if option.starts_with("--") {
-                if option == "--help" || option == "-h" {
-                    usage();
-                    return Ok(None);
-                }
-                if option == "--analyze" {
-                    config.analyzer.status = true;
-                }
-                if option == "--dump-ast" {
-                    config.dump_ast = true;
-                }
-                if option == "--dump-ast-only" {
-                    config.dump_ast_only = true;
-                }
-                if option == "--dump-qasm" {
-                    config.dump_qasm = true;
+                match option {
+                    "--help" | "-h" => {
+                        usage();
+                        return Ok(None);
+                    }
+                    "--analyze" => config.analyzer.status = true,
+                    "--dump-ast" => config.dump_ast = true,
+                    "--dump-ast-only" => config.dump_ast_only = true,
+                    "--dump-qasm" => config.dump_qasm = true,
+                    _ => Err(QccErrorKind::NoSuchArg)?,
                 }
             } else if option.starts_with('-') {
                 // Parse opt level
