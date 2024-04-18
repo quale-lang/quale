@@ -24,10 +24,12 @@ impl Location {
         self.path.clone()
     }
 
+    #[inline]
     pub(crate) fn row(&self) -> usize {
         self.row
     }
 
+    #[inline]
     pub(crate) fn col(&self) -> usize {
         self.col
     }

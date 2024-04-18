@@ -192,37 +192,12 @@ impl Parser {
                     Ok(f) => qast.append(f),
                     Err(e) => {
                         seen_errors = true;
-                        // TODO: Move this to a standalone mechanism. That is,
-                        // the source location dumping alongside error.
+
                         let err: QccErrorLoc = (e, self.lexer.location.clone()).into();
-                        eprintln!("{}", err);
-
-                        let row_s = self.lexer.location.row().to_string();
-                        let mut col = self.lexer.location.col();
-
-                        let builder = format!("\t{}\t{}", row_s, self.lexer.line());
-                        eprint!("{builder}");
-
-                        col += 1 + row_s.len(); // for inserted tabs
-
-                        for c in builder.chars() {
-                            if col > 0 {
-                                col -= 1;
-                            } else {
-                                eprintln!("^");
-                                break;
-                            }
-                            if c.is_whitespace() {
-                                eprint!("{c}");
-                            } else {
-                                eprint!(" ");
-                            }
-                        }
+                        err.report(self.lexer.line());
                     }
                 }
             } else {
-                // TODO: Typing this over and over is no fun. This is a
-                // scope for research.
                 self.lexer.consume(self.lexer.token.unwrap())?;
             }
         }

@@ -143,6 +143,34 @@ impl QccErrorLoc {
         let new_loc = Location::new(loc.path().as_str(), loc.row(), col);
         self.1.replace(new_loc);
     }
+
+    /// Reporter to print source with annotation.
+    pub(crate) fn report(&self, src: String) {
+        let row = self.1.borrow().row().to_string();
+        let mut col = self.1.borrow().col();
+
+        let src_fmt = format!("\t{}\t{}", row, src);
+
+        eprintln!("{}", self);
+        eprint!("{src_fmt}");
+
+        col += 1 + row.len(); // +2 for inserted tabs, -1 for starting index
+                              // with 1, effectively +1
+
+        for c in src_fmt.chars() {
+            if col > 0 {
+                col -= 1;
+            } else {
+                eprintln!("^");
+                break;
+            }
+            if c.is_whitespace() {
+                eprint!("{c}");
+            } else {
+                eprint!(" ");
+            }
+        }
+    }
 }
 
 impl Display for QccErrorLoc {
