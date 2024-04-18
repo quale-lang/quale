@@ -57,7 +57,7 @@ impl Parser {
         for option in args {
             if option.starts_with("--") {
                 match option {
-                    "--help" | "-h" => {
+                    "--help" => {
                         usage();
                         return Ok(None);
                     }
