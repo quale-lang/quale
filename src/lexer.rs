@@ -193,9 +193,10 @@ impl Lexer {
         self.slice(self.ptr.start, self.ptr.end)
     }
 
+    #[inline]
     /// Checks if the current token is what is given.
     pub(crate) fn is_token(&self, token: Token) -> bool {
-        self.token == Some(token)
+        !self.token.is_none() && self.token == Some(token)
     }
 
     /// Returns the next token wrapped. If EOF is reached it returns None.
