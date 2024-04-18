@@ -46,8 +46,7 @@ impl Default for Location {
 impl fmt::Display for Location {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let basename = *self.path.split('/').collect::<Vec<_>>().last().unwrap();
-        // NOTE: +1 because we index from 0 and printing cols should be from 1.
-        write!(f, "@{}:{}:{}", basename, self.row, self.col /* + 1*/)
+        write!(f, "@{}:{}:{}", basename, self.row, self.col)
     }
 }
 
@@ -117,9 +116,6 @@ impl Pointer {
 
     /// Get the entire range start `Pointer.start` to `Pointer.end`.
     pub(crate) fn range(&self) -> std::ops::Range<usize> {
-        // TODO: rename to line() which is more appropriate
-        // one counter point line is materialized in lexer, here it is only a
-        // range of indices. a complete range or whole_range is suitable
         self.start..self.end
     }
 }
@@ -190,6 +186,11 @@ impl Lexer {
             print!("{}", std::ascii::escape_default(*byte));
         }
         println!();
+    }
+
+    /// Returns the entire line which is being parsed at the moment.
+    pub(crate) fn line(&self) -> String {
+        self.slice(self.ptr.start, self.ptr.end)
     }
 
     /// Checks if the current token is what is given.

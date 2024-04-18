@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 mod analyzer;
 mod ast;
 mod attributes;

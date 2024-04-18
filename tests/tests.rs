@@ -1,6 +1,6 @@
 use qcc::error::QccErrorKind;
 use qcc::parser::Parser;
-use qcc::{assert_eq_all, assert_eq_any};
+use qcc::{assert_eq_any};
 
 #[test]
 fn compile() -> Result<(), Box<dyn std::error::Error>> {

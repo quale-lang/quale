@@ -1,4 +1,6 @@
-//! quale compiler framework
+#![allow(warnings)]
+
+//! Quale Compiler Framework
 mod analyzer;
 mod ast;
 mod attributes;

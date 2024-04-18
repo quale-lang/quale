@@ -42,18 +42,12 @@ impl Qast {
         Self { functions }
     }
 
-    pub(crate) fn append(&mut self, function: FunctionAST) -> &mut Self {
+    pub(crate) fn append(&mut self, function: FunctionAST) {
         self.functions.push(function);
-        self
     }
 
-    pub(crate) fn append_function(
-        &mut self,
-        name: Ident,
-        location: Location,
-        attrs: Attributes,
-    ) -> &mut Self {
-        self.append(FunctionAST::new(name, location, attrs))
+    pub(crate) fn append_function(&mut self, name: Ident, location: Location, attrs: Attributes) {
+        self.append(FunctionAST::new(name, location, attrs));
     }
 
     pub(crate) fn iter(&self) -> impl Iterator<Item = &FunctionAST> + '_ {

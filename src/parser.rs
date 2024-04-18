@@ -146,14 +146,6 @@ impl Parser {
         }
         self.lexer.consume(Token::CBracket)?;
 
-        // TODO: How to get column index? And where to report it?
-        // match self.lexer.identifier().parse::<Attributes>() {
-        //     Ok(a) => {
-        //         attrs = a;
-        //     }
-        //     Err(err) => {}
-        // }
-
         Ok(attrs)
     }
 
@@ -200,46 +192,37 @@ impl Parser {
             if let Some(token) = self.lexer.token {
                 if token == Token::Hash || token == Token::Function {
                     let func = self.parse_function();
-                    if func.is_ok() {
-                        qast.append(func.unwrap());
-                    } else {
-                        seen_errors = true;
-                        // TODO: Proper error reporting is unfinished due to
-                        // change of lexer modularization.
-                        // let partial_err: QccErrorLoc = (func.err().unwrap(), self.lexer.location.clone()).into();
+                    match func {
+                        Ok(f) => qast.append(f),
+                        Err(e) => {
+                            seen_errors = true;
+                            // TODO: Move this to a standalone mechanism. That is,
+                            // the source location dumping alongside error.
+                            let err: QccErrorLoc = (e, self.lexer.location.clone()).into();
+                            eprintln!("{}", err);
 
-                        // let row = self.lexer.location.row();
-                        // let mut col = partial_err.get_loc().borrow().col();
-                        // let row_s = format!("{}", row);
+                            let row_s = self.lexer.location.row().to_string();
+                            let mut col = self.lexer.location.col();
 
-                        // let loc = Location::new(
-                        //     self.lexer.location.path().as_str(),
-                        //     self.lexer.location.row(),
-                        //     col,
-                        // );
+                            let builder = format!("\t{}\t{}", row_s, self.lexer.line());
+                            eprint!("{builder}");
 
-                        // let full_err: QccErrorLoc = (partial_err, loc).into();
-                        // eprintln!("{full_err}");
+                            col += 1 + row_s.len(); // for inserted tabs
 
-                        // let builder = format!("\t{}\t{}", row_s,
-                        // self.lexer.identifier());
-                        // eprintln!("{builder}");
-
-                        // col += 2 + row_s.len(); // for inserted tabs
-
-                        // for c in builder.chars() {
-                        //     if col > 0 {
-                        //         col -= 1;
-                        //     } else {
-                        //         eprintln!("^");
-                        //         break;
-                        //     }
-                        //     if c.is_whitespace() {
-                        //         eprint!("{c}");
-                        //     } else {
-                        //         eprint!(" ");
-                        //     }
-                        // }
+                            for c in builder.chars() {
+                                if col > 0 {
+                                    col -= 1;
+                                } else {
+                                    eprintln!("^");
+                                    break;
+                                }
+                                if c.is_whitespace() {
+                                    eprint!("{c}");
+                                } else {
+                                    eprint!(" ");
+                                }
+                            }
+                        }
                     }
                 } else {
                     // TODO: Typing this over and over is no fun. This is a
@@ -256,100 +239,5 @@ impl Parser {
         } else {
             Ok(qast)
         }
-
-        // while let Some(token) = lexer.next_token()? {
-        //     match lexer.token.unwrap() {
-        //         Token::Identifier => {
-        //             if is_fn {
-        //                 if !attr_assoc {
-        //                     qast.append_function(
-        //                         lexer.identifier(),
-        //                         lexer.location.clone(),
-        //                         attrs.clone(),
-        //                     );
-        //                     attr_assoc = true;
-        //                 } else {
-        //                     qast.append_function(
-        //                         lexer.identifier(),
-        //                         lexer.location.clone(),
-        //                         Default::default(),
-        //                     );
-        //                 }
-        //                 is_fn = false;
-        //             }
-        //         }
-        //         Token::Literal => {}
-        //         Token::Attribute => match lexer.identifier().parse::<Attributes>() {
-        //             Ok(a) => {
-        //                 attrs = a;
-        //                 attr_assoc = false;
-        //             }
-
-        //             Err(partial_err) => {
-        //                 // TODO: Move this to a standalone mechanism. That is,
-        //                 // the source location dumping alongside error.
-        //                 seen_errors = true;
-        //                 let row = lexer.location.row();
-        //                 let mut col = partial_err.get_loc().borrow().col();
-        //                 let row_s = format!("{}", row);
-
-        //                 let loc = Location::new(
-        //                     lexer.location.path().as_str(),
-        //                     lexer.location.row(),
-        //                     col,
-        //                 );
-
-        //                 let full_err: QccErrorLoc = (partial_err, loc).into();
-        //                 eprintln!("{full_err}");
-
-        //                 let builder = format!("\t{}\t{}", row_s,
-        //                 lexer.identifier());
-        //                 eprintln!("{builder}");
-
-        //                 col += 2 + row_s.len(); // for inserted tabs
-
-        //                 for c in builder.chars() {
-        //                     if col > 0 {
-        //                         col -= 1;
-        //                     } else {
-        //                         eprintln!("^");
-        //                         break;
-        //                     }
-        //                     if c.is_whitespace() {
-        //                         eprint!("{c}");
-        //                     } else {
-        //                         eprint!(" ");
-        //                     }
-        //                 }
-        //             }
-        //         },
-        //         Token::Function => {
-        //             is_fn = true;
-        //             lexer.dump();
-        //         }
-        //         Token::Hash => {
-        //             lexer.consume(token);
-        //             if lexer.next_token()?.unwrap() == Token::OBracket {
-        //                 let err = QccErrorKind::ExpectedAttr;
-        //                 let loc = lexer.location.clone();
-        //                 let err: QccErrorLoc = (err, loc).into();
-        //                 eprintln!("{err}");
-        //             }
-        //             // Starting of attribute parsing.
-        //             lexer.dump();
-        //             assert!(false, "THIS IS A TESST ASSERT");
-        //         }
-        //         _ => todo!(),
-        //     };
-        //     lexer.consume(token);
-        // }
-
-        // // If there is at least one attribute which is not associated with any
-        // // function, it is a semantic error.
-        // if !attr_assoc && !attrs.is_empty() {
-        //     let err = QccErrorLoc::new(QccErrorKind::ExpectedFnForAttr, lexer.location.clone());
-        //     eprintln!("{err}");
-        //     Err(QccErrorKind::ParseError)?
-        // }
     }
 }
