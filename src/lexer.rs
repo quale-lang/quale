@@ -250,6 +250,7 @@ impl Lexer {
             '(' => Token::OParenth,
             ')' => Token::CParenth,
             ',' => Token::Comma,
+            ':' => Token::Colon,
             '+' => Token::Add,
             '-' => Token::Sub,
             '*' => Token::Mul,

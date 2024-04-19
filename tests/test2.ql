@@ -1,6 +1,6 @@
 // This is a comment
 
 #[nondeter]
-fn main <T1, T2> (param1: T1, param2: T1) : T2 {
-    return param1<T2> + param2<T2>
+fn main (param1: known, param2: known) : known {
+    return param1<known> + param2<known>
 }

@@ -13,6 +13,7 @@ pub(crate) enum Token {
     OCurly = '{' as isize,
     CCurly = '}' as isize,
     Comma = ',' as isize,
+    Colon = ':' as isize,
 
     Add = '+' as isize,
     Sub = '-' as isize,
@@ -46,8 +47,15 @@ impl Qast {
         self.functions.push(function);
     }
 
-    pub(crate) fn append_function(&mut self, name: Ident, location: Location, attrs: Attributes) {
-        self.append(FunctionAST::new(name, location, attrs));
+    pub(crate) fn append_function(
+        &mut self,
+        name: Ident,
+        location: Location,
+        params: Vec<(Ident, Type)>,
+        output_type: Type,
+        attrs: Attributes,
+    ) {
+        self.append(FunctionAST::new(name, location, params, output_type, attrs));
     }
 
     pub(crate) fn iter(&self) -> impl Iterator<Item = &FunctionAST> + '_ {
@@ -75,13 +83,19 @@ pub(crate) struct FunctionAST {
 }
 
 impl FunctionAST {
-    pub(crate) fn new(name: Ident, location: Location, attrs: Attributes) -> Self {
+    pub(crate) fn new(
+        name: Ident,
+        location: Location,
+        params: Vec<(Ident, Type)>,
+        output_type: Type,
+        attrs: Attributes,
+    ) -> Self {
         Self {
             name,
             location,
-            params: Default::default(),
+            params,
             input_type: Default::default(),
-            output_type: Default::default(),
+            output_type,
             attrs,
         }
     }
@@ -117,13 +131,13 @@ impl std::fmt::Display for FunctionAST {
         if self.attrs.0.len() == 0 {
             write!(
                 f,
-                "fn {} ({}) -> {} {{  // {}\n}}",
+                "fn {} ({}) : {} {{  // {}\n}}",
                 self.name, self.input_type, self.output_type, self.location
             )?;
         } else {
             write!(
                 f,
-                "fn [[{}]] {} ({}) -> {} {{  // {}\n}}",
+                "fn [[{}]] {} ({}) : {} {{  // {}\n}}",
                 self.attrs, self.name, self.input_type, self.output_type, self.location
             )?;
         }

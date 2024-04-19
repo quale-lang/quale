@@ -5,6 +5,7 @@ use crate::attributes::{Attribute, Attributes};
 use crate::config::*;
 use crate::error::{QccErrorKind, QccErrorLoc, Result};
 use crate::lexer::{Lexer, Location};
+use crate::types::Type;
 use crate::utils::usage;
 use std::path::Path;
 
@@ -165,10 +166,74 @@ impl Parser {
 
         let name = self.lexer.identifier();
         let location = self.lexer.location.clone();
+        let mut params: Vec<(String, Type)> = Default::default();
 
         self.lexer.consume(Token::Identifier)?;
 
-        Ok(FunctionAST::new(name, location, attrs))
+        if !self.lexer.is_token(Token::OParenth) {
+            return Err(QccErrorKind::ExpectedFnArgs)?;
+        }
+        self.lexer.consume(Token::OParenth)?;
+
+        while !self.lexer.is_token(Token::CParenth) {
+            if self.lexer.is_token(Token::Identifier) {
+                let param = self.lexer.identifier();
+                self.lexer.consume(Token::Identifier)?;
+
+                if !self.lexer.is_token(Token::Colon) {
+                    return Err(QccErrorKind::ExpectedParamType)?;
+                }
+                self.lexer.consume(Token::Colon)?;
+
+                if !self.lexer.is_token(Token::Identifier) {
+                    return Err(QccErrorKind::ExpectedParamType)?;
+                }
+
+                let type_ = self.lexer.identifier().parse::<Type>()?;
+                self.lexer.consume(Token::Identifier)?;
+
+                params.push((param, type_));
+            }
+
+            if !self.lexer.is_token(Token::Comma) && !self.lexer.is_token(Token::CParenth) {
+                return Err(QccErrorKind::ExpectedAttr)?;
+            }
+
+            if self.lexer.is_token(Token::Comma) {
+                self.lexer.consume(Token::Comma)?;
+            }
+        }
+        self.lexer.consume(Token::CParenth)?;
+
+        // Parse function return type
+        let mut output_type = Default::default();
+
+        if self.lexer.is_token(Token::Colon) {
+            self.lexer.consume(Token::Colon)?;
+
+            if !self.lexer.is_token(Token::Identifier) {
+                return Err(QccErrorKind::ExpectedFnReturnType)?;
+            }
+
+            output_type = self.lexer.identifier().parse::<Type>()?;
+            self.lexer.consume(Token::Identifier)?;
+        }
+
+        let body = self.parse_function_body()?;
+
+        Ok(FunctionAST::new(name, location, params, output_type, attrs))
+    }
+
+    fn parse_function_body(&mut self) -> Result<()> {
+        // if !self.lexer.is_token(Token::OCurly) {
+        //     return Err(QccErrorKind::ExpectedFnBody)?;
+        // }
+        // self.lexer.consume(Token::OCurly)?;
+
+        // if !self.lexer.is_token(Token::CCurly) {
+        //     return Err(QccErrorKind::ExpectedFnBodyEnd)?;
+        // }
+        Ok(())
     }
 
     /* TODO: If we have more than one quale file in a parsing session

@@ -33,6 +33,12 @@ pub enum QccErrorKind {
     LexerError,
     ParseError,
     ExpectedFnForAttr,
+    ExpectedFnArgs,
+    ExpectedParamType,
+    UnexpectedType,
+    ExpectedFnBody,
+    ExpectedFnReturnType,
+    ExpectedFnBodyEnd,
 }
 
 impl Display for QccErrorKind {
@@ -48,6 +54,12 @@ impl Display for QccErrorKind {
                 LexerError => "lexer failed to tokenize",
                 ParseError => "could not parse source",
                 ExpectedFnForAttr => "expected a function for attribute",
+                ExpectedFnArgs => "expected function arguments in parenthesis",
+                ExpectedParamType => "expected parameter type",
+                UnexpectedType => "unexpected type",
+                ExpectedFnBody => "expected function body",
+                ExpectedFnReturnType => "expected function return type",
+                ExpectedFnBodyEnd => "expected end of function body",
             }
         })(self))
     }
