@@ -25,6 +25,7 @@ pub(crate) type LocationRef = std::cell::RefCell<Location>;
 
 #[derive(Debug, PartialEq)]
 pub enum QccErrorKind {
+    CmdlineErr,
     InvalidArgs,
     NoSuchArg,
     NoFile,
@@ -46,6 +47,7 @@ impl Display for QccErrorKind {
         f.write_str((|kind: &Self| {
             use QccErrorKind::*;
             match kind {
+                CmdlineErr => "cmdline error",
                 InvalidArgs => "invalid number of arguments",
                 NoSuchArg => "no such argument",
                 NoFile => "no such file",
@@ -69,6 +71,14 @@ impl Display for QccErrorKind {
 /// parser returns it. We are only concerned with kind of an error.
 #[derive(Debug, PartialEq)]
 pub struct QccError(pub(crate) QccErrorKind);
+
+impl QccError {
+    #[inline]
+    /// Report a message alongwith error.
+    pub(crate) fn report(&self, msg: &str) {
+        eprintln!("{} {}", self, msg);
+    }
+}
 
 impl Display for QccError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

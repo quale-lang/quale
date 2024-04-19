@@ -3,7 +3,7 @@
 use crate::ast::{FunctionAST, Qast, Token};
 use crate::attributes::{Attribute, Attributes};
 use crate::config::*;
-use crate::error::{QccErrorKind, QccErrorLoc, Result};
+use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
 use crate::lexer::{Lexer, Location};
 use crate::types::Type;
 use crate::utils::usage;
@@ -66,7 +66,11 @@ impl Parser {
                     "--dump-ast" => config.dump_ast = true,
                     "--dump-ast-only" => config.dump_ast_only = true,
                     "--dump-qasm" => config.dump_qasm = true,
-                    _ => Err(QccErrorKind::NoSuchArg)?,
+                    _ => {
+                        let err: QccError = QccErrorKind::NoSuchArg.into();
+                        err.report(option);
+                        return Err(QccErrorKind::CmdlineErr)?;
+                    }
                 }
             } else if option.starts_with('-') {
                 // Parse opt level
@@ -80,7 +84,11 @@ impl Parser {
                         usage();
                         return Ok(None);
                     }
-                    _ => Err(QccErrorKind::NoSuchArg)?,
+                    _ => {
+                        let err: QccError = QccErrorKind::NoSuchArg.into();
+                        err.report(option);
+                        return Err(QccErrorKind::CmdlineErr)?;
+                    }
                 }
             } else {
                 if output_direct == 0x1 {
