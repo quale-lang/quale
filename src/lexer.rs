@@ -264,6 +264,7 @@ impl Lexer {
             ')' => Token::CParenth,
             ',' => Token::Comma,
             ':' => Token::Colon,
+            ';' => Token::Semicolon,
             '+' => Token::Add,
             '-' => Token::Sub,
             '*' => Token::Mul,
