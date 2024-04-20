@@ -160,13 +160,26 @@ impl Lexer {
         sliced
     }
 
-    /// Returns the current pointing character in buffer
+    /// Returns the previous pointing character in buffer.
+    fn previous(&self) -> u8 {
+        self.buffer[self.ptr.prev]
+    }
+
+    /// Returns the current pointing character in buffer.
     fn current(&self) -> u8 {
         self.buffer[self.ptr.current]
     }
 
+    /// Returns the digit as a string after trimming whitespaces.
+    pub(crate) fn digit(&self) -> Option<f64> {
+        let digit = self.identifier().replace(" ", "").parse::<f64>();
+        if digit.is_err() {
+            return None;
+        }
+        Some(digit.unwrap())
+    }
+
     /// Returns current identifier contained in `self.prev` and `self.current`.
-    /// If the current token isn't `Identifier`, it returns an empty string.
     pub(crate) fn identifier(&self) -> String {
         self.slice(self.ptr.prev, self.ptr.current)
     }
@@ -262,7 +275,17 @@ impl Lexer {
         if single_token != Token::Multi {
             self.ptr.current += 1;
             self.token = Some(single_token);
-            return Ok(self.token);
+
+            if single_token != Token::Sub {
+                return Ok(self.token);
+            }
+        }
+
+        if single_token == Token::Sub {
+            while self.buffer[self.ptr.current].is_ascii_whitespace() {
+                self.ptr.current += 1;
+                self.location.col += 1;
+            }
         }
 
         if self.current().is_ascii_digit() {
@@ -271,6 +294,11 @@ impl Lexer {
                 self.ptr.current += 1;
             }
             self.token = Some(Token::Digit);
+            return Ok(self.token);
+        }
+
+        // If Sub isn't consumed by now, it was a standalone Sub.
+        if single_token == Token::Sub {
             return Ok(self.token);
         }
 
