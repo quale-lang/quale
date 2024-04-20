@@ -311,6 +311,10 @@ impl Lexer {
                 self.token = Some(Token::Function);
                 return Ok(self.token);
             }
+            if self.identifier() == "return" {
+                self.token = Some(Token::Return);
+                return Ok(self.token);
+            }
             self.token = Some(Token::Identifier);
             return Ok(self.token);
         }

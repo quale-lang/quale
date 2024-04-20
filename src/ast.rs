@@ -27,6 +27,7 @@ pub(crate) enum Token {
     Function = -4,
     Multi = -5, // token comprises of more than one chars
     Digit = -6,
+    Return = -7,
 }
 
 // Design of Qast
