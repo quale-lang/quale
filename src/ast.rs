@@ -15,20 +15,24 @@ pub(crate) enum Token {
     Comma       = ',' as isize,
     Colon       = ':' as isize,
     Semicolon   = ';' as isize,
+    Bang        = '!' as isize,
 
     Add = '+' as isize,
     Sub = '-' as isize,
     Mul = '*' as isize,
     Div = '/' as isize,
 
-    /* Eof      = 0, // is replaced by None, Option<Token> is used. */
-    Identifier  = -1,
-    Literal     = -2,
-    Attribute   = -3,
-    Function    = -4,
-    Multi       = -5, // token comprises of more than one chars
-    Digit       = -6,
-    Return      = -7,
+    /* Eof,         // is replaced by None, Option<Token> is used. */
+    Identifier,
+    Literal,
+    Attribute,
+    Function,
+    Multi,          // token comprises of more than one chars
+    Digit,
+    Return,
+    Const,
+    Extern,
+    Module,
 }
 
 // Design of Qast
@@ -37,12 +41,13 @@ pub(crate) enum Token {
 // AST.
 #[derive(Default)]
 pub struct Qast {
+    modules: Vec<ModuleAST>,
     functions: Vec<FunctionAST>,
 }
 
 impl Qast {
-    pub(crate) fn new(functions: Vec<FunctionAST>) -> Self {
-        Self { functions }
+    pub(crate) fn new(modules: Vec<ModuleAST>, functions: Vec<FunctionAST>) -> Self {
+        Self { modules, functions }
     }
 
     pub(crate) fn append(&mut self, function: FunctionAST) {
@@ -71,6 +76,31 @@ impl std::fmt::Display for Qast {
             writeln!(f, "{}", function)?;
         }
         Ok(())
+    }
+}
+
+/// Representation of a module or namespace.
+pub(crate) struct ModuleAST {
+    name: Ident,
+    location: Location,
+    functions: Vec<FunctionAST>,
+}
+
+impl ModuleAST {
+    pub(crate) fn new(name: Ident, location: Location, functions: Vec<FunctionAST>) -> Self {
+        Self { name, location, functions }
+    }
+}
+
+impl std::fmt::Display for ModuleAST {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(
+            f,
+            "
+module {} {{}}  // {}",
+            self.name,
+            self.location
+        )
     }
 }
 

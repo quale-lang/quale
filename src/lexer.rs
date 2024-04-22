@@ -265,6 +265,7 @@ impl Lexer {
             ',' => Token::Comma,
             ':' => Token::Colon,
             ';' => Token::Semicolon,
+            '!' => Token::Bang,
             '+' => Token::Add,
             '-' => Token::Sub,
             '*' => Token::Mul,
@@ -308,15 +309,14 @@ impl Lexer {
             while self.current().is_ascii_alphanumeric() || self.current() == '_' as u8 {
                 self.ptr.current += 1;
             }
-            if self.identifier() == "fn" {
-                self.token = Some(Token::Function);
-                return Ok(self.token);
+            match self.identifier().as_str() {
+                "fn" => self.token = Some(Token::Function),
+                "return" => self.token = Some(Token::Return),
+                "const" => self.token = Some(Token::Const),
+                "extern" => self.token = Some(Token::Extern),
+                "module" => self.token = Some(Token::Module),
+                _ => self.token = Some(Token::Identifier),
             }
-            if self.identifier() == "return" {
-                self.token = Some(Token::Return);
-                return Ok(self.token);
-            }
-            self.token = Some(Token::Identifier);
             return Ok(self.token);
         }
 

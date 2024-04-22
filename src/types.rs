@@ -29,7 +29,8 @@ impl std::str::FromStr for Type {
         Ok(match s {
             "known" => Self::Known,
             "unknown" => Self::Unknown,
-            _ => Err(QccErrorKind::UnexpectedType)?,
+            // _ => Err(QccErrorKind::UnexpectedType)?,
+            _ => Self::Unknown,
         })
     }
 }

@@ -1,6 +1,6 @@
 //! Parser for quale language.
 //! It translates the given code into an AST.
-use crate::ast::{FunctionAST, Qast, Token};
+use crate::ast::{ModuleAST, FunctionAST, Qast, Token};
 use crate::attributes::{Attribute, Attributes};
 use crate::config::*;
 use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
@@ -122,6 +122,10 @@ impl Parser {
         }
         self.lexer.consume(Token::Hash)?;
 
+        if self.lexer.is_token(Token::Bang) {
+            self.lexer.consume(Token::Bang)?;
+        }
+
         if !self.lexer.is_token(Token::OBracket) {
             return Err(QccErrorKind::ExpectedAttr)?;
         }
@@ -219,6 +223,11 @@ impl Parser {
         if self.lexer.is_token(Token::Colon) {
             self.lexer.consume(Token::Colon)?;
 
+            // TODO: exponential type - linear logic
+            if self.lexer.is_token(Token::Bang) {
+                self.lexer.consume(Token::Bang)?;
+            }
+
             if !self.lexer.is_token(Token::Identifier) {
                 return Err(QccErrorKind::ExpectedFnReturnType)?;
             }
@@ -242,6 +251,45 @@ impl Parser {
         //     return Err(QccErrorKind::ExpectedFnBodyEnd)?;
         // }
         Ok(())
+    }
+
+    fn parse_module(&mut self) -> Result<ModuleAST> {
+        if !self.lexer.is_token(Token::Module) {
+            return Err(QccErrorKind::ExpectedMod)?;
+        }
+        let location = self.lexer.location.clone();
+        self.lexer.consume(Token::Module)?;
+
+        let mut name : String = String::from("unnamed");
+
+        if self.lexer.is_token(Token::Identifier) {
+            name = self.lexer.identifier();
+            self.lexer.consume(Token::Identifier)?;
+        }
+
+        if !self.lexer.is_token(Token::OCurly) {
+            return Err(QccErrorKind::ExpectedMod)?;
+        }
+        self.lexer.consume(Token::OCurly)?;
+
+        let mut functions: Vec<FunctionAST> = Default::default();
+        while !self.lexer.is_token(Token::CCurly) {
+            let function = self.parse_function();
+            if function.is_ok() {
+                functions.push(function?);
+            } else {
+                if self.lexer.is_token(Token::Div) {
+                    // FIXME: Tabbed comments are unparseable here.
+                }
+                if self.lexer.token.is_some() {
+                    self.lexer.consume(self.lexer.token.unwrap())?;
+                }
+            }
+        }
+
+        self.lexer.consume(Token::CCurly)?;
+
+        Ok(ModuleAST::new(name, location, functions))
     }
 
     /* TODO: If we have more than one quale file in a parsing session
