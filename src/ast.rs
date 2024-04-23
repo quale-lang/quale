@@ -94,13 +94,13 @@ impl ModuleAST {
 
 impl std::fmt::Display for ModuleAST {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(
-            f,
-            "
-module {} {{}}  // {}",
-            self.name,
-            self.location
-        )
+        writeln!(f, "module {} {{ // {}", self.name, self.location)?;
+        for function in &self.functions {
+            // TODO: Add tab before each function line for pretty printing.
+            writeln!(f, "{}", function)?;
+        }
+        writeln!(f, "}}")?;
+        Ok(())
     }
 }
 

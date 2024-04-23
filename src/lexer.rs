@@ -65,7 +65,7 @@ impl fmt::Debug for Location {
 /// `Pointer` is a movable reference into a buffer.
 #[derive(Debug)]
 pub(crate) struct Pointer {
-    /// start of the line, as seen in source
+    /// start of the line, as seen in source, points first non-whitespace char
     start: usize,
     /// index at previous recognized token
     prev: usize,
@@ -116,7 +116,7 @@ impl Pointer {
         }
     }
 
-    /// Get the entire range start `Pointer.start` to `Pointer.end`.
+    /// Get the entire range start `Pointer::start` to `Pointer::end`.
     pub(crate) fn range(&self) -> std::ops::Range<usize> {
         self.start..self.end
     }
@@ -220,11 +220,30 @@ impl Lexer {
     /// character at end, so we must keep calling `next_line` until a non-empty
     /// `self.line` is returned.
     pub(crate) fn next_token(&mut self) -> Result<Option<Token>> {
+        // Skip all leading whitespaces
+        while self.buffer[self.ptr.current].is_ascii_whitespace() {
+            self.ptr.current += 1;
+            self.location.col += 1;
+
+            // If only whitespaces are present, ask for next line.
+            if self.ptr.current >= self.ptr.end {
+                if self.next_line() == None {
+                    self.token = None;
+                    return Ok(self.token);
+                }
+                return self.next_token();
+            }
+        }
+
         while self.ptr.current >= self.ptr.end
             || self.buffer[self.ptr.start..].starts_with(&['/' as u8, '/' as u8])
             || self.buffer[self.ptr.range()] == ['\n' as u8]
+            || self.buffer[self.ptr.current..].starts_with(&['/' as u8, '/' as u8])
         {
             // TODO: FromResidual trait impl (but nightly) to use ?
+            // TODO: == None blob should be rechecked because bug was present
+            // because of no return of self.next_token after a new line was
+            // fetched.
             if self.next_line() == None {
                 self.token = None;
                 return Ok(self.token);
@@ -236,20 +255,8 @@ impl Lexer {
                 self.token = None;
                 return Ok(self.token);
             }
-        }
 
-        // Skip all whitespaces
-        while self.buffer[self.ptr.current].is_ascii_whitespace() {
-            self.ptr.current += 1;
-            self.location.col += 1;
-
-            // If only whitespaces are present, ask for next line.
-            if self.ptr.current == self.ptr.end {
-                if self.next_line() == None {
-                    self.token = None;
-                    return Ok(self.token);
-                }
-            }
+            return self.next_token();
         }
 
         self.ptr = self.ptr.reset();
@@ -309,6 +316,7 @@ impl Lexer {
             while self.current().is_ascii_alphanumeric() || self.current() == '_' as u8 {
                 self.ptr.current += 1;
             }
+            // TODO: let self.token = match {}
             match self.identifier().as_str() {
                 "fn" => self.token = Some(Token::Function),
                 "return" => self.token = Some(Token::Return),
@@ -343,7 +351,7 @@ impl Lexer {
                 "
 Internal Compiler Error: Lexer failed {}
 Please report this bug to {}",
-                self.location, "https://github.com/quale-lang/quale/issues"
+self.location, "https://github.com/quale-lang/quale/issues"
             );
             self.location.col += self.ptr.current - self.ptr.prev;
             self.ptr = self.ptr.reset();
@@ -365,6 +373,10 @@ Please report this bug to {}",
                 self.location.row += 1;
 
                 return Some(());
+            }
+            // Move Ptr::start to first non-whitespace char.
+            if self.buffer[self.ptr.start].is_ascii_whitespace() {
+                self.ptr.start += 1;
             }
             self.ptr.end += 1;
         }

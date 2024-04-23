@@ -166,14 +166,13 @@ impl Parser {
         }
 
         if !self.lexer.is_token(Token::Function) {
-            return Err(QccErrorKind::ExpectedFnForAttr)?;
+            return Err(QccErrorKind::ExpectedFn)?;
         }
 
         self.lexer.consume(Token::Function)?;
 
         if !self.lexer.is_token(Token::Identifier) {
-            // TODO: return Err(QccErrorKind::ExpectedFnName)?;
-            return Err(QccErrorKind::ExpectedFnForAttr)?;
+            return Err(QccErrorKind::ExpectedFnName)?;
         }
 
         let name = self.lexer.identifier();
@@ -278,12 +277,7 @@ impl Parser {
             if function.is_ok() {
                 functions.push(function?);
             } else {
-                if self.lexer.is_token(Token::Div) {
-                    // FIXME: Tabbed comments are unparseable here.
-                }
-                if self.lexer.token.is_some() {
-                    self.lexer.consume(self.lexer.token.unwrap())?;
-                }
+                self.lexer.consume(self.lexer.token.unwrap())?;
             }
         }
 
@@ -308,7 +302,17 @@ impl Parser {
             if self.lexer.token.is_none() {
                 break;
             }
-            if self.lexer.is_token(Token::Hash) || self.lexer.is_token(Token::Function) {
+            if self.lexer.is_token(Token::Module) {
+                match self.parse_module() {
+                    Ok(module) => println!("{module}"),
+                    Err(e) => {
+                        seen_errors = true;
+
+                        let err: QccErrorLoc = (e, self.lexer.location.clone()).into();
+                        err.report(self.lexer.line());
+                    }
+                }
+            } else if self.lexer.is_token(Token::Hash) || self.lexer.is_token(Token::Function) {
                 match self.parse_function() {
                     Ok(f) => qast.append(f),
                     Err(e) => {
