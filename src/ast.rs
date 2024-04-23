@@ -22,17 +22,18 @@ pub(crate) enum Token {
     Mul = '*' as isize,
     Div = '/' as isize,
 
-    /* Eof,         // is replaced by None, Option<Token> is used. */
-    Identifier,
-    Literal,
-    Attribute,
-    Function,
-    Multi, // token comprises of more than one chars
-    Digit,
-    Return,
-    Const,
-    Extern,
-    Module,
+    /* Eof is replaced by None, Option<Token> is used. */
+    Identifier = -1,
+    Literal = -2,
+    Attribute = -3,
+    Function = -4,
+    Multi = -5, // token comprises of more than one chars
+    Digit = -6,
+    Return = -7,
+    Const = -8,
+    Extern = -9,
+    Module = -10,
+    Import = -11,
 }
 
 // Design of Qast
