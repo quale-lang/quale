@@ -5,17 +5,17 @@ use crate::types::Type;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub(crate) enum Token {
-    Hash        = '#' as isize,
-    OBracket    = '[' as isize,
-    CBracket    = ']' as isize,
-    OParenth    = '(' as isize,
-    CParenth    = ')' as isize,
-    OCurly      = '{' as isize,
-    CCurly      = '}' as isize,
-    Comma       = ',' as isize,
-    Colon       = ':' as isize,
-    Semicolon   = ';' as isize,
-    Bang        = '!' as isize,
+    Hash = '#' as isize,
+    OBracket = '[' as isize,
+    CBracket = ']' as isize,
+    OParenth = '(' as isize,
+    CParenth = ')' as isize,
+    OCurly = '{' as isize,
+    CCurly = '}' as isize,
+    Comma = ',' as isize,
+    Colon = ':' as isize,
+    Semicolon = ';' as isize,
+    Bang = '!' as isize,
 
     Add = '+' as isize,
     Sub = '-' as isize,
@@ -27,7 +27,7 @@ pub(crate) enum Token {
     Literal,
     Attribute,
     Function,
-    Multi,          // token comprises of more than one chars
+    Multi, // token comprises of more than one chars
     Digit,
     Return,
     Const,
@@ -88,7 +88,11 @@ pub(crate) struct ModuleAST {
 
 impl ModuleAST {
     pub(crate) fn new(name: Ident, location: Location, functions: Vec<FunctionAST>) -> Self {
-        Self { name, location, functions }
+        Self {
+            name,
+            location,
+            functions,
+        }
     }
 }
 

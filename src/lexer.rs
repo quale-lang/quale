@@ -351,7 +351,7 @@ impl Lexer {
                 "
 Internal Compiler Error: Lexer failed {}
 Please report this bug to {}",
-self.location, "https://github.com/quale-lang/quale/issues"
+                self.location, "https://github.com/quale-lang/quale/issues"
             );
             self.location.col += self.ptr.current - self.ptr.prev;
             self.ptr = self.ptr.reset();

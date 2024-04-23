@@ -1,6 +1,6 @@
 //! Parser for quale language.
 //! It translates the given code into an AST.
-use crate::ast::{ModuleAST, FunctionAST, Qast, Token};
+use crate::ast::{FunctionAST, ModuleAST, Qast, Token};
 use crate::attributes::{Attribute, Attributes};
 use crate::config::*;
 use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
@@ -259,7 +259,7 @@ impl Parser {
         let location = self.lexer.location.clone();
         self.lexer.consume(Token::Module)?;
 
-        let mut name : String = String::from("unnamed");
+        let mut name: String = String::from("unnamed");
 
         if self.lexer.is_token(Token::Identifier) {
             name = self.lexer.identifier();
