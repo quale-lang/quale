@@ -1,0 +1,3 @@
+module _foo {
+    // #[deter]
+}
