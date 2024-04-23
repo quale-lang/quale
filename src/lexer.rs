@@ -316,15 +316,14 @@ impl Lexer {
             while self.current().is_ascii_alphanumeric() || self.current() == '_' as u8 {
                 self.ptr.current += 1;
             }
-            // TODO: let self.token = match {}
-            match self.identifier().as_str() {
-                "fn" => self.token = Some(Token::Function),
-                "return" => self.token = Some(Token::Return),
-                "const" => self.token = Some(Token::Const),
-                "extern" => self.token = Some(Token::Extern),
-                "module" => self.token = Some(Token::Module),
-                _ => self.token = Some(Token::Identifier),
-            }
+            self.token = match self.identifier().as_str() {
+                "fn" => Some(Token::Function),
+                "return" => Some(Token::Return),
+                "const" => Some(Token::Const),
+                "extern" => Some(Token::Extern),
+                "module" => Some(Token::Module),
+                _ => Some(Token::Identifier),
+            };
             return Ok(self.token);
         }
 
