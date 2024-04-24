@@ -42,13 +42,25 @@ pub(crate) enum Token {
 // AST.
 #[derive(Default)]
 pub struct Qast {
-    modules: Vec<ModuleAST>,
+    name: Ident,
+    location: Location,
     functions: Vec<FunctionAST>,
 }
 
 impl Qast {
-    pub(crate) fn new(modules: Vec<ModuleAST>, functions: Vec<FunctionAST>) -> Self {
-        Self { modules, functions }
+    pub(crate) fn new(name: Ident, location: Location, functions: Vec<FunctionAST>) -> Self {
+        Self {
+            name,
+            location,
+            functions,
+        }
+    }
+
+    /// Add module level information in the ast. This includes module name and
+    /// its location. Location by default should be first row and first column.
+    pub(crate) fn add_module_info(&mut self, name: Ident, location: Location) {
+        self.name = name;
+        self.location = location;
     }
 
     pub(crate) fn append(&mut self, function: FunctionAST) {
@@ -73,9 +85,11 @@ impl Qast {
 
 impl std::fmt::Display for Qast {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "module {} {{  // {}", self.name, self.location)?;
         for function in &self.functions {
             writeln!(f, "{}", function)?;
         }
+        writeln!(f, "}}")?;
         Ok(())
     }
 }

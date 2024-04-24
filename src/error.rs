@@ -43,6 +43,7 @@ pub enum QccErrorKind {
     ExpectedFnReturnType,
     ExpectedFnBodyEnd,
     ExpectedMod,
+    UnknownModName,
 }
 
 impl Display for QccErrorKind {
@@ -68,6 +69,7 @@ impl Display for QccErrorKind {
                 ExpectedFnReturnType => "expected function return type",
                 ExpectedFnBodyEnd => "expected end of function body",
                 ExpectedMod => "expected a module",
+                UnknownModName => "unknown module name given",
             }
         })(self))
     }

@@ -297,6 +297,16 @@ impl Parser {
         let mut qast: Qast = Default::default();
         let mut seen_errors = false;
 
+        let module_basename = src.rsplit_once('/');
+        if module_basename.is_none() {
+            return Err(QccErrorKind::UnknownModName)?;
+        }
+        let (_, module_name) = module_basename.unwrap();
+        // TODO: We need a mangler for sanitizing module name.
+        let module_name = module_name.trim_end_matches(".ql").into();
+        let module_location = Location::new(src, 1, 1);
+        qast.add_module_info(module_name, module_location);
+
         self.lexer.next_token()?;
         loop {
             if self.lexer.token.is_none() {
