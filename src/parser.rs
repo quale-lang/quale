@@ -1,6 +1,6 @@
 //! Parser for quale language.
 //! It translates the given code into an AST.
-use crate::ast::{FunctionAST, ModuleAST, Qast, Token};
+use crate::ast::*;
 use crate::attributes::{Attribute, Attributes};
 use crate::config::*;
 use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
@@ -235,21 +235,80 @@ impl Parser {
             self.lexer.consume(Token::Identifier)?;
         }
 
-        let body = self.parse_function_body()?;
+        if !self.lexer.is_token(Token::OCurly) {
+            return Err(QccErrorKind::ExpectedFnBody)?;
+        }
+        self.lexer.consume(Token::OCurly)?;
 
-        Ok(FunctionAST::new(name, location, params, output_type, attrs))
+        let mut body: Vec<Box<dyn Expr>> = Default::default();
+        while !self.lexer.is_token(Token::CCurly) {
+            if self.lexer.is_token(Token::Let) {
+                let expr = self.parse_let()?;
+                body.push(expr);
+            } else {
+                if self.lexer.token.is_some() {
+                    self.lexer.consume(self.lexer.token.unwrap());
+                } else {
+                    break;
+                }
+            }
+        }
+
+        Ok(FunctionAST::new(
+            name,
+            location,
+            params,
+            output_type,
+            attrs,
+            body,
+        ))
     }
 
-    fn parse_function_body(&mut self) -> Result<()> {
-        // if !self.lexer.is_token(Token::OCurly) {
-        //     return Err(QccErrorKind::ExpectedFnBody)?;
-        // }
-        // self.lexer.consume(Token::OCurly)?;
+    fn parse_let(&mut self) -> Result<Box<dyn Expr>> {
+        if !self.lexer.is_token(Token::Let) {
+            return Err(QccErrorKind::ExpectedLet)?;
+        }
+        self.lexer.consume(Token::Let)?;
 
-        // if !self.lexer.is_token(Token::CCurly) {
-        //     return Err(QccErrorKind::ExpectedFnBodyEnd)?;
-        // }
-        Ok(())
+        if !self.lexer.is_token(Token::Identifier) {
+            return Err(QccErrorKind::ExpectedLet)?;
+        }
+
+        let name = self.lexer.identifier();
+        let location = self.lexer.location.clone();
+        let mut var = VarAST::new(name, location);  // lhs
+        self.lexer.consume(Token::Identifier)?;
+
+        // Parse given type if available
+        if self.lexer.is_token(Token::Colon) {
+            self.lexer.consume(Token::Colon)?;
+            if !self.lexer.is_token(Token::Identifier) {
+                return Err(QccErrorKind::ExpectedType)?;
+            }
+            let type_ = self.lexer.identifier().parse::<Type>()?;
+            var.set_type(type_);
+            self.lexer.consume(Token::Identifier)?;
+        }
+
+        if !self.lexer.is_token(Token::Assign) {
+            return Err(QccErrorKind::ExpectedAssign)?;
+        }
+
+        while !self.lexer.is_token(Token::Semicolon) {
+            if self.lexer.token.is_some() {
+                self.lexer.consume(self.lexer.token.unwrap())?;
+            } else {
+                break;
+            }
+        }
+        // TODO: Location is different.
+        if !self.lexer.is_token(Token::Semicolon) {
+            return Err(QccErrorKind::ExpectedSemicolon)?;
+        }
+        self.lexer.consume(Token::Semicolon)?;
+
+        let val = VarAST::new("to be implemented".into(), self.lexer.location.clone());
+        Ok(Box::new(LetAST::new(var, val)))
     }
 
     fn parse_module(&mut self) -> Result<ModuleAST> {
@@ -298,15 +357,20 @@ impl Parser {
         let mut seen_errors = false;
 
         let module_basename = src.rsplit_once('/');
+        let mut module_name: &str;
         if module_basename.is_none() {
-            return Err(QccErrorKind::UnknownModName)?;
+            module_name = src;
+        } else {
+            (_, module_name) = module_basename.unwrap();
         }
-        let (_, module_name) = module_basename.unwrap();
         // TODO: We need a mangler for sanitizing module name.
         let module_name = module_name.trim_end_matches(".ql").into();
         let module_location = Location::new(src, 1, 1);
         qast.add_module_info(module_name, module_location);
 
+        // TODO: Move this entirely in parse_module, parse_module should return
+        // a Qast and it can recursively call itself when `module` is seen
+        // inside the file.
         self.lexer.next_token()?;
         loop {
             if self.lexer.token.is_none() {

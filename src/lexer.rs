@@ -220,7 +220,7 @@ impl Lexer {
     /// character at end, so we must keep calling `next_line` until a non-empty
     /// `self.line` is returned.
     pub(crate) fn next_token(&mut self) -> Result<Option<Token>> {
-        // Skip all leading whitespaces
+        // Skip all leading whitespaces and trailing newlines.
         while self.buffer[self.ptr.current].is_ascii_whitespace() {
             self.ptr.current += 1;
             self.location.col += 1;
@@ -256,6 +256,8 @@ impl Lexer {
                 return Ok(self.token);
             }
 
+            // FIXME: stackoverflow, too much recursion, see bug
+            // only-whitespace-no-eof.ql
             return self.next_token();
         }
 
@@ -273,6 +275,7 @@ impl Lexer {
             ':' => Token::Colon,
             ';' => Token::Semicolon,
             '!' => Token::Bang,
+            '=' => Token::Assign,
             '+' => Token::Add,
             '-' => Token::Sub,
             '*' => Token::Mul,
@@ -322,6 +325,7 @@ impl Lexer {
                 "const" => Some(Token::Const),
                 "extern" => Some(Token::Extern),
                 "module" => Some(Token::Module),
+                "let" => Some(Token::Let),
                 _ => Some(Token::Identifier),
             };
             return Ok(self.token);

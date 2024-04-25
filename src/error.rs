@@ -38,12 +38,16 @@ pub enum QccErrorKind {
     ExpectedFnName,
     ExpectedFnArgs,
     ExpectedParamType,
+    ExpectedType,
     UnexpectedType,
     ExpectedFnBody,
     ExpectedFnReturnType,
     ExpectedFnBodyEnd,
     ExpectedMod,
     UnknownModName,
+    ExpectedLet,
+    ExpectedAssign,
+    ExpectedSemicolon,
 }
 
 impl Display for QccErrorKind {
@@ -64,12 +68,16 @@ impl Display for QccErrorKind {
                 ExpectedFnName => "expected a function name after fn",
                 ExpectedFnArgs => "expected function arguments in parenthesis",
                 ExpectedParamType => "expected parameter type",
+                ExpectedType => "expected a type",
                 UnexpectedType => "unexpected type",
                 ExpectedFnBody => "expected function body",
                 ExpectedFnReturnType => "expected function return type",
                 ExpectedFnBodyEnd => "expected end of function body",
                 ExpectedMod => "expected a module",
                 UnknownModName => "unknown module name given",
+                ExpectedLet => "expected a let definition",
+                ExpectedAssign => "expected an assignment operator",
+                ExpectedSemicolon => "expected a ; to end line",
             }
         })(self))
     }

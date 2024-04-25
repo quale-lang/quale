@@ -10,5 +10,6 @@ fn main () {
 // non-deterministic quantum function
 #[nondeter]
 fn foo () {
-    -   42.4265
+    let x = -   42.4265;
+    x
 }
