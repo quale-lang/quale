@@ -80,17 +80,19 @@ bit (or value). There can be functions of <u>non-deterministic</u> type which
 may return a quantum value (`qubit`). A non-deterministic function can also
 return classical value, but at least one of the arguments should be a quantum
 value. This category is important to consider and its necessity stems from the
-[no cloning](https://en.wikipedia.org/wiki/No-cloning_theorem) theorem in
+[no-cloning theorem](https://en.wikipedia.org/wiki/No-cloning_theorem) in
 quantum computing. This theorem states that it is impossible to create an
 independent and identical copy of a quantum state. So you can imagine, there are
-certains things we aren't allowed to do in a non-deterministic function.
+certains things we aren't allowed to do in a non-deterministic function, like
+consistently mutating a variable state in a loop.
 
 To keep the syntax simple, there is no language-defined keyword or attribute to
 distinguish between these two categories of functions. Quale's type system,
-which is Peter Selinger's type system presented in his paper :TODO: [1], handles
-this discretion for us. This means that you can write correct code as long as
-the compiler is happy.
-
+which is Peter Selinger's type system presented in his paper [1], handles
+this discretion for us. This means that you can write correct code without
+manually ensuring no-cloning stands for quantum values as long as the compiler
+is happy.
+ 
 Coming back to our fair coin toss example, we established that putting a qubit
 in superposition and measuring it will give us a fairly picked choice between 0
 and 1. And similarly to classical example, we will represent 0 with heads and 1
@@ -108,8 +110,8 @@ fn main() {
 ```
 
 `toss` is a non-deterministic function which will return a fair choice to us. We
-store it in `choice` variable. `choice` is a classical type value, so we can
-write it as `bit` (or `bool`).
+store the returned value in `choice` variable. `choice` is a classical type
+value, so we can write it as `bit` (or `bool`).
 
 Now let us introduce a non-deterministic function in our program.
 
@@ -134,9 +136,11 @@ job for them.
 
 So a qubit in superposition when returned from toss, upon measurement will
 either give us 0 or 1 with an equal probability. But how can we put a qubit in
-superposition?
+superposition in the first place? For this we rely on the standard library for
+quale which provides certain standard gates which can be applied to qubits in
+function-like manner.
 
-So this `toss` function needs a two-step procedure to achieve what we aimed.
+This `toss` function requires a two-step procedure to achieve what we aimed.
 First we need to create a `qubit` in state 0. And then we put it in
 superposition. Again as a matter of fact, we can put a qubit in superposition
 by applying Hadamard gate to it.
@@ -164,9 +168,10 @@ be defined in standard library of quale. We will assume it as a black box for
 now. The first `let` statement creates a qubit in state zero. We can represent 0
 as either a classical bit 0 or a qubit in state zero (represented as |0〉). The
 type determines whether it will be a bit or a qubit. The second `let` calls the
-function Hadamard and receives a qubit.  Notice that, `superpositioned` is
-inferred to be of qubit type (`toss`'s return type is qubit and superpositioned
-is returned), so there wouldn't be a measurement operator here.
+Hadamard function and receives a qubit in superposition.  Notice that,
+`superpositioned` is inferred to be of qubit type (`toss`'s return type is qubit
+and superpositioned is returned), so there wouldn't be a measurement operator
+here.
 
 This pretty much covers the program for a fair coin toss. We create a qubit in
 state 0 and then put that qubit in superposition, followed by a measurement of
@@ -181,4 +186,9 @@ IR.
 Before we move forward, it should be explained how these qubits are used in a
 function call, because according to no-cloning theorem, we cannot possibly copy
 it. :TODO:
+
+# References
+
+[1]: Selinger, P. and Valiron, B., 2009. Quantum lambda calculus. Semantic
+techniques in quantum computation, pp.135-172.
 
