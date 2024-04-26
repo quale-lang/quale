@@ -88,7 +88,7 @@ consistently mutating a variable state in a loop.
 
 To keep the syntax simple, there is no language-defined keyword or attribute to
 distinguish between these two categories of functions. Quale's type system,
-which is Peter Selinger's type system presented in his paper [1], handles
+which is Peter Selinger's type system presented in his paper [[1]](#1), handles
 this discretion for us. This means that you can write correct code without
 manually ensuring no-cloning stands for quantum values as long as the compiler
 is happy.
@@ -187,8 +187,8 @@ Before we move forward, it should be explained how these qubits are used in a
 function call, because according to no-cloning theorem, we cannot possibly copy
 it. :TODO:
 
-# References
+## References
 
-[1]: Selinger, P. and Valiron, B., 2009. Quantum lambda calculus. Semantic
-techniques in quantum computation, pp.135-172.
+<a id="1">[1]</a> Selinger, P. and Valiron, B., 2009. Quantum lambda calculus.
+Semantic techniques in quantum computation, pp.135-172.
 
