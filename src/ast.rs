@@ -312,11 +312,11 @@ impl std::fmt::Display for FunctionAST {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "fn ")?;
         if self.attrs.0.len() != 0 {
-            write!(f, "[[{}]]", self.attrs)?;
+            write!(f, "[[{}]] ", self.attrs)?;
         }
         writeln!(
             f,
-            " {} ({}) : {} {{  // {}",
+            "{} ({}) : {} {{  // {}",
             self.name, self.input_type, self.output_type, self.location
         )?;
 
