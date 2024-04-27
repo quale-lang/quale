@@ -56,6 +56,7 @@ pub enum QccErrorKind {
     UnknownOpcode,
     UnknownBinaryExpr,
     ExpectedOpcode,
+    ExpectedComma,
 }
 
 impl Display for QccErrorKind {
@@ -94,6 +95,7 @@ impl Display for QccErrorKind {
                 UnknownOpcode => "unknown opcode",
                 UnknownBinaryExpr => "unknown binary expression (unimplemented)",
                 ExpectedOpcode => "expected one of the following operations: +,-,*,/",
+                ExpectedComma => "expected a ',' comma"
             }
         })(self))
     }

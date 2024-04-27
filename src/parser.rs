@@ -356,6 +356,13 @@ impl Parser {
                         break;
                     }
 
+                    if !self.lexer.is_any_token(&[Token::Comma, Token::CParenth]) {
+                        if !self.lexer.is_token(Token::Comma) {
+                            return Err(QccErrorKind::ExpectedComma)?;
+                        } else {
+                            return Err(QccErrorKind::ExpectedParenth)?;
+                        }
+                    }
                     if self.lexer.is_token(Token::Comma) {
                         self.lexer.consume(Token::Comma)?;
                     }
