@@ -89,7 +89,7 @@ impl Display for QccErrorKind {
                 UnexpectedStr => "unexpected string found",
                 UnexpectedDigit => "unexpected digit found",
                 ExpectedExpr => "expected an expression",
-                ExpectedParenth => "expected ()",
+                ExpectedParenth => "expected parenthesis",
                 UnexpectedExpr => "unexpected expression",
                 UnknownOpcode => "unknown opcode",
                 UnknownBinaryExpr => "unknown binary expression (unimplemented)",

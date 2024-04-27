@@ -318,7 +318,6 @@ impl Parser {
             Default::default(),
         );
 
-        // Ok(Box::new(FunctionCallAST::new(Box::new(function), args)))
         Ok(Box::new(Expr::FnCall(function, args)))
     }
 
@@ -337,6 +336,7 @@ impl Parser {
             let expr = LiteralAST::Lit_Digit((d.unwrap()));
             self.lexer.consume(Token::Digit)?;
 
+            // TODO: Digit may be part of binary expression.
             return Ok(Box::new(Expr::Literal(Box::new(expr))));
         } else if self.lexer.is_token(Token::Identifier) {
             let name = self.lexer.identifier();
@@ -360,6 +360,9 @@ impl Parser {
                         self.lexer.consume(Token::Comma)?;
                     }
                 }
+                if !self.lexer.is_token(Token::CParenth) {
+                    return Err(QccErrorKind::ExpectedParenth)?;
+                }
                 self.lexer.consume(Token::CParenth)?;
 
                 if !self.lexer.is_token(Token::Semicolon) {
@@ -377,7 +380,6 @@ impl Parser {
                     Default::default(),
                 );
 
-                // Ok(Box::new(FunctionCallAST::new(Box::new(function), args)))
                 Ok(Box::new(Expr::FnCall(function, args)))
             } else if self.lexer.is_token(Token::Semicolon) {
                 // only a variable
