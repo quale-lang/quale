@@ -48,6 +48,14 @@ pub enum QccErrorKind {
     ExpectedLet,
     ExpectedAssign,
     ExpectedSemicolon,
+    UnexpectedStr,
+    UnexpectedDigit,
+    ExpectedExpr,
+    ExpectedParenth,
+    UnexpectedExpr,
+    UnknownOpcode,
+    UnknownBinaryExpr,
+    ExpectedOpcode,
 }
 
 impl Display for QccErrorKind {
@@ -64,7 +72,7 @@ impl Display for QccErrorKind {
                 LexerError => "lexer failed to tokenize",
                 ParseError => "could not parse source",
                 ExpectedFnForAttr => "expected a function for attribute",
-                ExpectedFn => "expected a function definition",
+                ExpectedFn => "expected a function",
                 ExpectedFnName => "expected a function name after fn",
                 ExpectedFnArgs => "expected function arguments in parenthesis",
                 ExpectedParamType => "expected parameter type",
@@ -78,6 +86,14 @@ impl Display for QccErrorKind {
                 ExpectedLet => "expected a let definition",
                 ExpectedAssign => "expected an assignment operator",
                 ExpectedSemicolon => "expected a ; to end line",
+                UnexpectedStr => "unexpected string found",
+                UnexpectedDigit => "unexpected digit found",
+                ExpectedExpr => "expected an expression",
+                ExpectedParenth => "expected ()",
+                UnexpectedExpr => "unexpected expression",
+                UnknownOpcode => "unknown opcode",
+                UnknownBinaryExpr => "unknown binary expression (unimplemented)",
+                ExpectedOpcode => "expected one of the following operations: +,-,*,/",
             }
         })(self))
     }

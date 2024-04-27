@@ -1,5 +1,6 @@
 //! QAST is an abstract representation for quale language.
 use crate::attributes::Attributes;
+use crate::error::{QccError, QccErrorKind};
 use crate::lexer::Location;
 use crate::types::Type;
 
@@ -76,7 +77,7 @@ impl Qast {
         params: Vec<(Ident, Type)>,
         output_type: Type,
         attrs: Attributes,
-        body: Vec<Box<dyn Expr>>,
+        body: Vec<Box<Expr>>,
     ) {
         self.append(FunctionAST::new(
             name,
@@ -133,11 +134,6 @@ impl std::fmt::Display for ModuleAST {
     }
 }
 
-/// A trait to represent expression. An expression can be of various types.
-/// Binary expressions, let assignments, function calls and returning
-/// expressions should implement it.
-pub(crate) trait Expr: std::fmt::Display {}
-
 /// A repr for a variable. It contains a `name` of the variable and its
 /// `location`.
 pub(crate) struct VarAST {
@@ -148,7 +144,11 @@ pub(crate) struct VarAST {
 
 impl VarAST {
     pub(crate) fn new(name: Ident, location: Location) -> Self {
-        Self { name, location, type_: Default::default() }
+        Self {
+            name,
+            location,
+            type_: Default::default(),
+        }
     }
 
     pub(crate) fn set_type(&mut self, type_: Type) {
@@ -156,38 +156,13 @@ impl VarAST {
     }
 }
 
-impl Expr for VarAST {}
-
 impl std::fmt::Display for VarAST {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}: {}", self.name, self.type_.borrow())
-    }
-}
-
-/// Repr for `let` statements. Location of a let expression is the location of
-/// its `var` member.
-pub(crate) struct LetAST<T: Expr> {
-    var: VarAST,
-    val: std::cell::RefCell<T>,
-}
-
-impl<T> LetAST<T>
-where
-    T: Expr,
-{
-    pub(crate) fn new(var: VarAST, val: T) -> Self {
-        Self { var, val: val.into() }
-    }
-}
-
-impl<T: Expr> Expr for LetAST<T> {}
-
-impl<T> std::fmt::Display for LetAST<T>
-where
-    T: Expr + std::fmt::Display,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{} = {}", self.var, self.val.borrow())
+        if *self.type_.borrow() == Type::Unknown {
+            write!(f, "{}", self.name)
+        } else {
+            write!(f, "{}: {}", self.name, self.type_.borrow())
+        }
     }
 }
 
@@ -199,6 +174,21 @@ pub(crate) enum Opcode {
     Div,
     Eq,
     Neq,
+}
+
+impl std::str::FromStr for Opcode {
+    type Err = QccError;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        match s {
+            "+" => Ok(Self::Add),
+            "-" => Ok(Self::Sub),
+            "*" => Ok(Self::Mul),
+            "/" => Ok(Self::Div),
+            "==" => Ok(Self::Eq),
+            "!=" => Ok(Self::Neq),
+            _ => Err(QccErrorKind::UnknownOpcode.into()),
+        }
+    }
 }
 
 impl std::fmt::Display for Opcode {
@@ -215,37 +205,77 @@ impl std::fmt::Display for Opcode {
     }
 }
 
-/// Repr for binary expressions.
-pub(crate) struct BinaryExprAST<T1: Expr, T2: Expr> {
-    lhs: T1,
-    rhs: T2,
-    op: Opcode,
+pub(crate) enum LiteralAST {
+    Lit_Digit(f64),
+    Lit_Str(Vec<u8>), // does not store the quotations around str
 }
 
-impl<T1, T2> Expr for BinaryExprAST<T1, T2>
-where
-    T1: Expr,
-    T2: Expr,
-{
-}
+impl std::str::FromStr for LiteralAST {
+    type Err = QccErrorKind;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        if s.starts_with("\"") {
+            if s.ends_with("\"") {
+                return Err(QccErrorKind::UnexpectedStr)?;
+            }
 
-impl<T1, T2> BinaryExprAST<T1, T2>
-where
-    T1: Expr,
-    T2: Expr,
-{
-    pub(crate) fn new(lhs: T1, op: Opcode, rhs: T2) -> Self {
-        Self { lhs, rhs, op }
+            let mut v = vec![];
+            while let Some(c) = s.chars().next() {
+                if c != '\"' {
+                    v.push(c as u8);
+                }
+            }
+            return Ok(Self::Lit_Str((v)));
+        } else {
+            // parse digit
+            let d = s.parse::<f64>();
+            if d.is_err() {
+                return Err(QccErrorKind::UnexpectedDigit)?;
+            }
+            return Ok(Self::Lit_Digit((d.unwrap())));
+        }
     }
 }
 
-impl<T1, T2> std::fmt::Display for BinaryExprAST<T1, T2>
-where
-    T1: Expr + std::fmt::Display,
-    T2: Expr + std::fmt::Display,
-{
+impl std::fmt::Display for LiteralAST {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "({} {} {})", self.lhs, self.op, self.rhs)
+        match &self {
+            LiteralAST::Lit_Digit(d) => write!(f, "{}", d),
+            LiteralAST::Lit_Str(s) => {
+                write!(f, "\"")?;
+                for &c in s {
+                    write!(f, "{}", c as char)?;
+                }
+                write!(f, "\"")
+            }
+        }
+    }
+}
+
+pub(crate) enum Expr {
+    // TODO: Literals should be included here too.
+    Var(VarAST),
+    BinaryExpr(Box<Expr>, Opcode, Box<Expr>),
+    FnCall(FunctionAST, Vec<Box<Expr>>),
+    Let(VarAST, Box<Expr>),
+    Literal(Box<LiteralAST>),
+}
+
+impl std::fmt::Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Var(v) => write!(f, "{}", v),
+            Self::BinaryExpr(lhs, op, rhs) => write!(f, "({} {} {})", lhs, op, rhs),
+            Self::FnCall(function, args) => {
+                write!(f, "{}(", function.name)?;
+                for arg in args {
+                    write!(f, "{}, ", arg)?; // TODO: Trim last comma
+                }
+                write!(f, ")");
+                Ok(())
+            }
+            Self::Let(var, val) => writeln!(f, "{} = {}", var, val),
+            Self::Literal(lit) => write!(f, "{}", lit),
+        }
     }
 }
 
@@ -257,10 +287,10 @@ pub(crate) struct FunctionAST {
     input_type: Type,
     output_type: Type,
     attrs: Attributes,
-    body: Vec<Box<dyn Expr>>,
+    body: Vec<Box<Expr>>,
 }
 
-impl Expr for FunctionAST {}
+// impl Expr for FunctionAST {}
 
 impl FunctionAST {
     pub(crate) fn new(
@@ -269,7 +299,7 @@ impl FunctionAST {
         params: Vec<(Ident, Type)>,
         output_type: Type,
         attrs: Attributes,
-        body: Vec<Box<dyn Expr>>,
+        body: Vec<Box<Expr>>,
     ) -> Self {
         Self {
             name,
@@ -323,7 +353,7 @@ impl std::fmt::Display for FunctionAST {
         for expr in &self.body {
             write!(f, "    {}", *expr)?;
         }
-        writeln!(f, "}}")?;
+        writeln!(f, "\n}}")?;
 
         Ok(())
     }

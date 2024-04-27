@@ -240,10 +240,13 @@ impl Parser {
         }
         self.lexer.consume(Token::OCurly)?;
 
-        let mut body: Vec<Box<dyn Expr>> = Default::default();
+        let mut body: Vec<Box<Expr>> = Default::default();
         while !self.lexer.is_token(Token::CCurly) {
             if self.lexer.is_token(Token::Let) {
                 let expr = self.parse_let()?;
+                body.push(expr);
+            } else if self.lexer.is_token(Token::Return) {
+                let expr = self.parse_return()?;
                 body.push(expr);
             } else {
                 if self.lexer.token.is_some() {
@@ -264,7 +267,181 @@ impl Parser {
         ))
     }
 
-    fn parse_let(&mut self) -> Result<Box<dyn Expr>> {
+    fn parse_return(&mut self) -> Result<Box<Expr>> {
+        if self.lexer.is_token(Token::Return) {
+            self.lexer.consume(Token::Return)?;
+            let expr = self.parse_expr()?;
+            return Ok(expr);
+        } else {
+            let expr = self.parse_expr()?;
+
+            if !self.lexer.is_token(Token::CCurly) {
+                return Err(QccErrorKind::ExpectedFnBodyEnd)?;
+            }
+
+            return Ok(expr);
+        }
+    }
+
+    fn parse_fn_call(&mut self) -> Result<Box<Expr>> {
+        if !self.lexer.is_token(Token::Identifier) {
+            return Err(QccErrorKind::ExpectedFn)?;
+        }
+        let name = self.lexer.identifier();
+        self.lexer.consume(Token::Identifier)?;
+
+        if !self.lexer.is_token(Token::OParenth) {
+            return Err(QccErrorKind::ExpectedParenth)?;
+        }
+        self.lexer.consume(Token::OParenth)?;
+
+        let mut args: Vec<Box<Expr>> = vec![];
+        while !self.lexer.is_token(Token::CParenth) {
+            let expr = self.parse_expr();
+            if expr.is_ok() {
+                args.push(expr.unwrap());
+            } else {
+                return Err(QccErrorKind::UnexpectedExpr)?;
+            }
+
+            if self.lexer.is_token(Token::Comma) {
+                self.lexer.consume(Token::Comma)?;
+            }
+        }
+
+        let function = FunctionAST::new(
+            name,
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            Default::default(),
+        );
+
+        // Ok(Box::new(FunctionCallAST::new(Box::new(function), args)))
+        Ok(Box::new(Expr::FnCall(function, args)))
+    }
+
+    /// An expression can be of following kinds:
+    /// - literal : string, digit, etc.
+    /// - already defined var.
+    /// - function call
+    /// - binary expression
+    fn parse_expr(&mut self) -> Result<Box<Expr>> {
+        if self.lexer.is_token(Token::Digit) {
+            let d = self.lexer.digit();
+            if d.is_none() {
+                return Err(QccErrorKind::UnexpectedDigit)?;
+            }
+
+            let expr = LiteralAST::Lit_Digit((d.unwrap()));
+            self.lexer.consume(Token::Digit)?;
+
+            return Ok(Box::new(Expr::Literal(Box::new(expr))));
+        } else if self.lexer.is_token(Token::Identifier) {
+            let name = self.lexer.identifier();
+            let location = self.lexer.location.clone();
+            self.lexer.consume(Token::Identifier)?;
+
+            if self.lexer.is_token(Token::OParenth) {
+                // parse a function call
+                self.lexer.consume(Token::OParenth)?;
+
+                let mut args: Vec<Box<Expr>> = vec![];
+                while !self.lexer.is_token(Token::CParenth) {
+                    // FIXME: recursive call is dangerous
+
+                    let expr = self.parse_expr();
+                    if expr.is_ok() {
+                        args.push(expr.unwrap());
+                    } else {
+                        break;
+                    }
+
+                    if self.lexer.is_token(Token::Comma) {
+                        self.lexer.consume(Token::Comma)?;
+                    }
+                }
+                self.lexer.consume(Token::CParenth)?;
+
+                if !self.lexer.is_token(Token::Semicolon) {
+                    return Err(QccErrorKind::ExpectedSemicolon)?;
+                }
+                self.lexer.consume(Token::Semicolon)?;
+
+                let function = FunctionAST::new(
+                    name,
+                    Default::default(), // location if found during
+                    // type checking
+                    Default::default(),
+                    Default::default(),
+                    Default::default(),
+                    Default::default(),
+                );
+
+                // Ok(Box::new(FunctionCallAST::new(Box::new(function), args)))
+                Ok(Box::new(Expr::FnCall(function, args)))
+            } else if self.lexer.is_token(Token::Semicolon) {
+                // only a variable
+                let expr = Expr::Var(VarAST::new(name, location));
+                self.lexer.consume(Token::Semicolon)?;
+
+                Ok(Box::new(expr))
+            } else {
+                let name_lhs = name;
+                let loc_lhs = location;
+
+                let op: Opcode;
+
+                if self
+                    .lexer
+                    .is_any_token(&[Token::Add, Token::Sub, Token::Mul, Token::Div])
+                {
+                    op = self.lexer.identifier().parse()?;
+                    self.lexer.consume(self.lexer.token.unwrap())?;
+                } else {
+                    return Err(QccErrorKind::ExpectedOpcode)?;
+                }
+
+                if !self.lexer.is_token(Token::Identifier) && !self.lexer.is_token(Token::Digit) {
+                    return Err(QccErrorKind::ExpectedExpr)?;
+                }
+
+                if self.lexer.is_token(Token::Identifier) {
+                    // rhs is a named variable
+                    let name_rhs = self.lexer.identifier();
+                    let loc_rhs = self.lexer.location.clone();
+
+                    self.lexer.consume(Token::Identifier)?;
+
+                    let lhs = Expr::Var(VarAST::new(name_lhs, loc_lhs));
+                    let rhs = Expr::Var(VarAST::new(name_rhs, loc_rhs));
+
+                    return Ok(Box::new(Expr::BinaryExpr(Box::new(lhs), op, Box::new(rhs))));
+                } else if self.lexer.is_token(Token::Digit) {
+                    // rhs is a digit
+                    let digit = self.parse_expr()?;
+                    let lit: Box<LiteralAST>;
+
+                    match *digit {
+                        Expr::Literal(l) => lit = l,
+                        _ => unreachable!(),
+                    }
+
+                    let lhs = Expr::Var(VarAST::new(name_lhs, loc_lhs));
+                    let rhs = Expr::Literal(lit);
+
+                    return Ok(Box::new(Expr::BinaryExpr(Box::new(lhs), op, Box::new(rhs))));
+                } else {
+                    return Err(QccErrorKind::UnknownBinaryExpr)?;
+                }
+            }
+        } else {
+            return Err(QccErrorKind::ExpectedExpr)?;
+        }
+    }
+
+    fn parse_let(&mut self) -> Result<Box<Expr>> {
         if !self.lexer.is_token(Token::Let) {
             return Err(QccErrorKind::ExpectedLet)?;
         }
@@ -276,7 +453,7 @@ impl Parser {
 
         let name = self.lexer.identifier();
         let location = self.lexer.location.clone();
-        let mut var = VarAST::new(name, location);  // lhs
+        let mut var = VarAST::new(name, location); // lhs
         self.lexer.consume(Token::Identifier)?;
 
         // Parse given type if available
@@ -307,8 +484,12 @@ impl Parser {
         }
         self.lexer.consume(Token::Semicolon)?;
 
-        let val = VarAST::new("to be implemented".into(), self.lexer.location.clone());
-        Ok(Box::new(LetAST::new(var, val)))
+        let val = Expr::Var(VarAST::new(
+            "to be implemented".into(),
+            self.lexer.location.clone(),
+        ));
+        // Ok(Box::new(LetAST::new(var, val)))
+        Ok(Box::new(Expr::Let(var, Box::new(val))))
     }
 
     fn parse_module(&mut self) -> Result<ModuleAST> {
