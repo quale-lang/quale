@@ -267,10 +267,13 @@ impl std::fmt::Display for Expr {
             Self::BinaryExpr(lhs, op, rhs) => write!(f, "({} {} {})", lhs, op, rhs),
             Self::FnCall(function, args) => {
                 write!(f, "{}(", function.name)?;
-                for arg in args {
-                    write!(f, "{}, ", arg)?; // TODO: Trim last comma
-                }
-                write!(f, ")");
+                let args_str = args
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "{args_str}")?;
+                write!(f, ")")?;
                 Ok(())
             }
             Self::Let(var, val) => writeln!(f, "{} = {}", var, val),
