@@ -349,8 +349,6 @@ impl Parser {
 
                 let mut args: Vec<Box<Expr>> = vec![];
                 while !self.lexer.is_token(Token::CParenth) {
-                    // FIXME: recursive call is dangerous
-
                     let expr = self.parse_expr();
                     if expr.is_ok() {
                         args.push(expr.unwrap());
@@ -388,9 +386,6 @@ impl Parser {
 
                 Ok(Box::new(expr))
             } else {
-                let name_lhs = name;
-                let loc_lhs = location;
-
                 let op: Opcode;
 
                 if self
@@ -400,6 +395,9 @@ impl Parser {
                     op = self.lexer.identifier().parse()?;
                     self.lexer.consume(self.lexer.token.unwrap())?;
                 } else {
+                    if self.lexer.is_token(Token::CParenth) {
+                        return Ok(Box::new(Expr::Var(VarAST::new(name, location))));
+                    }
                     return Err(QccErrorKind::ExpectedOpcode)?;
                 }
 
@@ -414,7 +412,7 @@ impl Parser {
 
                     self.lexer.consume(Token::Identifier)?;
 
-                    let lhs = Expr::Var(VarAST::new(name_lhs, loc_lhs));
+                    let lhs = Expr::Var(VarAST::new(name, location));
                     let rhs = Expr::Var(VarAST::new(name_rhs, loc_rhs));
 
                     return Ok(Box::new(Expr::BinaryExpr(Box::new(lhs), op, Box::new(rhs))));
@@ -428,7 +426,7 @@ impl Parser {
                         _ => unreachable!(),
                     }
 
-                    let lhs = Expr::Var(VarAST::new(name_lhs, loc_lhs));
+                    let lhs = Expr::Var(VarAST::new(name, location));
                     let rhs = Expr::Literal(lit);
 
                     return Ok(Box::new(Expr::BinaryExpr(Box::new(lhs), op, Box::new(rhs))));
