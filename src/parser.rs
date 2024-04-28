@@ -256,6 +256,7 @@ impl Parser {
                 }
             }
         }
+        self.lexer.consume(Token::CCurly)?;
 
         Ok(FunctionAST::new(
             name,
@@ -444,6 +445,7 @@ impl Parser {
                 }
             }
         } else {
+            // TODO: Complex binary expressions
             return Err(QccErrorKind::ExpectedExpr)?;
         }
     }
@@ -477,26 +479,11 @@ impl Parser {
         if !self.lexer.is_token(Token::Assign) {
             return Err(QccErrorKind::ExpectedAssign)?;
         }
+        self.lexer.consume(Token::Assign)?;
 
-        while !self.lexer.is_token(Token::Semicolon) {
-            if self.lexer.token.is_some() {
-                self.lexer.consume(self.lexer.token.unwrap())?;
-            } else {
-                break;
-            }
-        }
-        // TODO: Location is different.
-        if !self.lexer.is_token(Token::Semicolon) {
-            return Err(QccErrorKind::ExpectedSemicolon)?;
-        }
-        self.lexer.consume(Token::Semicolon)?;
+        let val = self.parse_expr()?;
 
-        let val = Expr::Var(VarAST::new(
-            "to be implemented".into(),
-            self.lexer.location.clone(),
-        ));
-        // Ok(Box::new(LetAST::new(var, val)))
-        Ok(Box::new(Expr::Let(var, Box::new(val))))
+        Ok(Box::new(Expr::Let(var, val)))
     }
 
     fn parse_module(&mut self) -> Result<ModuleAST> {
