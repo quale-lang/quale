@@ -235,7 +235,6 @@ impl Lexer {
         // Skip all leading whitespaces and trailing newlines.
         while self.buffer[self.ptr.current].is_ascii_whitespace() {
             self.ptr.current += 1;
-            self.location.col += 1;
 
             // If only whitespaces are present, ask for next line.
             if self.ptr.current >= self.ptr.end {
@@ -243,6 +242,12 @@ impl Lexer {
                     self.token = None;
                     return Ok(self.token);
                 }
+
+                if self.ptr.prev == self.ptr.end {
+                    self.token = None;
+                    return Ok(self.token);
+                }
+
                 return self.next_token();
             }
         }
