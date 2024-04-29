@@ -12,10 +12,12 @@ mod optimizer;
 mod parser;
 mod types;
 mod utils;
+mod inference;
 
 use crate::codegen::{qasm, Translator};
 use crate::error::Result;
 use crate::parser::Parser;
+use crate::inference::infer;
 
 fn init_session(args: Vec<&str>) -> Result<()> {
     let session = Parser::new(args)?;
@@ -24,7 +26,9 @@ fn init_session(args: Vec<&str>) -> Result<()> {
         Some(mut parser) => {
             let config = parser.get_config();
 
-            let qast = parser.parse(&config.analyzer.src)?;
+            let mut qast = parser.parse(&config.analyzer.src)?;
+
+            // infer(&mut qast);
 
             if config.dump_ast_only {
                 println!("{qast}");

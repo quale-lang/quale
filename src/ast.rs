@@ -45,62 +45,28 @@ pub(crate) enum Token {
 // AST.
 #[derive(Default)]
 pub struct Qast {
-    name: Ident,
-    location: Location,
-    functions: Vec<FunctionAST>,
+    modules: Vec<ModuleAST>,
 }
 
 impl Qast {
-    pub(crate) fn new(name: Ident, location: Location, functions: Vec<FunctionAST>) -> Self {
-        Self {
-            name,
-            location,
-            functions,
-        }
+    pub(crate) fn new(modules: Vec<ModuleAST>) -> Self {
+        Self { modules }
     }
 
-    /// Add module level information in the ast. This includes module name and
-    /// its location. Location by default should be first row and first column.
-    pub(crate) fn add_module_info(&mut self, name: Ident, location: Location) {
-        self.name = name;
-        self.location = location;
+    pub(crate) fn append_module(&mut self, module: ModuleAST) {
+        self.modules.push(module);
     }
 
-    pub(crate) fn append(&mut self, function: FunctionAST) {
-        self.functions.push(function);
-    }
-
-    pub(crate) fn append_function(
-        &mut self,
-        name: Ident,
-        location: Location,
-        params: Vec<VarAST>,
-        output_type: Type,
-        attrs: Attributes,
-        body: Vec<Box<Expr>>,
-    ) {
-        self.append(FunctionAST::new(
-            name,
-            location,
-            params,
-            output_type,
-            attrs,
-            body,
-        ));
-    }
-
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &FunctionAST> + '_ {
-        self.functions.iter()
+    pub(crate) fn iter_modules(&self) -> impl Iterator<Item = &ModuleAST> + '_ {
+        self.modules.iter()
     }
 }
 
 impl std::fmt::Display for Qast {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "module {} {{  // {}", self.name, self.location)?;
-        for function in &self.functions {
-            writeln!(f, "{}", function)?;
+        for module in &self.modules {
+            writeln!(f, "{}", module)?;
         }
-        writeln!(f, "}}")?;
         Ok(())
     }
 }
@@ -119,6 +85,10 @@ impl ModuleAST {
             location,
             functions,
         }
+    }
+
+    pub(crate) fn append_function(&mut self, function: FunctionAST) {
+        self.functions.push(function);
     }
 
     pub(crate) fn iter(&self) -> impl Iterator<Item = &FunctionAST> + '_ {
@@ -178,7 +148,7 @@ impl VarAST {
     }
 
     #[inline]
-    pub(crate) fn r#type(&self) -> std::cell::Ref<'_, Type> {
+    pub(crate) fn get_type(&self) -> std::cell::Ref<'_, Type> {
         self.type_.borrow()
     }
 }
@@ -341,7 +311,7 @@ pub(crate) struct FunctionAST {
     location: Location,
     // description: String,
     params: Vec<VarAST>,
-    input_type: Type,
+    input_type: Vec<Type>,
     output_type: Type,
     attrs: Attributes,
     body: Vec<Box<Expr>>,
@@ -370,6 +340,11 @@ impl FunctionAST {
     }
 
     #[inline]
+    pub(crate) fn insert_input_type(&mut self, type_: Type) {
+        self.input_type.push(type_);
+    }
+
+    #[inline]
     pub(crate) fn get_name(&self) -> &Ident {
         &self.name
     }
@@ -380,7 +355,7 @@ impl FunctionAST {
     }
 
     #[inline]
-    pub(crate) fn get_input_type(&self) -> &Type {
+    pub(crate) fn get_input_type(&self) -> &Vec<Type> {
         &self.input_type
     }
 
@@ -409,10 +384,17 @@ impl std::fmt::Display for FunctionAST {
         if self.attrs.0.len() != 0 {
             write!(f, "[[{}]] ", self.attrs)?;
         }
+        // parameters
+        let params = self.params
+            .iter()
+            .map(|p| p.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
         writeln!(
             f,
             "{} ({}) : {} {{  // {}",
-            self.name, self.input_type, self.output_type, self.location
+            self.name, params, self.output_type, self.location
         )?;
 
         for expr in &self.body {

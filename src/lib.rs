@@ -11,3 +11,4 @@ mod optimizer;
 pub mod parser;
 mod types;
 mod utils;
+mod inference;

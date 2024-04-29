@@ -722,9 +722,11 @@ impl Parser {
             (_, module_name) = module_basename.unwrap();
         }
         // TODO: We need a mangler for sanitizing module name.
-        let module_name = module_name.trim_end_matches(".ql").into();
+        let module_name: Ident = module_name.trim_end_matches(".ql").into();
         let module_location = Location::new(src, 1, 1);
-        qast.add_module_info(module_name, module_location);
+        // qast.add_module_info(module_name.clone(), module_location.clone());
+        // representation for this module
+        let mut this = ModuleAST::new(module_name, module_location, Default::default());
 
         // TODO: Move this entirely in parse_module, parse_module should return
         // a Qast and it can recursively call itself when `module` is seen
@@ -736,7 +738,7 @@ impl Parser {
             }
             if self.lexer.is_token(Token::Module) {
                 match self.parse_module() {
-                    Ok(module) => println!("{module}"),
+                    Ok(module) => qast.append_module(module),
                     Err(e) => {
                         seen_errors = true;
 
@@ -746,7 +748,7 @@ impl Parser {
                 }
             } else if self.lexer.is_token(Token::Hash) || self.lexer.is_token(Token::Function) {
                 match self.parse_function() {
-                    Ok(f) => qast.append(f),
+                    Ok(f) => this.append_function(f),
                     Err(e) => {
                         seen_errors = true;
 
@@ -758,6 +760,7 @@ impl Parser {
                 self.lexer.consume(self.lexer.token.unwrap())?;
             }
         }
+        qast.append_module(this);
 
         if seen_errors {
             Err(QccErrorKind::ParseError)?

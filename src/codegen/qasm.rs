@@ -63,10 +63,12 @@ impl Translator<Qast> for QasmModule {
     /// `QasmModule`.
     fn translate(ast: Qast) -> Result<Self> {
         let mut gates: Vec<QasmGate> = vec![];
-        for f in ast.iter() {
-            let attrs = f.get_attrs();
-            if !attrs.is_empty() && attrs.0.contains(&Attribute::NonDeter) {
-                gates.push(f.into());
+        for module in ast.iter_modules() {
+            for f in module.iter() {
+                let attrs = f.get_attrs();
+                if !attrs.is_empty() && attrs.0.contains(&Attribute::NonDeter) {
+                    gates.push(f.into());
+                }
             }
         }
         Ok(gates.into())
