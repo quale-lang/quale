@@ -60,6 +60,14 @@ impl Qast {
     pub(crate) fn iter_modules(&self) -> impl Iterator<Item = &ModuleAST> + '_ {
         self.modules.iter()
     }
+
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &ModuleAST> + '_ {
+        self.modules.iter()
+    }
+
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut ModuleAST> + '_ {
+        self.modules.iter_mut()
+    }
 }
 
 impl std::fmt::Display for Qast {
@@ -93,6 +101,10 @@ impl ModuleAST {
 
     pub(crate) fn iter(&self) -> impl Iterator<Item = &FunctionAST> + '_ {
         self.functions.iter()
+    }
+
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut FunctionAST> + '_ {
+        self.functions.iter_mut()
     }
 }
 
@@ -155,7 +167,7 @@ impl VarAST {
 
 impl std::fmt::Display for VarAST {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if *self.type_.borrow() == Type::Unknown {
+        if *self.type_.borrow() == Type::Bottom {
             write!(f, "{}", self.name)
         } else {
             write!(f, "{}: {}", self.name, self.type_.borrow())
@@ -324,6 +336,7 @@ impl FunctionAST {
         name: Ident,
         location: Location,
         params: Vec<VarAST>,
+        input_type: Vec<Type>,
         output_type: Type,
         attrs: Attributes,
         body: Vec<Box<Expr>>,
@@ -332,13 +345,16 @@ impl FunctionAST {
             name,
             location,
             params,
-            input_type: Default::default(),
+            input_type,
             output_type,
             attrs,
             body,
         }
     }
 
+    /// Inserts the input type in function. This should be called successively
+    /// for many-parametered functions to append types for each parameter into a
+    /// vector.
     #[inline]
     pub(crate) fn insert_input_type(&mut self, type_: Type) {
         self.input_type.push(type_);
@@ -369,12 +385,30 @@ impl FunctionAST {
         &self.attrs
     }
 
+    // /// If a return expression exists in function, return its reference.
+    // // TODO:
+    // pub(crate) fn get_return_expr(&self) -> Option<&Expr> {
+    //     let last_instruction = self.body.last()?;
+    //     match **last_instruction {
+    //         Expr::Var(_) | Expr::Let(_, _) => None,
+    //         x => Some(&x),
+    //     }
+    // }
+
     pub(crate) fn iter(&self) -> impl Iterator<Item = &Box<Expr>> + '_ {
         self.body.iter()
     }
 
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut Box<Expr>> + '_ {
+        self.body.iter_mut()
+    }
+
     pub(crate) fn iter_params(&self) -> impl Iterator<Item = &VarAST> + '_ {
         self.params.iter()
+    }
+
+    pub(crate) fn iter_params_mut(&mut self) -> impl Iterator<Item = &mut VarAST> + '_ {
+        self.params.iter_mut()
     }
 }
 

@@ -178,6 +178,7 @@ impl Parser {
         let name = self.lexer.identifier();
         let location = self.lexer.location.clone();
         let mut params: Vec<VarAST> = Default::default();
+        let mut input_type: Vec<Type> = Default::default();
 
         self.lexer.consume(Token::Identifier)?;
 
@@ -204,6 +205,7 @@ impl Parser {
                 let type_ = self.lexer.identifier().parse::<Type>()?;
                 self.lexer.consume(Token::Identifier)?;
 
+                input_type.push(type_.clone());
                 params.push(VarAST::new_with_type(name, location, type_));
             }
 
@@ -263,6 +265,7 @@ impl Parser {
             name,
             location,
             params,
+            input_type,
             output_type,
             attrs,
             body,
@@ -313,6 +316,7 @@ impl Parser {
 
         let function = FunctionAST::new(
             name,
+            Default::default(),
             Default::default(),
             Default::default(),
             Default::default(),
@@ -388,6 +392,7 @@ impl Parser {
                     name,
                     Default::default(), // location if found during
                     // type checking
+                    Default::default(),
                     Default::default(),
                     Default::default(),
                     Default::default(),
@@ -513,6 +518,7 @@ impl Parser {
                     Default::default(),
                     Default::default(),
                     Default::default(),
+                    Default::default(),
                 );
                 return Ok(Box::new(BinaryExprAST::FnCall(f, args)));
             } else if self
@@ -608,6 +614,7 @@ impl Parser {
                 let f = FunctionAST::new(
                     name,
                     location,
+                    Default::default(),
                     Default::default(),
                     Default::default(),
                     Default::default(),

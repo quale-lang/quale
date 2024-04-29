@@ -6,9 +6,8 @@ use crate::error::QccErrorKind;
 
 #[derive(Default, Clone, Copy, PartialEq)]
 pub(crate) enum Type {
-    Known,
     #[default]
-    Unknown,
+    Bottom,
     Rad,
     Qbit,
     Bit,
@@ -18,8 +17,7 @@ pub(crate) enum Type {
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Known => write!(f, "<known>"),
-            Self::Unknown => write!(f, "<unknown-type>"),
+            Self::Bottom => write!(f, "<bottom>"),
             Self::Rad => write!(f, "radians"),
             Self::Qbit => write!(f, "qubit"),
             Self::Bit => write!(f, "bit"),
@@ -35,14 +33,11 @@ impl std::str::FromStr for Type {
 
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         Ok(match s {
-            "known" => Self::Known,
-            "unknown" => Self::Unknown,
             "rad" => Self::Rad,
             "qbit" => Self::Qbit,
             "bit" => Self::Bit,
             "f64" => Self::F64,
-            // _ => Err(QccErrorKind::UnexpectedType)?,
-            _ => Self::Unknown,
+            _ => Err(QccErrorKind::UnexpectedType)?,
         })
     }
 }
