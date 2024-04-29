@@ -74,7 +74,7 @@ impl Qast {
         &mut self,
         name: Ident,
         location: Location,
-        params: Vec<(Ident, Type)>,
+        params: Vec<VarAST>,
         output_type: Type,
         attrs: Attributes,
         body: Vec<Box<Expr>>,
@@ -120,6 +120,10 @@ impl ModuleAST {
             functions,
         }
     }
+
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &FunctionAST> + '_ {
+        self.functions.iter()
+    }
 }
 
 impl std::fmt::Display for ModuleAST {
@@ -151,8 +155,31 @@ impl VarAST {
         }
     }
 
+    pub(crate) fn new_with_type(name: Ident, location: Location, type_: Type) -> Self {
+        Self {
+            name,
+            location,
+            type_: std::cell::RefCell::new(type_),
+        }
+    }
+
     pub(crate) fn set_type(&mut self, type_: Type) {
         self.type_ = type_.into();
+    }
+
+    #[inline]
+    pub(crate) fn name(&self) -> &Ident {
+        &self.name
+    }
+
+    #[inline]
+    pub(crate) fn location(&self) -> &Location {
+        &self.location
+    }
+
+    #[inline]
+    pub(crate) fn r#type(&self) -> std::cell::Ref<'_, Type> {
+        self.type_.borrow()
     }
 }
 
@@ -303,7 +330,7 @@ impl std::fmt::Display for Expr {
                 write!(f, ")")?;
                 Ok(())
             }
-            Self::Let(var, val) => writeln!(f, "{} = {}", var, val),
+            Self::Let(var, val) => write!(f, "{} = {}", var, val),
             Self::Literal(lit) => write!(f, "{}", lit),
         }
     }
@@ -313,7 +340,7 @@ pub(crate) struct FunctionAST {
     name: Ident,
     location: Location,
     // description: String,
-    params: Vec<(Ident, Type)>,
+    params: Vec<VarAST>,
     input_type: Type,
     output_type: Type,
     attrs: Attributes,
@@ -326,7 +353,7 @@ impl FunctionAST {
     pub(crate) fn new(
         name: Ident,
         location: Location,
-        params: Vec<(Ident, Type)>,
+        params: Vec<VarAST>,
         output_type: Type,
         attrs: Attributes,
         body: Vec<Box<Expr>>,
@@ -366,6 +393,14 @@ impl FunctionAST {
     pub(crate) fn get_attrs(&self) -> &Attributes {
         &self.attrs
     }
+
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &Box<Expr>> + '_ {
+        self.body.iter()
+    }
+
+    pub(crate) fn iter_params(&self) -> impl Iterator<Item = &VarAST> + '_ {
+        self.params.iter()
+    }
 }
 
 impl std::fmt::Display for FunctionAST {
@@ -381,9 +416,9 @@ impl std::fmt::Display for FunctionAST {
         )?;
 
         for expr in &self.body {
-            write!(f, "    {}", *expr)?;
+            writeln!(f, "    {}", *expr)?;
         }
-        writeln!(f, "\n}}")?;
+        writeln!(f, "}}")?;
 
         Ok(())
     }

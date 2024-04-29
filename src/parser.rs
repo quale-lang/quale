@@ -177,7 +177,7 @@ impl Parser {
 
         let name = self.lexer.identifier();
         let location = self.lexer.location.clone();
-        let mut params: Vec<(String, Type)> = Default::default();
+        let mut params: Vec<VarAST> = Default::default();
 
         self.lexer.consume(Token::Identifier)?;
 
@@ -188,7 +188,8 @@ impl Parser {
 
         while !self.lexer.is_token(Token::CParenth) {
             if self.lexer.is_token(Token::Identifier) {
-                let param = self.lexer.identifier();
+                let name = self.lexer.identifier();
+                let location = self.lexer.location.clone();
                 self.lexer.consume(Token::Identifier)?;
 
                 if !self.lexer.is_token(Token::Colon) {
@@ -203,7 +204,7 @@ impl Parser {
                 let type_ = self.lexer.identifier().parse::<Type>()?;
                 self.lexer.consume(Token::Identifier)?;
 
-                params.push((param, type_));
+                params.push(VarAST::new_with_type(name, location, type_));
             }
 
             if !self.lexer.is_token(Token::Comma) && !self.lexer.is_token(Token::CParenth) {
