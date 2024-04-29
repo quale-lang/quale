@@ -385,7 +385,8 @@ impl std::fmt::Display for FunctionAST {
             write!(f, "[[{}]] ", self.attrs)?;
         }
         // parameters
-        let params = self.params
+        let params = self
+            .params
             .iter()
             .map(|p| p.to_string())
             .collect::<Vec<String>>()

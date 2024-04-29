@@ -7,17 +7,17 @@ mod attributes;
 mod codegen;
 mod config;
 mod error;
+mod inference;
 mod lexer;
 mod optimizer;
 mod parser;
 mod types;
 mod utils;
-mod inference;
 
 use crate::codegen::{qasm, Translator};
 use crate::error::Result;
-use crate::parser::Parser;
 use crate::inference::infer;
+use crate::parser::Parser;
 
 fn init_session(args: Vec<&str>) -> Result<()> {
     let session = Parser::new(args)?;
@@ -28,7 +28,7 @@ fn init_session(args: Vec<&str>) -> Result<()> {
 
             let mut qast = parser.parse(&config.analyzer.src)?;
 
-            // infer(&mut qast);
+            infer(&mut qast)?;
 
             if config.dump_ast_only {
                 println!("{qast}");
