@@ -9,6 +9,10 @@ pub(crate) enum Type {
     Known,
     #[default]
     Unknown,
+    Rad,
+    Qbit,
+    Bit,
+    F64,
 }
 
 impl std::fmt::Display for Type {
@@ -16,6 +20,10 @@ impl std::fmt::Display for Type {
         match self {
             Self::Known => write!(f, "<known>"),
             Self::Unknown => write!(f, "<unknown-type>"),
+            Self::Rad => write!(f, "radians"),
+            Self::Qbit => write!(f, "qubit"),
+            Self::Bit => write!(f, "bit"),
+            Self::F64 => write!(f, "float64"),
         }
     }
 }
@@ -29,6 +37,10 @@ impl std::str::FromStr for Type {
         Ok(match s {
             "known" => Self::Known,
             "unknown" => Self::Unknown,
+            "rad" => Self::Rad,
+            "qbit" => Self::Qbit,
+            "bit" => Self::Bit,
+            "f64" => Self::F64,
             // _ => Err(QccErrorKind::UnexpectedType)?,
             _ => Self::Unknown,
         })
