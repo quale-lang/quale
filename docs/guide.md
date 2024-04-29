@@ -60,7 +60,9 @@ detect, the better RNG works. But in quantum computing, randomness comes in its
 purest form. I won't go into the details of how it occurs. But remember that
 putting a `qubit`, which is a datatype we will use often, in
 <u>superposition</u> and subsequently measuring it can give us a purely random
-result.
+result. In Quale, `qubit` is written as `qbit` when defined as type, and in the
+following guide, when a `qubit` is mentioned it refers to the logical qubits
+representation, and `qbit` refers to the type in quale.
 
 We will work on this problem stepwise. Firstly, the `main` function which
 usually is the entrypoint in many languages is back. We also start with the
@@ -117,10 +119,10 @@ Now let us introduce a non-deterministic function in our program.
 
 ```quale
 
-fn toss() : qubit {...}
+fn toss() : qbit {...}
 ```
 
-`toss` is returning a `qubit` value (the details of the function will be
+`toss` is returning a `qbit` value (the details of the function will be
 expanded below). So, `toss` is a non-deterministic function. Also it is worth
 mentioning that this qubit is returned but our variable `choice` _collapses_
 this qubit into a bit and then stores it. This is the measurement part which we
@@ -128,8 +130,8 @@ talked about earlier. The measurement is simply a collapsing of the quantum
 state into a classical state. Here, the measurement happens implicitly and is
 kept hidden away from programmer's view point.
 
-<u>Note</u>: The compiler upon seeing a mismatch where a qubit is used but a
-bit was expected, puts a _measurement operator_ which takes in a qubit and
+<u>Note</u>: The compiler upon seeing a mismatch where a qbit is used but a
+bit was expected, puts a _measurement operator_ which takes in a qbit and
 returns a classical bit. This mechanism provides simplicity for programmer that
 they don't have to worry about measuring explicitly. The compiler will do this
 job for them.
@@ -146,8 +148,8 @@ superposition. Again as a matter of fact, we can put a qubit in superposition
 by applying Hadamard gate to it.
 
 ```quale
-fn toss() : qubit {
-    let zero_state: qubit = 0;  // represent a qubit in zero state simply as 0
+fn toss() : qbit {
+    let zero_state: qbit = 0;  // represent a qubit in zero state simply as 0
     let superpositioned = Hadamard(zero_state);
     superpositioned
 }
@@ -162,14 +164,14 @@ fn main() {
 }
 ```
 
-`Hadamard` is another function (technically called a gate) that takes in a qubit
-and returns a qubit. So its type would be `Hadamard: qubit -> qubit`. This will
+`Hadamard` is another function (technically called a gate) that takes in a qbit
+and returns a qbit. So its type would be `Hadamard: qbit -> qbit`. This will
 be defined in standard library of quale. We will assume it as a black box for
 now. The first `let` statement creates a qubit in state zero. We can represent 0
 as either a classical bit 0 or a qubit in state zero (represented as |0〉). The
-type determines whether it will be a bit or a qubit. The second `let` calls the
+type determines whether it will be a bit or a qbit. The second `let` calls the
 Hadamard function and receives a qubit in superposition.  Notice that,
-`superpositioned` is inferred to be of qubit type (`toss`'s return type is qubit
+`superpositioned` is inferred to be of qbit type (`toss`'s return type is qbit
 and superpositioned is returned), so there wouldn't be a measurement operator
 here.
 
