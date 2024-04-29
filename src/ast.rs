@@ -251,8 +251,35 @@ impl std::fmt::Display for LiteralAST {
     }
 }
 
+pub(crate) enum BinaryExprAST {
+    Var(VarAST),
+    Literal(Box<LiteralAST>),
+    BinaryExpr(Box<BinaryExprAST>, Opcode, Box<BinaryExprAST>),
+    FnCall(FunctionAST, Vec<Box<BinaryExprAST>>),
+}
+
+impl std::fmt::Display for BinaryExprAST {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Var(v) => write!(f, "{v}"),
+            Self::Literal(lit) => write!(f, "{lit}"),
+            Self::BinaryExpr(lhs, op, rhs) => write!(f, "({lhs} {op} {rhs})"),
+            Self::FnCall(function, args) => {
+                write!(f, "{}(", function.name)?;
+                let args_str = args
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "{args_str}")?;
+                write!(f, ")")?;
+                Ok(())
+            }
+        }
+    }
+}
+
 pub(crate) enum Expr {
-    // TODO: Literals should be included here too.
     Var(VarAST),
     BinaryExpr(Box<Expr>, Opcode, Box<Expr>),
     FnCall(FunctionAST, Vec<Box<Expr>>),

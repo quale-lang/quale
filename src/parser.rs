@@ -339,7 +339,12 @@ impl Parser {
 
             // TODO: Digit may be part of binary expression.
             return Ok(Box::new(Expr::Literal(Box::new(expr))));
-        } else if self.lexer.is_token(Token::Identifier) {
+        } else if self.lexer.is_any_token(&[Token::Identifier, Token::Sub]) {
+            if self.lexer.is_token(Token::Sub) {
+                // TODO: unary negative named variable
+                self.lexer.consume(Token::Sub)?;
+            }
+
             let name = self.lexer.identifier();
             let location = self.lexer.location.clone();
             self.lexer.consume(Token::Identifier)?;
@@ -396,22 +401,31 @@ impl Parser {
 
                 Ok(Box::new(expr))
             } else {
+                // parse a binary expression
                 let op: Opcode;
 
+                // get the opcode
                 if self
                     .lexer
                     .is_any_token(&[Token::Add, Token::Sub, Token::Mul, Token::Div])
                 {
+                    // opcode in binary expression
                     op = self.lexer.identifier().parse()?;
                     self.lexer.consume(self.lexer.token.unwrap())?;
                 } else {
+                    // single named variable is enclosed in parenthesis
                     if self.lexer.is_token(Token::CParenth) {
                         return Ok(Box::new(Expr::Var(VarAST::new(name, location))));
                     }
+
                     return Err(QccErrorKind::ExpectedOpcode)?;
                 }
 
-                if !self.lexer.is_token(Token::Identifier) && !self.lexer.is_token(Token::Digit) {
+                // parse rhs of binary expression
+                if !self.lexer.is_token(Token::Identifier)
+                    && !self.lexer.is_token(Token::Digit)
+                    && !self.lexer.is_token(Token::OParenth)
+                {
                     return Err(QccErrorKind::ExpectedExpr)?;
                 }
 
@@ -425,7 +439,7 @@ impl Parser {
                     let lhs = Expr::Var(VarAST::new(name, location));
                     let rhs = Expr::Var(VarAST::new(name_rhs, loc_rhs));
 
-                    return Ok(Box::new(Expr::BinaryExpr(Box::new(lhs), op, Box::new(rhs))));
+                    Ok(Box::new(Expr::BinaryExpr(Box::new(lhs), op, Box::new(rhs))))
                 } else if self.lexer.is_token(Token::Digit) {
                     // rhs is a digit
                     let digit = self.parse_expr()?;
@@ -439,7 +453,25 @@ impl Parser {
                     let lhs = Expr::Var(VarAST::new(name, location));
                     let rhs = Expr::Literal(lit);
 
-                    return Ok(Box::new(Expr::BinaryExpr(Box::new(lhs), op, Box::new(rhs))));
+                    Ok(Box::new(Expr::BinaryExpr(Box::new(lhs), op, Box::new(rhs))))
+                } else if self.lexer.is_token(Token::OParenth) {
+                    // rhs is a sub binary expression
+                    let mut parenth_deep: usize = 1; // pairs of parentheses
+                                                     // should become 0 when
+                                                     // complete binary
+                                                     // expression is returned
+                    self.lexer.consume(Token::OParenth)?;
+
+                    let subexpr = self.parse_expr()?;
+
+                    if !self.lexer.is_token(Token::CParenth) {
+                        return Err(QccErrorKind::ExpectedParenth)?;
+                    }
+                    self.lexer.consume(Token::CParenth)?;
+
+                    let lhs = Expr::Var(VarAST::new(name, location));
+
+                    Ok(Box::new(Expr::BinaryExpr(Box::new(lhs), op, subexpr)))
                 } else {
                     return Err(QccErrorKind::UnknownBinaryExpr)?;
                 }
@@ -447,6 +479,156 @@ impl Parser {
         } else {
             // TODO: Complex binary expressions
             return Err(QccErrorKind::ExpectedExpr)?;
+        }
+    }
+
+    // TODO: a newer approach with adts
+    fn parse_binary_expr(&mut self) -> Result<Box<BinaryExprAST>> {
+        if self.lexer.is_token(Token::Identifier) {
+            let name = self.lexer.identifier();
+            let location = self.lexer.location.clone();
+            self.lexer.consume(Token::Identifier)?;
+
+            if self.lexer.is_token(Token::OParenth) {
+                // definitely a function call
+                self.lexer.consume(Token::OParenth)?;
+                let mut args = vec![];
+                while !self.lexer.is_token(Token::CParenth) {
+                    let arg = self.parse_binary_expr()?;
+                    args.push(arg);
+
+                    if !self.lexer.is_token(Token::Comma) && !self.lexer.is_token(Token::CParenth) {
+                        return Err(QccErrorKind::ExpectedAttr)?;
+                    }
+                    if self.lexer.is_token(Token::Comma) {
+                        self.lexer.consume(Token::Comma)?;
+                    }
+                }
+                self.lexer.consume(Token::CParenth)?;
+                let f = FunctionAST::new(
+                    name,
+                    location,
+                    Default::default(),
+                    Default::default(),
+                    Default::default(),
+                    Default::default(),
+                );
+                return Ok(Box::new(BinaryExprAST::FnCall(f, args)));
+            } else if self
+                .lexer
+                .is_any_token(&[Token::Add, Token::Sub, Token::Mul, Token::Div])
+            {
+                // (maybe complex) binary expression
+                let op = self.lexer.identifier().parse::<Opcode>()?;
+
+                if self.lexer.is_token(Token::OParenth) {
+                    // a complex binary expression
+                    let mut parenth_depth = 1;
+                    while parenth_depth != 0
+                        && self.lexer.is_any_token(&[
+                            Token::Add,
+                            Token::Sub,
+                            Token::Mul,
+                            Token::Div,
+                        ])
+                    {
+                        let inner_expr = self.parse_binary_expr()?;
+                    }
+                } else {
+                    let lhs = Box::new(BinaryExprAST::Var(VarAST::new(name, location)));
+
+                    if self.lexer.is_token(Token::Identifier) {
+                        let rhs = Box::new(BinaryExprAST::Var(VarAST::new(
+                            self.lexer.identifier(),
+                            self.lexer.location.clone(),
+                        )));
+                        self.lexer.consume(Token::Identifier)?;
+                        return Ok(Box::new(BinaryExprAST::BinaryExpr(lhs, op, rhs)));
+                    } else if self.lexer.is_token(Token::Digit) {
+                        let digit = self.lexer.digit();
+                        if digit.is_none() {
+                            return Err(QccErrorKind::ExpectedExpr)?;
+                        }
+                        return Ok(Box::new(BinaryExprAST::Literal(Box::new(
+                            LiteralAST::Lit_Digit(digit.unwrap()),
+                        ))));
+                    } else {
+                        return Err(QccErrorKind::ExpectedExpr)?;
+                    }
+                }
+            } else if self.lexer.is_token(Token::Semicolon) {
+                // is simply a named variable
+                self.lexer.consume(Token::Semicolon)?;
+                return Ok(Box::new(BinaryExprAST::Var(VarAST::new(name, location))));
+            } else {
+                return Err(QccErrorKind::UnexpectedStr)?;
+            }
+        } else if self.lexer.is_token(Token::Digit) {
+            // it must be a digit
+            let digit = self.lexer.digit();
+            self.lexer.consume(Token::Digit)?;
+            if digit.is_none() {
+                return Err(QccErrorKind::ExpectedExpr)?;
+            }
+            return Ok(Box::new(BinaryExprAST::Literal(Box::new(
+                LiteralAST::Lit_Digit(digit.unwrap()),
+            ))));
+        } else {
+            // TODO: ??
+            Err(QccErrorKind::ExpectedExpr)?
+        }
+
+        // a binary expression can be: a digit, a named variable, fn call or a
+        // complex binary expression.
+        if self
+            .lexer
+            .is_any_token(&[Token::Add, Token::Sub, Token::Mul, Token::Div])
+        {
+            Err(QccErrorKind::CmdlineErr)?
+        } else if self.lexer.is_token(Token::Identifier) {
+            let name = self.lexer.identifier();
+            let location = self.lexer.location.clone();
+
+            if self.lexer.is_token(Token::OParenth) {
+                self.lexer.consume(Token::OParenth)?;
+                let mut args = vec![];
+                while !self.lexer.is_token(Token::CParenth) {
+                    let arg = self.parse_binary_expr()?;
+                    args.push(arg);
+
+                    if !self.lexer.is_token(Token::Comma) && !self.lexer.is_token(Token::CParenth) {
+                        return Err(QccErrorKind::ExpectedAttr)?;
+                    }
+                    if self.lexer.is_token(Token::Comma) {
+                        self.lexer.consume(Token::Comma)?;
+                    }
+                }
+                self.lexer.consume(Token::CParenth)?;
+                let f = FunctionAST::new(
+                    name,
+                    location,
+                    Default::default(),
+                    Default::default(),
+                    Default::default(),
+                    Default::default(),
+                );
+                Ok(Box::new(BinaryExprAST::FnCall(f, args)))
+            } else if self.lexer.is_token(Token::Semicolon) {
+                Ok(Box::new(BinaryExprAST::Var(VarAST::new(name, location))))
+            } else {
+                Err(QccErrorKind::CmdlineErr)?
+            }
+        } else if self.lexer.is_token(Token::Digit) {
+            let digit = self.lexer.digit();
+            if digit.is_none() {
+                return Err(QccErrorKind::ExpectedExpr)?;
+            }
+            self.lexer.consume(Token::Digit)?;
+            Ok(Box::new(BinaryExprAST::Literal(Box::new(
+                LiteralAST::Lit_Digit(digit.unwrap()),
+            ))))
+        } else {
+            Err(QccErrorKind::ExpectedExpr)?
         }
     }
 
