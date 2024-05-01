@@ -45,27 +45,27 @@ pub(crate) enum Token {
 // AST.
 #[derive(Default)]
 pub struct Qast {
-    modules: Vec<ModuleAST>,
+    modules: Vec<Box<ModuleAST>>,
 }
 
 impl Qast {
-    pub(crate) fn new(modules: Vec<ModuleAST>) -> Self {
+    pub(crate) fn new(modules: Vec<Box<ModuleAST>>) -> Self {
         Self { modules }
     }
 
     pub(crate) fn append_module(&mut self, module: ModuleAST) {
-        self.modules.push(module);
+        self.modules.push(Box::new(module));
     }
 
-    pub(crate) fn iter_modules(&self) -> impl Iterator<Item = &ModuleAST> + '_ {
+    pub(crate) fn iter_modules(&self) -> impl Iterator<Item = &Box<ModuleAST>> + '_ {
         self.modules.iter()
     }
 
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &ModuleAST> + '_ {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &Box<ModuleAST>> + '_ {
         self.modules.iter()
     }
 
-    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut ModuleAST> + '_ {
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut Box<ModuleAST>> + '_ {
         self.modules.iter_mut()
     }
 }
@@ -83,11 +83,11 @@ impl std::fmt::Display for Qast {
 pub(crate) struct ModuleAST {
     name: Ident,
     location: Location,
-    functions: Vec<FunctionAST>,
+    functions: Vec<Box<FunctionAST>>,
 }
 
 impl ModuleAST {
-    pub(crate) fn new(name: Ident, location: Location, functions: Vec<FunctionAST>) -> Self {
+    pub(crate) fn new(name: Ident, location: Location, functions: Vec<Box<FunctionAST>>) -> Self {
         Self {
             name,
             location,
@@ -96,14 +96,14 @@ impl ModuleAST {
     }
 
     pub(crate) fn append_function(&mut self, function: FunctionAST) {
-        self.functions.push(function);
+        self.functions.push(Box::new(function));
     }
 
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &FunctionAST> + '_ {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &Box<FunctionAST>> + '_ {
         self.functions.iter()
     }
 
-    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut FunctionAST> + '_ {
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut Box<FunctionAST>> + '_ {
         self.functions.iter_mut()
     }
 }
@@ -162,6 +162,11 @@ impl VarAST {
     #[inline]
     pub(crate) fn get_type(&self) -> std::cell::Ref<'_, Type> {
         self.type_.borrow()
+    }
+
+    #[inline]
+    pub(crate) fn get_type_mut(&mut self) {
+        let tmp = self.type_.borrow_mut();
     }
 }
 

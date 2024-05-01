@@ -695,11 +695,11 @@ impl Parser {
         }
         self.lexer.consume(Token::OCurly)?;
 
-        let mut functions: Vec<FunctionAST> = Default::default();
+        let mut functions: Vec<Box<FunctionAST>> = Default::default();
         while !self.lexer.is_token(Token::CCurly) {
             let function = self.parse_function();
             if function.is_ok() {
-                functions.push(function?);
+                functions.push(Box::new(function?));
             } else {
                 self.lexer.consume(self.lexer.token.unwrap())?;
             }

@@ -67,7 +67,8 @@ impl Translator<Qast> for QasmModule {
             for f in module.iter() {
                 let attrs = f.get_attrs();
                 if !attrs.is_empty() && attrs.0.contains(&Attribute::NonDeter) {
-                    gates.push(f.into());
+                    let g = &**f;
+                    gates.push(g.into());
                 }
             }
         }
