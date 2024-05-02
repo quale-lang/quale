@@ -4,6 +4,7 @@ use crate::attributes::Attribute;
 use crate::codegen::Translator;
 use crate::error::Result;
 use std::fmt;
+use std::borrow::Borrow;
 
 use std::io::Write;
 
@@ -63,11 +64,11 @@ impl Translator<Qast> for QasmModule {
     /// `QasmModule`.
     fn translate(ast: Qast) -> Result<Self> {
         let mut gates: Vec<QasmGate> = vec![];
-        for module in ast.iter_modules() {
+        for module in ast.iter() {
             for f in module.iter() {
                 let attrs = f.get_attrs();
                 if !attrs.is_empty() && attrs.0.contains(&Attribute::NonDeter) {
-                    let g = &**f;
+                    let g: &FunctionAST = f.borrow();
                     gates.push(g.into());
                 }
             }

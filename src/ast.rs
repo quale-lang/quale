@@ -57,10 +57,6 @@ impl Qast {
         self.modules.push(Box::new(module));
     }
 
-    pub(crate) fn iter_modules(&self) -> impl Iterator<Item = &Box<ModuleAST>> + '_ {
-        self.modules.iter()
-    }
-
     pub(crate) fn iter(&self) -> impl Iterator<Item = &Box<ModuleAST>> + '_ {
         self.modules.iter()
     }
