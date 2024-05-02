@@ -2,37 +2,29 @@
 use crate::ast::{Expr, Qast};
 use crate::error::{QccErrorKind, Result};
 use crate::types::Type;
+use std::borrow::{Borrow, BorrowMut};
+
+/// Type checker
+pub(crate) fn checker(ast: &mut Qast) /*-> Result<()>*/ {}
 
 /// Type inference method.
 pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
-    for module in ast.iter() {
-        for function in module.iter() {
-            if *function.get_output_type() == Type::Bottom {
-                // println!("{function}");
-            }
-            for param_type in function.get_input_type() {
-                if *param_type == Type::Bottom {
-                    // println!("{}", function.get_name());
-                }
-            }
+    for module in ast.iter_mut() {
+        for function in module.iter_mut() {
+            let fn_return_type = *function.get_output_type();
 
-            for instruction in function.iter() {
-                match &**instruction {
-                    Expr::Var(v) => {
-                        if *v.get_type() == Type::Bottom {
-                            println!("Untyped: {}", v);
-                            println!("{}", function);
+            let last_instruction = function.iter_mut().last();
+            if last_instruction.is_some() {
+                match last_instruction.unwrap().borrow_mut() {
+                    Expr::Var(var) => {
+                        if *var.get_type() == Type::Bottom {
+                            var.set_type(fn_return_type);
                         }
-                        // i want to mutate type
                     }
-                    Expr::BinaryExpr(lhs, op, rhs) => {}
-                    Expr::FnCall(f, args) => {}
-                    Expr::Let(var, val) => {}
-                    Expr::Literal(lit) => {}
+                    _ => {}
                 }
             }
         }
     }
-
     Ok(())
 }

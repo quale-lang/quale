@@ -165,8 +165,8 @@ impl VarAST {
     }
 
     #[inline]
-    pub(crate) fn get_type_mut(&mut self) {
-        let tmp = self.type_.borrow_mut();
+    pub(crate) fn get_type_mut(&mut self) -> std::cell::RefMut<'_, Type> {
+        self.type_.borrow_mut()
     }
 }
 

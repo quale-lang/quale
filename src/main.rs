@@ -28,7 +28,7 @@ fn init_session(args: Vec<&str>) -> Result<()> {
 
             let mut qast = parser.parse(&config.analyzer.src)?;
 
-            return infer(&mut qast);
+            infer(&mut qast)?;
 
             if config.dump_ast_only {
                 println!("{qast}");
