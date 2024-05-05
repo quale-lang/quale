@@ -57,6 +57,9 @@ pub enum QccErrorKind {
     UnknownBinaryExpr,
     ExpectedOpcode,
     ExpectedComma,
+    TypeError,
+    TypeMismatch,
+    UnknownType,
 }
 
 impl Display for QccErrorKind {
@@ -96,6 +99,9 @@ impl Display for QccErrorKind {
                 UnknownBinaryExpr => "unknown binary expression (unimplemented)",
                 ExpectedOpcode => "expected one of the following operations: +,-,*,/",
                 ExpectedComma => "expected a ',' comma",
+                TypeError => "type error found",
+                TypeMismatch => "a type mismatch is found",
+                UnknownType => "type cannot be inferred",
             }
         })(self))
     }

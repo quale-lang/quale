@@ -362,6 +362,11 @@ impl FunctionAST {
     }
 
     #[inline]
+    pub(crate) fn set_output_type(&mut self, type_: Type) {
+        self.output_type = type_;
+    }
+
+    #[inline]
     pub(crate) fn get_name(&self) -> &Ident {
         &self.name
     }

@@ -3,8 +3,8 @@ use crate::ast::{FunctionAST, Ident, Qast};
 use crate::attributes::Attribute;
 use crate::codegen::Translator;
 use crate::error::Result;
-use std::fmt;
 use std::borrow::Borrow;
+use std::fmt;
 
 use std::io::Write;
 
