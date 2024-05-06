@@ -118,6 +118,7 @@ impl std::fmt::Display for ModuleAST {
 
 /// A repr for a variable. It contains a `name` of the variable and its
 /// `location`.
+#[derive(Clone)]
 pub(crate) struct VarAST {
     name: Ident,
     location: Location,
@@ -156,6 +157,11 @@ impl VarAST {
     }
 
     #[inline]
+    pub(crate) fn is_typed(&self) -> bool {
+        *self.type_.borrow() != Type::Bottom
+    }
+
+    #[inline]
     pub(crate) fn get_type(&self) -> std::cell::Ref<'_, Type> {
         self.type_.borrow()
     }
@@ -171,7 +177,8 @@ impl std::fmt::Display for VarAST {
         if *self.type_.borrow() == Type::Bottom {
             write!(f, "{}", self.name)
         } else {
-            write!(f, "{}: {}", self.name, self.type_.borrow())
+            // write!(f, "{}: {}", self.name, self.type_.borrow())
+            write!(f, "{}ᵀ", self.name)
         }
     }
 }
@@ -295,6 +302,37 @@ pub(crate) enum Expr {
     FnCall(FunctionAST, Vec<Box<Expr>>),
     Let(VarAST, Box<Expr>),
     Literal(Box<LiteralAST>),
+}
+
+impl Iterator for &Expr {
+    type Item = Self;
+    fn next(&mut self) -> Option<Self::Item> {
+        match *self {
+            Expr::Var(_) => Some(self),
+            Expr::BinaryExpr(lhs, op, rhs) => {
+                if let Some(l) = lhs.as_ref().next() {
+                    return Some(l);
+                }
+                if let Some(r) = rhs.as_ref().next() {
+                    return Some(r);
+                }
+                return None;
+            }
+            Expr::FnCall(f, args) => {
+                for arg in args {
+                    if let Some(arg_iter) = arg.as_ref().next() {
+                        return Some(arg_iter);
+                    }
+                }
+                return None;
+            }
+            Expr::Let(var, val) => {
+                return None;
+            }
+            Expr::Literal(_) => Some(self),
+            _ => None,
+        }
+    }
 }
 
 impl std::fmt::Display for Expr {
