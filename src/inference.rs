@@ -9,7 +9,19 @@ pub(crate) fn checker(ast: &mut Qast) /*-> Result<()>*/ {}
 
 /// Type inference method.
 pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
+    let mut seen_errors = false;
+
     for module in ast.iter_mut() {
+        // functions but only collect their names and return types.
+        let mut function_symbol_table: Vec<VarAST> = vec![];
+        for function in module.iter() {
+            function_symbol_table.push(VarAST::new_with_type(
+                function.get_name().clone(),
+                function.get_loc().clone(),
+                function.get_output_type().clone(),
+            ));
+        }
+
         for function in module.iter_mut() {
             // parameter symbols
             let mut param_symbol_table = vec![];
@@ -23,51 +35,61 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
                 local_symbol_table.extend(gather_already_typed(instruction));
             }
 
-            print!("Fn {} = ", function.get_name());
-            for param in &param_symbol_table {
-                print!("{} | ", param);
-            }
-            for local in &local_symbol_table {
-                print!("{} | ", local);
-            }
-            println!();
-
             // infer local var types
             for instruction in function.iter_mut() {
                 let instruction_type = infer_expr(instruction);
                 if instruction_type.is_none() {
                     // we couldn't infer all types for expression
-                    // see if either param_symbol_table or local_symbol_table
-                    // contain any information
-                    if infer_from_table(instruction, &param_symbol_table, &local_symbol_table)
-                        .is_some()
-                    {
-                        // some vars were remained untyped, TODO print them
-                        return Err(QccErrorKind::UnknownType)?;
+                    // see if either symbol table contains any information
+                    if let Some(untyped) = infer_from_table(
+                        instruction,
+                        &param_symbol_table,
+                        &local_symbol_table,
+                        &function_symbol_table,
+                    ) {
+                        seen_errors = true;
+                        let err: QccError = QccErrorKind::UnknownType.into();
+                        err.report(format!("for {}", untyped).as_str());
                     }
                 }
             }
 
+            // type check between function return type and the last returned
+            // expression
             let fn_return_type = *function.get_output_type();
 
             let last_instruction = function.iter_mut().last();
             if last_instruction.is_some() {
                 let last = last_instruction.unwrap();
+
+                // get last expression's type
                 let last_instruction_type = infer_expr(last);
+
                 if fn_return_type == Type::Bottom && last_instruction_type.is_some() {
                     function.set_output_type(last_instruction_type.unwrap());
                 } else {
                     if last_instruction_type != Some(fn_return_type) {
+                        seen_errors = true;
                         let err: QccError = QccErrorKind::TypeMismatch.into();
-                        err.report(&last.to_string());
-
-                        return Err(QccErrorKind::TypeMismatch)?;
+                        let msg = format!(
+                            "between\n\t`{}` ({}) and `{}` ({})",
+                            &last.to_string(),
+                            last_instruction_type.unwrap(),
+                            function.get_name(),
+                            function.get_output_type()
+                        );
+                        err.report(&msg);
                     }
                 }
             }
         }
     }
-    Ok(())
+
+    if seen_errors {
+        return Err(QccErrorKind::TypeError)?;
+    } else {
+        Ok(())
+    }
 }
 
 /// Infer type for expression.
@@ -75,9 +97,6 @@ fn infer_expr(expr: &mut Box<Expr>) -> Option<Type> {
     match expr.borrow_mut() {
         Expr::Var(var) => {
             if *var.get_type() == Type::Bottom {
-                // let err: QccError = QccErrorKind::UnknownType.into();
-                // err.report(format!("for `{}` {}", &var.to_string(), &var.location()).as_str());
-                // return Err(QccErrorKind::TypeError)?;
                 return None;
             } else {
                 return Some(*var.get_type());
@@ -99,6 +118,7 @@ fn infer_expr(expr: &mut Box<Expr>) -> Option<Type> {
                     let arg_type = infer_expr(arg)?;
                     f.insert_input_type(arg_type);
                 }
+                // TODO: we cannot infer function return type
                 return Some(*f.get_output_type());
             } else {
                 return Some(*f.get_output_type());
@@ -115,7 +135,6 @@ fn infer_expr(expr: &mut Box<Expr>) -> Option<Type> {
                 let lhs_type = *var.get_type();
                 let rhs_type = infer_expr(val)?;
                 if lhs_type != rhs_type {
-                    // return Err(QccErrorKind::TypeMismatch)?;
                     return None;
                 }
                 return Some(lhs_type);
@@ -168,11 +187,13 @@ fn gather_already_typed(expr: &Box<Expr>) -> Vec<VarAST> {
 
 /// Infer types for each part of expression from symbol tables. If some
 /// expression cannot be typed, because no information was found in symbol
-/// tables, then return that expression.
+/// tables, then return that expression. Otherwise if complete expression is
+/// typed then return None.
 fn infer_from_table<'a>(
     expr: &'a mut Box<Expr>,
     param_st: &Vec<VarAST>,
     local_st: &Vec<VarAST>,
+    function_st: &Vec<VarAST>,
 ) -> Option<&'a VarAST> {
     match expr.as_mut().borrow_mut() {
         Expr::Var(var) => {
@@ -202,18 +223,40 @@ fn infer_from_table<'a>(
             None
         }
         Expr::BinaryExpr(lhs, op, rhs) => {
-            let lhs_info = infer_from_table(lhs, param_st, local_st);
+            let lhs_info = infer_from_table(lhs, param_st, local_st, function_st);
             if lhs_info.is_some() {
                 return lhs_info;
             }
-            let rhs_info = infer_from_table(rhs, param_st, local_st);
+            let rhs_info = infer_from_table(rhs, param_st, local_st, function_st);
             if rhs_info.is_some() {
                 return rhs_info;
             }
             None
         }
-        Expr::FnCall(f, args) => None,
-        Expr::Let(var, val) => None,
+        Expr::FnCall(f, args) => {
+            for arg in args {
+                let info = infer_from_table(arg, param_st, local_st, function_st);
+                if info.is_some() {
+                    return info;
+                }
+            }
+            for func in function_st {
+                if func.name() == f.get_name() && func.is_typed() {
+                    f.set_output_type(*func.get_type());
+                    break;
+                }
+            }
+
+            None
+        }
+        Expr::Let(var, val) => {
+            let rhs_info = infer_from_table(val, param_st, local_st, function_st);
+            if rhs_info.is_some() {
+                return rhs_info;
+            }
+
+            None
+        }
         _ => None,
     }
 }

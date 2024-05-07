@@ -177,8 +177,7 @@ impl std::fmt::Display for VarAST {
         if *self.type_.borrow() == Type::Bottom {
             write!(f, "{}", self.name)
         } else {
-            // write!(f, "{}: {}", self.name, self.type_.borrow())
-            write!(f, "{}ᵀ", self.name)
+            write!(f, "{}: {}", self.name, self.type_.borrow())
         }
     }
 }
