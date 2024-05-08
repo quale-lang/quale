@@ -161,6 +161,9 @@ impl VarAST {
         *self.type_.borrow() != Type::Bottom
     }
 
+    /// Get the type of variable.
+    ///
+    /// # NOTE: It does not check for untyped variables.
     #[inline]
     pub(crate) fn get_type(&self) -> std::cell::Ref<'_, Type> {
         self.type_.borrow()

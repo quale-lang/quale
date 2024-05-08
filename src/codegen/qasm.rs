@@ -1,8 +1,9 @@
 //! OpenQASM Codegen Backend
-use crate::ast::{FunctionAST, Ident, Qast};
+use crate::ast::{Expr, FunctionAST, Ident, Qast};
 use crate::attributes::Attribute;
 use crate::codegen::Translator;
 use crate::error::Result;
+use crate::types::Type;
 use std::borrow::Borrow;
 use std::fmt;
 
@@ -66,8 +67,7 @@ impl Translator<Qast> for QasmModule {
         let mut gates: Vec<QasmGate> = vec![];
         for module in ast.iter() {
             for f in module.iter() {
-                let attrs = f.get_attrs();
-                if !attrs.is_empty() && attrs.0.contains(&Attribute::NonDeter) {
+                if *f.get_output_type() == Type::Qbit || f.get_input_type().contains(&Type::Qbit) {
                     let g: &FunctionAST = f.borrow();
                     gates.push(g.into());
                 }
@@ -243,6 +243,7 @@ pub(crate) struct QasmGate {
     name: Ident,
     params: Vec<Ident>,
     qargs: Vec<Qreg>,
+    instructions: Vec<Ident>,
 }
 
 impl QasmGate {
@@ -251,16 +252,30 @@ impl QasmGate {
             name: name.into(),
             params: params.to_vec().iter().map(|p| p.to_string()).collect(),
             qargs,
+            instructions: Default::default(),
         }
     }
 }
 
 impl From<&FunctionAST> for QasmGate {
     fn from(f: &FunctionAST) -> Self {
+        let mut instructions: Vec<Ident> = Default::default();
+        for expr in f.iter() {
+            match expr.as_ref().borrow() {
+                Expr::Let(var, val) => {
+                    if var.is_typed() && *var.get_type() == Type::Qbit {
+                        instructions.push(format!("qreg {}[1];", var.name()));
+                    }
+                }
+                _ => {}
+            }
+        }
+
         Self {
             name: f.get_name().clone(),
             params: vec![],
             qargs: vec![],
+            instructions,
         }
     }
 }
@@ -285,22 +300,28 @@ impl fmt::Display for QasmGate {
                 "
 gate {}({}) {}
 {{
-    // body: feature to be implemented
-}}
 ",
                 self.name, params_s, qargs_s
-            )
+            )?;
+
+            for instruction in &self.instructions {
+                writeln!(f, "    {}", instruction)?;
+            }
+            writeln!(f, "}}")
         } else {
             write!(
                 f,
                 "
 gate {} {}
 {{
-    // body: feature to be implemented
-}}
 ",
                 self.name, qargs_s
-            )
+            )?;
+
+            for instruction in &self.instructions {
+                writeln!(f, "    {}", instruction)?;
+            }
+            writeln!(f, "}}")
         }
     }
 }
