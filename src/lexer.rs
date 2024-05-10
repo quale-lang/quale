@@ -226,6 +226,18 @@ impl Lexer {
             })(self, tokens)
     }
 
+    /// Checks if current token is not in the given slice of tokens.
+    pub(crate) fn is_none_token(&self, tokens: &[Token]) -> bool {
+        !self.token.is_none()
+            && (|lexer: &Self, tokens| -> bool {
+                let mut result = true;
+                for &token in tokens {
+                    result &= !self.is_token(token);
+                }
+                result
+            })(self, tokens)
+    }
+
     /// Returns the next token wrapped. If EOF is reached it returns None.
     /// In order to find next token, we start looking first in `self.line`, if
     /// it is empty then we need next line. Note, `next_line` trims the newline

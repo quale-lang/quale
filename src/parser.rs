@@ -288,13 +288,9 @@ impl Parser {
         }
     }
 
-    fn parse_fn_call(&mut self) -> Result<Box<Expr>> {
-        if !self.lexer.is_token(Token::Identifier) {
-            return Err(QccErrorKind::ExpectedFn)?;
-        }
-        let name = self.lexer.identifier();
-        self.lexer.consume(Token::Identifier)?;
-
+    /// It parses a function call with its arguments. The `name` and `location`
+    /// of function call is seen already so it simply appends this information.
+    fn parse_fn_call_args(&mut self, name: Ident, location: Location) -> Result<Box<Expr>> {
         if !self.lexer.is_token(Token::OParenth) {
             return Err(QccErrorKind::ExpectedParenth)?;
         }
@@ -306,17 +302,29 @@ impl Parser {
             if expr.is_ok() {
                 args.push(expr.unwrap());
             } else {
-                return Err(QccErrorKind::UnexpectedExpr)?;
+                break;
             }
 
+            if !self.lexer.is_any_token(&[Token::Comma, Token::CParenth]) {
+                if !self.lexer.is_token(Token::Comma) {
+                    return Err(QccErrorKind::ExpectedComma)?;
+                } else {
+                    return Err(QccErrorKind::ExpectedParenth)?;
+                }
+            }
             if self.lexer.is_token(Token::Comma) {
                 self.lexer.consume(Token::Comma)?;
             }
         }
+        if !self.lexer.is_token(Token::CParenth) {
+            return Err(QccErrorKind::ExpectedParenth)?;
+        }
+        self.lexer.consume(Token::CParenth)?;
 
         let function = FunctionAST::new(
             name,
-            Default::default(),
+            location, // location if found during
+            // type checking
             Default::default(),
             Default::default(),
             Default::default(),
@@ -325,6 +333,18 @@ impl Parser {
         );
 
         Ok(Box::new(Expr::FnCall(function, args)))
+    }
+
+    /// Parses a function call with its name and location.
+    fn parse_fn_call(&mut self) -> Result<Box<Expr>> {
+        if !self.lexer.is_token(Token::Identifier) {
+            return Err(QccErrorKind::ExpectedFn)?;
+        }
+        let name = self.lexer.identifier();
+        let location = self.lexer.location.clone();
+        self.lexer.consume(Token::Identifier)?;
+
+        self.parse_fn_call_args(name, location)
     }
 
     /// An expression can be of following kinds:
@@ -339,11 +359,20 @@ impl Parser {
                 return Err(QccErrorKind::UnexpectedDigit)?;
             }
 
-            let expr = LiteralAST::Lit_Digit((d.unwrap()));
+            let mut expr = Box::new(Expr::Literal(Box::new(LiteralAST::Lit_Digit((d.unwrap())))));
             self.lexer.consume(Token::Digit)?;
 
-            // TODO: Digit may be part of binary expression.
-            return Ok(Box::new(Expr::Literal(Box::new(expr))));
+            if self.lexer.is_any_token(Token::all_binops()) {
+                while self.lexer.is_any_token(Token::all_binops()) {
+                    let op: Opcode = self.lexer.identifier().parse()?;
+                    self.lexer.consume(self.lexer.token.unwrap())?;
+
+                    let subexpr = self.parse_expr()?;
+                    expr = Box::new(Expr::BinaryExpr(expr, op, subexpr));
+                }
+            }
+
+            return Ok(expr);
         } else if self.lexer.is_any_token(&[Token::Identifier, Token::Sub]) {
             if self.lexer.is_token(Token::Sub) {
                 // TODO: unary negative named variable
@@ -356,50 +385,7 @@ impl Parser {
 
             if self.lexer.is_token(Token::OParenth) {
                 // parse a function call
-                self.lexer.consume(Token::OParenth)?;
-
-                let mut args: Vec<Box<Expr>> = vec![];
-                while !self.lexer.is_token(Token::CParenth) {
-                    let expr = self.parse_expr();
-                    if expr.is_ok() {
-                        args.push(expr.unwrap());
-                    } else {
-                        break;
-                    }
-
-                    if !self.lexer.is_any_token(&[Token::Comma, Token::CParenth]) {
-                        if !self.lexer.is_token(Token::Comma) {
-                            return Err(QccErrorKind::ExpectedComma)?;
-                        } else {
-                            return Err(QccErrorKind::ExpectedParenth)?;
-                        }
-                    }
-                    if self.lexer.is_token(Token::Comma) {
-                        self.lexer.consume(Token::Comma)?;
-                    }
-                }
-                if !self.lexer.is_token(Token::CParenth) {
-                    return Err(QccErrorKind::ExpectedParenth)?;
-                }
-                self.lexer.consume(Token::CParenth)?;
-
-                if !self.lexer.is_token(Token::Semicolon) {
-                    return Err(QccErrorKind::ExpectedSemicolon)?;
-                }
-                self.lexer.consume(Token::Semicolon)?;
-
-                let function = FunctionAST::new(
-                    name,
-                    Default::default(), // location if found during
-                    // type checking
-                    Default::default(),
-                    Default::default(),
-                    Default::default(),
-                    Default::default(),
-                    Default::default(),
-                );
-
-                Ok(Box::new(Expr::FnCall(function, args)))
+                return self.parse_fn_call_args(name, location);
             } else if self.lexer.is_token(Token::Semicolon) {
                 // only a variable
                 let expr = Expr::Var(VarAST::new(name, location));
@@ -411,10 +397,7 @@ impl Parser {
                 let op: Opcode;
 
                 // get the opcode
-                if self
-                    .lexer
-                    .is_any_token(&[Token::Add, Token::Sub, Token::Mul, Token::Div])
-                {
+                if self.lexer.is_any_token(Token::all_binops()) {
                     // opcode in binary expression
                     op = self.lexer.identifier().parse()?;
                     self.lexer.consume(self.lexer.token.unwrap())?;
@@ -436,11 +419,16 @@ impl Parser {
                 }
 
                 if self.lexer.is_token(Token::Identifier) {
-                    // rhs is a named variable
+                    // rhs is a named variable or a function call
                     let name_rhs = self.lexer.identifier();
                     let loc_rhs = self.lexer.location.clone();
 
                     self.lexer.consume(Token::Identifier)?;
+
+                    if self.lexer.is_token(Token::OParenth) {
+                        // parse a function call
+                        return self.parse_fn_call_args(name_rhs, loc_rhs);
+                    }
 
                     let lhs = Expr::Var(VarAST::new(name, location));
                     let rhs = Expr::Var(VarAST::new(name_rhs, loc_rhs));
@@ -483,7 +471,6 @@ impl Parser {
                 }
             }
         } else {
-            // TODO: Complex binary expressions
             return Err(QccErrorKind::ExpectedExpr)?;
         }
     }
@@ -521,24 +508,14 @@ impl Parser {
                     Default::default(),
                 );
                 return Ok(Box::new(BinaryExprAST::FnCall(f, args)));
-            } else if self
-                .lexer
-                .is_any_token(&[Token::Add, Token::Sub, Token::Mul, Token::Div])
-            {
+            } else if self.lexer.is_any_token(Token::all_binops()) {
                 // (maybe complex) binary expression
                 let op = self.lexer.identifier().parse::<Opcode>()?;
 
                 if self.lexer.is_token(Token::OParenth) {
                     // a complex binary expression
                     let mut parenth_depth = 1;
-                    while parenth_depth != 0
-                        && self.lexer.is_any_token(&[
-                            Token::Add,
-                            Token::Sub,
-                            Token::Mul,
-                            Token::Div,
-                        ])
-                    {
+                    while parenth_depth != 0 && self.lexer.is_any_token(Token::all_binops()) {
                         let inner_expr = self.parse_binary_expr()?;
                     }
                 } else {
@@ -587,10 +564,7 @@ impl Parser {
 
         // a binary expression can be: a digit, a named variable, fn call or a
         // complex binary expression.
-        if self
-            .lexer
-            .is_any_token(&[Token::Add, Token::Sub, Token::Mul, Token::Div])
-        {
+        if self.lexer.is_any_token(Token::all_binops()) {
             Err(QccErrorKind::CmdlineErr)?
         } else if self.lexer.is_token(Token::Identifier) {
             let name = self.lexer.identifier();

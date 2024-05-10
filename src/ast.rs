@@ -3,6 +3,7 @@ use crate::attributes::Attributes;
 use crate::error::{QccError, QccErrorKind};
 use crate::lexer::Location;
 use crate::types::Type;
+use std::borrow::Borrow;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub(crate) enum Token {
@@ -37,6 +38,12 @@ pub(crate) enum Token {
     Module = -10,
     Import = -11,
     Let = -12,
+}
+
+impl Token {
+    pub(crate) fn all_binops() -> &'static [Self] {
+        &[Self::Add, Self::Sub, Self::Mul, Self::Div]
+    }
 }
 
 // Design of Qast
