@@ -1,2 +1,2 @@
 #[nondeter]
-fn     main (param: type) { return 42; }
+fn     main (param: qbit) { return 0; }
