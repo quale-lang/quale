@@ -424,7 +424,10 @@ impl Parser {
 
     /// Parse a binary expression.
     fn parse_binary_expr(&mut self) -> Result<Box<Expr>> {
-        if self.lexer.is_none_token(&[Token::Sub, Token::Identifier, Token::Digit]) {
+        if self
+            .lexer
+            .is_none_token(&[Token::Sub, Token::Identifier, Token::Digit])
+        {
             return Err(QccErrorKind::ExpectedExpr)?;
         }
         let lhs = self.parse_expr()?;
