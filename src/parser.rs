@@ -348,8 +348,9 @@ impl Parser {
 
     /// Returns the parsed expression.
     fn parse_expr(&mut self) -> Result<Box<Expr>> {
+        let mut unary_negative = false;
         if self.lexer.is_token(Token::Sub) {
-            // unary negative operator
+            unary_negative = true;
             self.lexer.consume(Token::Sub)?;
         }
 
@@ -358,7 +359,7 @@ impl Parser {
             let location = self.lexer.location.clone();
             self.lexer.consume(Token::Identifier)?;
 
-            let var = Box::new(Expr::Var(VarAST::new(name.clone(), location.clone())));
+            let var = Box::new(Expr::Var(VarAST::new_with_sign(name.clone(), location.clone(), unary_negative)));
 
             if self.lexer.is_none_token(&[
                 Token::OParenth, /* function call */

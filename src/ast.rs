@@ -130,6 +130,7 @@ pub(crate) struct VarAST {
     name: Ident,
     location: Location,
     type_: std::cell::RefCell<Type>,
+    unary_negative: bool,  // represent unary negative named variables
 }
 
 impl VarAST {
@@ -138,6 +139,7 @@ impl VarAST {
             name,
             location,
             type_: Default::default(),
+            unary_negative: false,
         }
     }
 
@@ -146,6 +148,16 @@ impl VarAST {
             name,
             location,
             type_: std::cell::RefCell::new(type_),
+            unary_negative: false,
+        }
+    }
+
+    pub(crate) fn new_with_sign(name: Ident, location: Location, unary_negative: bool) -> Self {
+        Self {
+            name,
+            location,
+            type_: Default::default(),
+            unary_negative,
         }
     }
 
@@ -184,10 +196,24 @@ impl VarAST {
 
 impl std::fmt::Display for VarAST {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if *self.type_.borrow() == Type::Bottom {
-            write!(f, "{}", self.name)
-        } else {
-            write!(f, "{}: {}", self.name, self.type_.borrow())
+        match *self.type_.borrow() {
+            Type::Bottom => {
+                if self.unary_negative {
+                    write!(f, "-{}", self.name)
+                } else {
+                    write!(f, "{}", self.name)
+
+                }
+            }
+            _ => {
+                if self.unary_negative {
+
+                    write!(f, "-{}: {}", self.name, self.type_.borrow())
+                } else {
+                    write!(f, "{}: {}", self.name, self.type_.borrow())
+
+                }
+            }
         }
     }
 }
