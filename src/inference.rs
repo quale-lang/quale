@@ -4,6 +4,41 @@ use crate::error::{QccError, QccErrorKind, Result};
 use crate::types::Type;
 use std::borrow::{Borrow, BorrowMut};
 
+/// A generic symbol table implementation.
+struct SymbolTable<T> {
+    table: Vec<T>,
+}
+
+impl<T> SymbolTable<T> {
+    fn new() -> Self {
+        Self { table: vec![] }
+    }
+
+    fn push(&mut self, value: T) {
+        self.table.push(value);
+    }
+
+    fn extend(&mut self, values: Vec<T>) {
+        self.table.extend(values);
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &T> + '_ {
+        self.table.iter()
+    }
+}
+
+impl<T> std::fmt::Display for SymbolTable<T>
+where
+    T: std::fmt::Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for entry in self.iter() {
+            write!(f, "{} ", entry)?;
+        }
+        writeln!(f, "")
+    }
+}
+
 /// Type checker
 pub(crate) fn checker(ast: &mut Qast) /*-> Result<()>*/ {}
 
@@ -13,9 +48,10 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
 
     for module in ast.iter_mut() {
         // functions but only collect their names and return types.
-        let mut function_symbol_table: Vec<VarAST> = vec![];
+        // let mut function_symbol_table: Vec<VarAST> = vec![];
+        let mut function_table: SymbolTable<VarAST> = SymbolTable::new();
         for function in module.iter() {
-            function_symbol_table.push(VarAST::new_with_type(
+            function_table.push(VarAST::new_with_type(
                 function.get_name().clone(),
                 function.get_loc().clone(),
                 function.get_output_type().clone(),
@@ -24,32 +60,32 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
 
         for function in module.iter_mut() {
             // parameter symbols
-            let mut param_symbol_table = vec![];
+            let mut parameter_table: SymbolTable<VarAST> = SymbolTable::new();
             for param in function.iter_params() {
-                param_symbol_table.push(param.clone());
+                parameter_table.push(param.clone());
             }
 
             // local variables
-            let mut local_symbol_table: Vec<VarAST> = vec![];
+            let mut local_var_table: SymbolTable<VarAST> = SymbolTable::new();
             for instruction in function.iter() {
-                local_symbol_table.extend(gather_already_typed(instruction));
+                local_var_table.extend(gather_already_typed(instruction));
             }
 
             // infer local var types
             for instruction in function.iter_mut() {
                 let instruction_type = infer_expr(instruction);
-                if instruction_type.is_none() {
+                if instruction_type.is_none() || instruction_type == Some(Type::Bottom) {
                     // we couldn't infer all types for expression
                     // see if either symbol table contains any information
                     if let Some(untyped) = infer_from_table(
                         instruction,
-                        &param_symbol_table,
-                        &local_symbol_table,
-                        &function_symbol_table,
+                        &parameter_table,
+                        &local_var_table,
+                        &function_table,
                     ) {
                         seen_errors = true;
                         let err: QccError = QccErrorKind::UnknownType.into();
-                        err.report(format!("for {}", untyped).as_str());
+                        err.report(format!("for `{}` {}", untyped, untyped.location()).as_str());
                     }
                 }
             }
@@ -118,7 +154,8 @@ fn infer_expr(expr: &mut Box<Expr>) -> Option<Type> {
                     let arg_type = infer_expr(arg)?;
                     f.insert_input_type(arg_type);
                 }
-                // TODO: we cannot infer function return type
+                // TODO: we cannot infer function return type and it may return
+                // a Bottom type.
                 return Some(*f.get_output_type());
             } else {
                 return Some(*f.get_output_type());
@@ -191,22 +228,22 @@ fn gather_already_typed(expr: &Box<Expr>) -> Vec<VarAST> {
 /// typed then return None.
 fn infer_from_table<'a>(
     expr: &'a mut Box<Expr>,
-    param_st: &Vec<VarAST>,
-    local_st: &Vec<VarAST>,
-    function_st: &Vec<VarAST>,
+    param_st: &SymbolTable<VarAST>,
+    local_st: &SymbolTable<VarAST>,
+    function_st: &SymbolTable<VarAST>,
 ) -> Option<&'a VarAST> {
     match expr.as_mut().borrow_mut() {
         Expr::Var(var) => {
             let mut param_type = Type::Bottom;
             let mut local_type = Type::Bottom;
-            for param in param_st {
+            for param in param_st.iter() {
                 if param.name() == var.name() && param.is_typed()
                 /*trivial*/
                 {
                     param_type = *param.get_type();
                 }
             }
-            for local in local_st {
+            for local in local_st.iter() {
                 if local.name() == var.name() && local.is_typed() {
                     local_type = *local.get_type();
                 }
@@ -240,13 +277,12 @@ fn infer_from_table<'a>(
                     return info;
                 }
             }
-            for func in function_st {
+            for func in function_st.iter() {
                 if func.name() == f.get_name() && func.is_typed() {
                     f.set_output_type(*func.get_type());
                     break;
                 }
             }
-
             None
         }
         Expr::Let(var, val) => {

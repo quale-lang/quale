@@ -4,8 +4,16 @@ module lib {
     extern fn cos(r: rad) : rad;
 }
 
+fn bar(x: f64, y: f64) : f64 {
+    return x + y;
+}
+
 fn main() {
-    let f2 = bar(e0 * cos(a) / nonce, -e1 * sin(a));
+    let a: rad = 3.14;
+    let e0: f64 = 1;
+    let nonce: f64 = 10;
+    let e1: f64 = e0;
+    let f2: f64 = bar(e0 * cos(a) / nonce, -e1 * sin(a));
     return f2;
 }
 
