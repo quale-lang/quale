@@ -202,16 +202,13 @@ impl std::fmt::Display for VarAST {
                     write!(f, "-{}", self.name)
                 } else {
                     write!(f, "{}", self.name)
-
                 }
             }
             _ => {
                 if self.unary_negative {
-
                     write!(f, "-{}: {}", self.name, self.type_.borrow())
                 } else {
                     write!(f, "{}: {}", self.name, self.type_.borrow())
-
                 }
             }
         }
@@ -337,6 +334,30 @@ pub(crate) enum Expr {
     FnCall(FunctionAST, Vec<Box<Expr>>),
     Let(VarAST, Box<Expr>),
     Literal(Box<LiteralAST>),
+}
+
+impl Expr {
+    pub(crate) fn get_type(&self) -> Type {
+        match &self {
+            Self::Var(v) => *v.get_type(),
+            Self::BinaryExpr(lhs, op, rhs) => {
+                if lhs.get_type() == rhs.get_type() {
+                    return lhs.get_type();
+                } else {
+                    // TODO
+                    return Type::Bottom;
+                }
+            }
+            Self::FnCall(f, args) => *f.get_output_type(),
+            Self::Let(var, val) => *var.get_type(),
+            Self::Literal(lit) => {
+                match lit.as_ref().borrow() {
+                    LiteralAST::Lit_Str(_) => Type::Bottom,
+                    LiteralAST::Lit_Digit(_) => Type::F64,
+                }
+            }
+        }
+    }
 }
 
 impl Iterator for &Expr {

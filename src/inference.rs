@@ -287,10 +287,7 @@ fn infer_from_table<'a>(
         }
         Expr::Let(var, val) => {
             let rhs_info = infer_from_table(val, param_st, local_st, function_st);
-            if rhs_info.is_some() {
-                return rhs_info;
-            }
-
+            var.set_type(val.get_type());
             None
         }
         _ => None,
