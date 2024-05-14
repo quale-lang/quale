@@ -402,6 +402,26 @@ impl Parser {
             }
 
             Ok(digit)
+        } else if self.lexer.is_token(Token::OParenth) {
+            // This will be a binary expression surrounded by parentheses.
+            self.lexer.consume(Token::OParenth)?;
+
+            let mut lhs: Option<Box<Expr>> = None;
+            while !self.lexer.is_token(Token::CParenth) {
+                lhs = Some(self.parse_expr()?);
+            }
+            self.lexer.consume(Token::CParenth)?;
+
+            if lhs.is_some() {
+                let lhs = lhs.unwrap();
+                if self.lexer.is_any_token(Token::all_binops()) {
+                    return self.parse_binary_expr_with_lhs(lhs);
+                } else {
+                    return Ok(lhs);
+                }
+            } else {
+                return Err(QccErrorKind::ExpectedExpr)?;
+            }
         } else {
             return Err(QccErrorKind::ExpectedExpr)?;
         }
