@@ -243,7 +243,7 @@ impl Parser {
         }
         self.lexer.consume(Token::OCurly)?;
 
-        let mut body: Vec<Box<Expr>> = Default::default();
+        let mut body: Vec<QccCell<Expr>> = Default::default();
         while !self.lexer.is_token(Token::CCurly) {
             if self.lexer.is_token(Token::Let) {
                 let expr = self.parse_let()?;
@@ -272,7 +272,7 @@ impl Parser {
         ))
     }
 
-    fn parse_return(&mut self) -> Result<Box<Expr>> {
+    fn parse_return(&mut self) -> Result<QccCell<Expr>> {
         if self.lexer.is_token(Token::Return) {
             self.lexer.consume(Token::Return)?;
             let expr = self.parse_expr()?;
@@ -290,13 +290,13 @@ impl Parser {
 
     /// It parses a function call with its arguments. The `name` and `location`
     /// of function call is seen already so it simply appends this information.
-    fn parse_fn_call_args(&mut self, name: Ident, location: Location) -> Result<Box<Expr>> {
+    fn parse_fn_call_args(&mut self, name: Ident, location: Location) -> Result<QccCell<Expr>> {
         if !self.lexer.is_token(Token::OParenth) {
             return Err(QccErrorKind::ExpectedParenth)?;
         }
         self.lexer.consume(Token::OParenth)?;
 
-        let mut args: Vec<Box<Expr>> = vec![];
+        let mut args: Vec<QccCell<Expr>> = vec![];
         while !self.lexer.is_token(Token::CParenth) {
             let expr = self.parse_expr();
             if expr.is_ok() {
@@ -331,11 +331,11 @@ impl Parser {
             Default::default(),
         );
 
-        Ok(Box::new(Expr::FnCall(function, args)))
+        Ok(Expr::FnCall(function, args).into())
     }
 
     /// Parses a function call with its name and location.
-    fn parse_fn_call(&mut self) -> Result<Box<Expr>> {
+    fn parse_fn_call(&mut self) -> Result<QccCell<Expr>> {
         if !self.lexer.is_token(Token::Identifier) {
             return Err(QccErrorKind::ExpectedFn)?;
         }
@@ -347,7 +347,7 @@ impl Parser {
     }
 
     /// Returns the parsed expression.
-    fn parse_expr(&mut self) -> Result<Box<Expr>> {
+    fn parse_expr(&mut self) -> Result<QccCell<Expr>> {
         let mut unary_negative = false;
         if self.lexer.is_token(Token::Sub) {
             unary_negative = true;
@@ -359,11 +359,12 @@ impl Parser {
             let location = self.lexer.location.clone();
             self.lexer.consume(Token::Identifier)?;
 
-            let var = Box::new(Expr::Var(VarAST::new_with_sign(
+            let var: QccCell<Expr> = Expr::Var(VarAST::new_with_sign(
                 name.clone(),
                 location.clone(),
                 unary_negative,
-            )));
+            ))
+            .into();
 
             if self.lexer.is_none_token(&[
                 Token::OParenth, /* function call */
@@ -393,20 +394,20 @@ impl Parser {
             }
             self.lexer.consume(Token::Digit)?;
 
-            let digit = Box::new(Expr::Literal(Box::new(LiteralAST::Lit_Digit(
-                digit.unwrap(),
-            ))));
+            let digit = Expr::Literal(std::rc::Rc::new(std::cell::RefCell::new(
+                LiteralAST::Lit_Digit(digit.unwrap()),
+            )));
 
             if self.lexer.is_any_token(Token::all_binops()) {
-                return self.parse_binary_expr_with_lhs(digit);
+                return self.parse_binary_expr_with_lhs(digit.into());
             }
 
-            Ok(digit)
+            Ok(digit.into())
         } else if self.lexer.is_token(Token::OParenth) {
             // This will be a binary expression surrounded by parentheses.
             self.lexer.consume(Token::OParenth)?;
 
-            let mut lhs: Option<Box<Expr>> = None;
+            let mut lhs: Option<QccCell<Expr>> = None;
             while !self.lexer.is_token(Token::CParenth) {
                 lhs = Some(self.parse_expr()?);
             }
@@ -428,7 +429,7 @@ impl Parser {
     }
 
     /// Parses binary expression but the left-most expression is already parsed.
-    fn parse_binary_expr_with_lhs(&mut self, lhs: Box<Expr>) -> Result<Box<Expr>> {
+    fn parse_binary_expr_with_lhs(&mut self, lhs: QccCell<Expr>) -> Result<QccCell<Expr>> {
         if self.lexer.is_none_token(Token::all_binops()) {
             return Err(QccErrorKind::ExpectedOpcode)?;
         }
@@ -436,19 +437,19 @@ impl Parser {
         let mut expr = lhs;
 
         while self.lexer.is_any_token(Token::all_binops()) {
-            let op: Opcode = self.lexer.identifier().parse()?;
+            let op = self.lexer.identifier().parse::<Opcode>()?;
             self.lexer.consume(self.lexer.token.unwrap())?;
 
             let rhs = self.parse_expr()?;
 
-            expr = Box::new(Expr::BinaryExpr(expr, op, rhs));
+            expr = Expr::BinaryExpr(expr, op, rhs).into();
         }
 
-        Ok(expr)
+        Ok(expr.into())
     }
 
     /// Parse a binary expression.
-    fn parse_binary_expr(&mut self) -> Result<Box<Expr>> {
+    fn parse_binary_expr(&mut self) -> Result<QccCell<Expr>> {
         if self
             .lexer
             .is_none_token(&[Token::Sub, Token::Identifier, Token::Digit])
@@ -459,7 +460,7 @@ impl Parser {
         self.parse_binary_expr_with_lhs(lhs)
     }
 
-    fn parse_let(&mut self) -> Result<Box<Expr>> {
+    fn parse_let(&mut self) -> Result<QccCell<Expr>> {
         if !self.lexer.is_token(Token::Let) {
             return Err(QccErrorKind::ExpectedLet)?;
         }
@@ -492,7 +493,7 @@ impl Parser {
 
         let val = self.parse_expr()?;
 
-        Ok(Box::new(Expr::Let(var, val)))
+        Ok(Expr::Let(var, val).into())
     }
 
     fn parse_module(&mut self) -> Result<ModuleAST> {

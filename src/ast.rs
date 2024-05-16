@@ -130,7 +130,7 @@ pub(crate) struct VarAST {
     name: Ident,
     location: Location,
     type_: std::cell::RefCell<Type>,
-    unary_negative: bool,  // represent unary negative named variables
+    unary_negative: bool, // represent unary negative named variables
 }
 
 impl VarAST {
@@ -328,21 +328,37 @@ impl std::fmt::Display for BinaryExprAST {
     }
 }
 
+pub(crate) type QccCell<T> = std::rc::Rc<std::cell::RefCell<T>>;
+
 pub(crate) enum Expr {
     Var(VarAST),
-    BinaryExpr(Box<Expr>, Opcode, Box<Expr>),
-    FnCall(FunctionAST, Vec<Box<Expr>>),
-    Let(VarAST, Box<Expr>),
-    Literal(Box<LiteralAST>),
+    BinaryExpr(QccCell<Expr>, Opcode, QccCell<Expr>),
+    FnCall(FunctionAST, Vec<QccCell<Expr>>),
+    Let(VarAST, QccCell<Expr>),
+    Literal(QccCell<LiteralAST>),
 }
 
 impl Expr {
+    pub(crate) fn get_location(&self) -> Location {
+        match &self {
+            Self::Var(v) => v.location().clone(),
+            Self::BinaryExpr(lhs, _, _) => lhs.as_ref().borrow().get_location(),
+            Self::FnCall(f, _) => f.get_loc().clone(),
+            Self::Let(var, _) => var.location.clone(),
+            Self::Literal(lit) =>
+            /*TODO*/
+            {
+                Default::default()
+            }
+        }
+    }
+
     pub(crate) fn get_type(&self) -> Type {
         match &self {
             Self::Var(v) => *v.get_type(),
             Self::BinaryExpr(lhs, op, rhs) => {
-                if lhs.get_type() == rhs.get_type() {
-                    return lhs.get_type();
+                if lhs.as_ref().borrow().get_type() == rhs.as_ref().borrow().get_type() {
+                    return lhs.as_ref().borrow().get_type();
                 } else {
                     // TODO
                     return Type::Bottom;
@@ -350,65 +366,82 @@ impl Expr {
             }
             Self::FnCall(f, args) => *f.get_output_type(),
             Self::Let(var, val) => *var.get_type(),
-            Self::Literal(lit) => {
-                match lit.as_ref().borrow() {
-                    LiteralAST::Lit_Str(_) => Type::Bottom,
-                    LiteralAST::Lit_Digit(_) => Type::F64,
-                }
-            }
+            Self::Literal(lit) => match *lit.as_ref().borrow() {
+                LiteralAST::Lit_Str(_) => Type::Bottom,
+                LiteralAST::Lit_Digit(_) => Type::F64,
+            },
         }
     }
 }
 
-impl Iterator for &Expr {
-    type Item = Self;
-    fn next(&mut self) -> Option<Self::Item> {
-        match *self {
-            Expr::Var(_) => Some(self),
-            Expr::BinaryExpr(lhs, op, rhs) => {
-                if let Some(l) = lhs.as_ref().next() {
-                    return Some(l);
-                }
-                if let Some(r) = rhs.as_ref().next() {
-                    return Some(r);
-                }
-                return None;
-            }
-            Expr::FnCall(f, args) => {
-                for arg in args {
-                    if let Some(arg_iter) = arg.as_ref().next() {
-                        return Some(arg_iter);
-                    }
-                }
-                return None;
-            }
-            Expr::Let(var, val) => {
-                return None;
-            }
-            Expr::Literal(_) => Some(self),
-            _ => None,
-        }
+impl From<Expr> for QccCell<Expr> {
+    fn from(expr: Expr) -> Self {
+        std::rc::Rc::new(std::cell::RefCell::new(expr))
     }
 }
+
+// TODO:
+// impl Iterator for &Expr {
+//     type Item = Self;
+//     fn next(&mut self) -> Option<Self::Item> {
+//         match *self {
+//             Expr::Var(_) => Some(self),
+//             Expr::BinaryExpr(lhs, op, rhs) => {
+//                 if let Some(l) = lhs.as_ref().next() {
+//                     return Some(l);
+//                 }
+//                 if let Some(r) = rhs.as_ref().next() {
+//                     return Some(r);
+//                 }
+//                 return None;
+//             }
+//             Expr::FnCall(f, args) => {
+//                 for arg in args {
+//                     if let Some(arg_iter) = arg.as_ref().next() {
+//                         return Some(arg_iter);
+//                     }
+//                 }
+//                 return None;
+//             }
+//             Expr::Let(var, val) => {
+//                 return None;
+//             }
+//             Expr::Literal(_) => Some(self),
+//             _ => None,
+//         }
+//     }
+// }
 
 impl std::fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Var(v) => write!(f, "{}", v),
-            Self::BinaryExpr(lhs, op, rhs) => write!(f, "({} {} {})", lhs, op, rhs),
+            Self::BinaryExpr(lhs, op, rhs) => {
+                write!(
+                    f,
+                    "({} {} {})",
+                    *lhs.as_ref().borrow(),
+                    op,
+                    *rhs.as_ref().borrow()
+                )
+            }
             Self::FnCall(function, args) => {
-                write!(f, "{}(", function.name)?;
+                if *function.get_output_type() != Type::Bottom {
+                    write!(f, "{}: {} (", function.name, function.output_type)?;
+                } else {
+                    write!(f, "{}(", function.name)?;
+                }
                 let args_str = args
                     .iter()
-                    .map(|p| p.to_string())
+                    .map(|p| p.as_ref().borrow().to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 write!(f, "{args_str}")?;
                 write!(f, ")")?;
                 Ok(())
             }
-            Self::Let(var, val) => write!(f, "{} = {}", var, val),
-            Self::Literal(lit) => write!(f, "{}", lit),
+            Self::Let(var, val) => write!(f, "{} = {}", var, *val.as_ref().borrow()),
+            Self::Literal(lit) => write!(f, "{}", *lit.as_ref().borrow()),
         }
     }
 }
@@ -421,7 +454,7 @@ pub(crate) struct FunctionAST {
     input_type: Vec<Type>,
     output_type: Type,
     attrs: Attributes,
-    body: Vec<Box<Expr>>,
+    body: Vec<QccCell<Expr>>,
 }
 
 // impl Expr for FunctionAST {}
@@ -434,7 +467,7 @@ impl FunctionAST {
         input_type: Vec<Type>,
         output_type: Type,
         attrs: Attributes,
-        body: Vec<Box<Expr>>,
+        body: Vec<QccCell<Expr>>,
     ) -> Self {
         Self {
             name,
@@ -495,11 +528,11 @@ impl FunctionAST {
     //     }
     // }
 
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &Box<Expr>> + '_ {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &QccCell<Expr>> + '_ {
         self.body.iter()
     }
 
-    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut Box<Expr>> + '_ {
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut QccCell<Expr>> + '_ {
         self.body.iter_mut()
     }
 
@@ -533,7 +566,7 @@ impl std::fmt::Display for FunctionAST {
         )?;
 
         for expr in &self.body {
-            writeln!(f, "    {}", *expr)?;
+            writeln!(f, "    {}", *expr.as_ref().borrow())?;
         }
         writeln!(f, "}}")?;
 
