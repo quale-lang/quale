@@ -1,5 +1,5 @@
 //! Type inference mechanism for qcc.
-use crate::ast::{QccCell, Expr, LiteralAST, Qast, VarAST, FunctionAST};
+use crate::ast::{Expr, FunctionAST, LiteralAST, Qast, QccCell, VarAST};
 use crate::error::{QccError, QccErrorKind, Result};
 use crate::types::Type;
 use std::borrow::{Borrow, BorrowMut};
@@ -261,14 +261,13 @@ fn infer_from_table(
     local_st: &SymbolTable<VarAST>,
     function_st: &SymbolTable<VarAST>,
 ) -> Option<QccCell<Expr>> {
-
     match *expr.as_ref().borrow_mut() {
         Expr::Var(ref mut var) => {
             let mut param_type = Type::Bottom;
             let mut local_type = Type::Bottom;
             for param in param_st.iter() {
                 if param.name() == var.name() && param.is_typed()
-                    /*trivial*/
+                /*trivial*/
                 {
                     param_type = *param.get_type();
                 }
@@ -281,11 +280,14 @@ fn infer_from_table(
             if param_type == local_type && param_type == Type::Bottom {
                 // couldn't find any type information
                 // return Some(var);
-                return Some(Expr::Var(VarAST::new_with_type(
-                            var.name().clone(),
-                            var.location().clone(),
-                            *var.get_type(),
-                )).into());
+                return Some(
+                    Expr::Var(VarAST::new_with_type(
+                        var.name().clone(),
+                        var.location().clone(),
+                        *var.get_type(),
+                    ))
+                    .into(),
+                );
             }
             if param_type != Type::Bottom {
                 var.set_type(param_type);
@@ -323,15 +325,21 @@ fn infer_from_table(
             }
 
             // unable to infer return type for function, returning it
-            Some(Expr::FnCall(FunctionAST::new(
+            Some(
+                Expr::FnCall(
+                    FunctionAST::new(
                         f.get_name().clone(),
                         f.get_loc().clone(),
                         Default::default(),
                         Default::default(),
                         *f.get_output_type(),
                         Default::default(),
-                        Default::default()
-            ), vec![]).into())
+                        Default::default(),
+                    ),
+                    vec![],
+                )
+                .into(),
+            )
         }
         Expr::Let(ref mut var, ref val) => {
             let rhs_info = infer_from_table(val, param_st, local_st, function_st);
