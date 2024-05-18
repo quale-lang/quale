@@ -114,6 +114,7 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
             // type check between function return type and the last returned
             // expression
             let fn_return_type = *function.get_output_type();
+            let fn_name = function.as_ref().borrow().get_name().clone();
 
             let last_instruction = function.iter_mut().last();
             if last_instruction.is_some() {
@@ -128,16 +129,18 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
                     if last_instruction_type != Some(fn_return_type) {
                         seen_errors = true;
                         let err: QccError = QccErrorKind::TypeMismatch.into();
-                        // let last_expr = last.as_ref().borrow();
-                        let msg = format!(
-                            "between\n\t`{{}}` ({{}}) and `{}` ({})",
-                            // FIXME:
-                            // last.as_ref().borrow(),
-                            // &last.to_string(),
-                            function.get_name(),
-                            function.get_output_type()
-                        );
-                        err.report(&msg);
+                        let last_expr = last.as_ref().borrow();
+                        if last_instruction_type.is_none() {
+                            err.report(&format!(
+                                "between\n\t`{}` ({}) and `{}` ({})",
+                                last_expr, Type::Bottom, fn_name, fn_return_type
+                            ));
+                        } else {
+                            err.report(&format!(
+                                "between\n\t`{}` ({}) and `{}` ({})",
+                                last_expr, last_instruction_type.unwrap(), fn_name, fn_return_type
+                            ));
+                        }
                     }
                 }
             }
