@@ -39,8 +39,82 @@ where
     }
 }
 
-/// Type checker
-pub(crate) fn checker(ast: &mut Qast) /*-> Result<()>*/ {}
+/// Sanity type checker for entire Qast.
+pub(crate) fn checker(ast: &Qast) -> Result<()> {
+    for module in ast.iter() {
+        for function in module.iter() {
+            for expr in function.iter() {
+                check_expr(expr);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
+    match *expr.as_ref().borrow() {
+        Expr::Var(ref v) => {
+            if !v.is_typed() {
+                let err: QccError = QccErrorKind::UnknownType.into();
+                err.report(&format!("for {}", v));
+                return Err(QccErrorKind::UnknownType)?;
+            } else {
+                return Ok(*v.get_type());
+            }
+        }
+        Expr::BinaryExpr(ref lhs, _, ref rhs) => {
+            let lhs_type = check_expr(lhs)?;
+            let rhs_type = check_expr(rhs)?;
+
+            if lhs_type != rhs_type {
+                let err: QccError = QccErrorKind::TypeMismatch.into();
+                err.report(&format!("between {} and {}",
+                        lhs.as_ref().borrow(), rhs.as_ref().borrow()));
+                return Err(QccErrorKind::TypeMismatch)?;
+            }
+
+            Ok(lhs_type)
+        }
+        Expr::FnCall(ref f, ref args) => {
+            for arg in args {
+                check_expr(arg)?;
+            }
+
+            if *f.get_output_type() == Type::Bottom {
+                let err: QccError = QccErrorKind::UnknownType.into();
+                err.report(&format!("for {}", f));
+                return Err(QccErrorKind::UnknownType)?;
+            }
+
+            Ok(*f.get_output_type())
+        }
+        Expr::Let(ref var, ref val) => {
+            if !var.is_typed() {
+                let err: QccError = QccErrorKind::UnknownType.into();
+                err.report("for {{}}");
+                return Err(QccErrorKind::UnknownType)?;
+            }
+            let val_type = check_expr(val)?;
+
+            if *var.get_type() != val_type {
+                let err: QccError = QccErrorKind::TypeMismatch.into();
+                err.report(&format!("between {} and {}",
+                        var, val.as_ref().borrow()));
+                return Err(QccErrorKind::TypeMismatch)?;
+            }
+
+            Ok(val_type)
+        }
+        Expr::Literal(ref lit) => {
+            match *lit.as_ref().borrow() {
+                LiteralAST::Lit_Digit(ref digit) => Ok(Type::F64),
+                LiteralAST::Lit_Str(ref s) => Ok(Type::Bottom)
+            }
+        }
+
+    }
+}
 
 /// Type inference method.
 pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
