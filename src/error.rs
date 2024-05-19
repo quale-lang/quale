@@ -118,6 +118,12 @@ impl QccError {
     pub(crate) fn report(&self, msg: &str) {
         eprintln!("{} {}", self, msg);
     }
+
+    #[inline]
+    /// Check if an error is of certain kind.
+    pub(crate) fn is(&self, kind: QccErrorKind) -> bool {
+        self.0 == kind
+    }
 }
 
 impl Display for QccError {
