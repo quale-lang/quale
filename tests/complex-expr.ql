@@ -19,7 +19,7 @@ fn bar(x: f64, y: f64) : f64 {
 }
 
 fn main() {
-    let a: rad = 3.14;
+    let a: f64 = 3.14;
     let e0: f64 = 1;
     let nonce = a;
     let e1 = e0;

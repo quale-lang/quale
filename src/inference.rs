@@ -52,12 +52,12 @@ pub(crate) fn checker(ast: &Qast) -> Result<()> {
     Ok(())
 }
 
+/// Checks type of an expression and returns it, an unknown type or a mismatch
+/// results in an error being returned.
 fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
     match *expr.as_ref().borrow() {
         Expr::Var(ref v) => {
             if !v.is_typed() {
-                let err: QccError = QccErrorKind::UnknownType.into();
-                err.report(&format!("for {}", v));
                 return Err(QccErrorKind::UnknownType)?;
             } else {
                 return Ok(*v.get_type());
@@ -68,9 +68,6 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
             let rhs_type = check_expr(rhs)?;
 
             if lhs_type != rhs_type {
-                let err: QccError = QccErrorKind::TypeMismatch.into();
-                err.report(&format!("between {} and {}",
-                        lhs.as_ref().borrow(), rhs.as_ref().borrow()));
                 return Err(QccErrorKind::TypeMismatch)?;
             }
 
@@ -82,8 +79,6 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
             }
 
             if *f.get_output_type() == Type::Bottom {
-                let err: QccError = QccErrorKind::UnknownType.into();
-                err.report(&format!("for {}", f));
                 return Err(QccErrorKind::UnknownType)?;
             }
 
@@ -91,28 +86,20 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
         }
         Expr::Let(ref var, ref val) => {
             if !var.is_typed() {
-                let err: QccError = QccErrorKind::UnknownType.into();
-                err.report("for {{}}");
                 return Err(QccErrorKind::UnknownType)?;
             }
             let val_type = check_expr(val)?;
 
             if *var.get_type() != val_type {
-                let err: QccError = QccErrorKind::TypeMismatch.into();
-                err.report(&format!("between {} and {}",
-                        var, val.as_ref().borrow()));
                 return Err(QccErrorKind::TypeMismatch)?;
             }
 
             Ok(val_type)
         }
-        Expr::Literal(ref lit) => {
-            match *lit.as_ref().borrow() {
-                LiteralAST::Lit_Digit(ref digit) => Ok(Type::F64),
-                LiteralAST::Lit_Str(ref s) => Ok(Type::Bottom)
-            }
-        }
-
+        Expr::Literal(ref lit) => match *lit.as_ref().borrow() {
+            LiteralAST::Lit_Digit(ref digit) => Ok(Type::F64),
+            LiteralAST::Lit_Str(ref s) => Ok(Type::Bottom),
+        },
     }
 }
 
@@ -141,7 +128,16 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
             // local variables
             let mut local_var_table: SymbolTable<VarAST> = SymbolTable::new();
             for instruction in function.iter() {
-                local_var_table.extend(gather_already_typed(instruction));
+                // only add let-lhs and only if they are type checked
+                match *instruction.as_ref().borrow() {
+                    Expr::Let(ref def, _) => {
+                        let checked = check_expr(instruction);
+                        if checked.is_ok_and(|ty| ty != Type::Bottom) {
+                            local_var_table.push(def.clone());
+                        }
+                    }
+                    _ => {}
+                }
             }
 
             // infer local var types
@@ -151,35 +147,42 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
                 if instruction_type.is_none() || instruction_type == Some(Type::Bottom) {
                     // we couldn't infer all types for expression
                     // see if either symbol table contains any information
-                    if let Some(untyped) = infer_from_table(
+                    match infer_from_table(
                         instruction,
                         &parameter_table,
                         &local_var_table,
                         &function_table,
                     ) {
-                        seen_errors = true;
-                        let err: QccError = QccErrorKind::UnknownType.into();
-                        let expr = untyped.as_ref().borrow();
-                        err.report(format!("for `{}` {}", expr, expr.get_location()).as_str());
-                    }
-                }
-
-                // This infers type for let expressions based on the symbol
-                // table but doesn't update the table entries. For e.g.,
-                // ```quale
-                //   let a: f64 = 42;
-                //   let b = a;  // this is inferred as f64 type, but symbol table
-                //               // doesn't contain it after inferring
-                //   let c = b;  // hence, this would fail to be inferred
-                // ```
-                // So we have to update symbol tables accordingly.
-                match *instruction.as_ref().borrow() {
-                    Expr::Let(ref var, _) => {
-                        if var.is_typed() {
-                            local_var_table.push(var.clone());
+                        None => {
+                            // This infers type for let expressions based on the
+                            // symbol table but doesn't update the table
+                            // entries. For e.g.,
+                            // ```quale
+                            //   let a: f64 = 42;
+                            //   let b = a;  // this is inferred as f64 type,
+                            //               // but symbol table
+                            //               // doesn't contain it after
+                            //               // inferring
+                            //   let c = b;  // hence, this would fail to be
+                            //               // inferred
+                            // ```
+                            // So we have to update symbol tables accordingly.
+                            match *instruction.as_ref().borrow() {
+                                Expr::Let(ref var, _) => {
+                                    if var.is_typed() {
+                                        local_var_table.push(var.clone());
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                        Some(untyped) => {
+                            seen_errors = true;
+                            let err: QccError = QccErrorKind::UnknownType.into();
+                            let expr = untyped.as_ref().borrow();
+                            err.report(format!("for `{}` {}", expr, expr.get_location()).as_str());
                         }
                     }
-                    _ => {}
                 }
             }
 
@@ -205,12 +208,18 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
                         if last_instruction_type.is_none() {
                             err.report(&format!(
                                 "between\n\t`{}` ({}) and `{}` ({})",
-                                last_expr, Type::Bottom, fn_name, fn_return_type
+                                last_expr,
+                                Type::Bottom,
+                                fn_name,
+                                fn_return_type
                             ));
                         } else {
                             err.report(&format!(
                                 "between\n\t`{}` ({}) and `{}` ({})",
-                                last_expr, last_instruction_type.unwrap(), fn_name, fn_return_type
+                                last_expr,
+                                last_instruction_type.unwrap(),
+                                fn_name,
+                                fn_return_type
                             ));
                         }
                     }
