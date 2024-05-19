@@ -119,12 +119,10 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
 /// Type inference method.
 pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
     let mut seen_errors = false;
+    let mut function_table: SymbolTable<VarAST> = SymbolTable::new();
 
     for module in ast.iter_mut() {
         // functions but only collect their names and return types.
-        // let mut function_symbol_table: Vec<VarAST> = vec![];
-        // TODO: Imported functions from different modules aren't handled.
-        let mut function_table: SymbolTable<VarAST> = SymbolTable::new();
         for function in module.iter() {
             function_table.push(VarAST::new_with_type(
                 function.get_name().clone(),

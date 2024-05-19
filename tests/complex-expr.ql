@@ -1,8 +1,16 @@
 module lib {
 
-fn bar(x: f64, y: f64) : f64;
-fn sin(r: f64) : f64;
-fn cos(r: f64) : f64;
+fn bar(x: f64, y: f64) : f64 {
+    return 0;
+}
+
+fn sin(r: f64) : f64 {
+    return (r / 180);
+}
+
+fn cos(r: f64) : f64 {
+    return (r / 90);
+}
 
 }
 
