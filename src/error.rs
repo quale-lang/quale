@@ -60,6 +60,8 @@ pub enum QccErrorKind {
     TypeError,
     TypeMismatch,
     UnknownType,
+    ExpectedQbit,
+    ExpectedAmpinQbit,
 }
 
 impl Display for QccErrorKind {
@@ -102,6 +104,8 @@ impl Display for QccErrorKind {
                 TypeError => "type error found",
                 TypeMismatch => "a type mismatch is found",
                 UnknownType => "type cannot be inferred",
+                ExpectedQbit => "expected a quantum bit of the form `0q(<amplitude>, <amplitude>)`",
+                ExpectedAmpinQbit => "expected pairs of probability amplitudes",
             }
         })(self))
     }

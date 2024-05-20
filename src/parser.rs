@@ -348,6 +348,13 @@ impl Parser {
 
     /// Returns the parsed expression.
     fn parse_expr(&mut self) -> Result<QccCell<Expr>> {
+        if self.lexer.is_token(Token::Qbit) {
+            let qbit = self.lexer.identifier().parse::<Qbit>()?;
+            self.lexer.consume(Token::Qbit)?;
+            let expr = Expr::Literal(LiteralAST::Lit_Qbit(qbit).into());
+            return Ok(expr.into());
+        }
+
         let mut unary_negative = false;
         if self.lexer.is_token(Token::Sub) {
             unary_negative = true;

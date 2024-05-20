@@ -38,6 +38,7 @@ pub(crate) enum Token {
     Module = -10,
     Import = -11,
     Let = -12,
+    Qbit = -13,
 }
 
 impl Token {
@@ -254,7 +255,55 @@ impl std::fmt::Display for Opcode {
     }
 }
 
+pub(crate) struct Qbit {
+    amp_0: f64,
+    amp_1: f64,
+}
+
+impl std::fmt::Display for Qbit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "0q{}_{}", self.amp_0, self.amp_1)
+    }
+}
+
+impl std::str::FromStr for Qbit {
+    type Err = QccErrorKind;
+
+    /// A quantum numeral should be of the form `0q(<amplitude>, amplitude)`
+    /// where the pair of amplitudes are probability amplitudes for zero and one
+    /// basis vectors respectively.
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        if !s.starts_with("0q") {
+            Err(QccErrorKind::ExpectedQbit)?
+        }
+
+        let s = s.trim_start_matches("0q");
+
+        if !s.starts_with('(') || !s.ends_with(')') {
+            Err(QccErrorKind::ExpectedParenth)?
+        }
+
+        let (s1, s2) = s.trim_matches(&['(', ')']).split_once(',')
+            .ok_or(QccErrorKind::ExpectedParenth)?;
+
+        let amp_0 = s1.trim().parse::<f64>();
+        if amp_0.is_err() {
+            Err(QccErrorKind::ExpectedAmpinQbit)?
+        }
+        let amp_0 = amp_0.unwrap();
+        let amp_1 = s2.trim().parse::<f64>();
+        if amp_1.is_err() {
+            Err(QccErrorKind::ExpectedAmpinQbit)?
+        }
+        let amp_1 = amp_1.unwrap();
+
+        Ok(Self { amp_0, amp_1 })
+
+    }
+}
+
 pub(crate) enum LiteralAST {
+    Lit_Qbit(Qbit),
     Lit_Digit(f64),
     Lit_Str(Vec<u8>), // does not store the quotations around str
 }
@@ -274,6 +323,10 @@ impl std::str::FromStr for LiteralAST {
                 }
             }
             return Ok(Self::Lit_Str((v)));
+        } else if s.starts_with("0q") {
+            // quantum numeral
+            let qn = s.parse::<Qbit>()?;
+            Ok(Self::Lit_Qbit(qn))
         } else {
             // parse digit
             let d = s.parse::<f64>();
@@ -296,7 +349,14 @@ impl std::fmt::Display for LiteralAST {
                 }
                 write!(f, "\"")
             }
+            LiteralAST::Lit_Qbit(qn) => write!(f, "{}", qn),
         }
+    }
+}
+
+impl From<LiteralAST> for QccCell<LiteralAST> {
+    fn from(lit: LiteralAST) -> Self {
+        QccCell::new(lit.into())
     }
 }
 
@@ -369,6 +429,7 @@ impl Expr {
             Self::Literal(lit) => match *lit.as_ref().borrow() {
                 LiteralAST::Lit_Str(_) => Type::Bottom,
                 LiteralAST::Lit_Digit(_) => Type::F64,
+                LiteralAST::Lit_Qbit(_) => Type::Qbit,
             },
         }
     }

@@ -332,6 +332,16 @@ impl Lexer {
 
         if self.current().is_ascii_digit() {
             self.ptr.current += 1;
+
+            // lexing quantum bit
+            if self.current() == 'q' as u8 {
+                while self.current() != ')' as u8 {
+                    self.ptr.current += 1;
+                }
+                self.ptr.current += 1;
+                return Ok(Some(Token::Qbit));
+            }
+
             while self.current().is_ascii_digit() || self.current() == '.' as u8 {
                 self.ptr.current += 1;
             }

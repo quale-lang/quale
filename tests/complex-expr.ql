@@ -1,7 +1,7 @@
 module lib {
 
-fn bar(x: f64, y: f64) : f64 {
-    return 0;
+fn bar(x: f64, y: f64) : qbit {
+    return 0q(1.0, 0.0);
 }
 
 fn sin(r: f64) : f64 {

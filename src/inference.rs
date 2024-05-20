@@ -99,6 +99,7 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
         Expr::Literal(ref lit) => match *lit.as_ref().borrow() {
             LiteralAST::Lit_Digit(ref digit) => Ok(Type::F64),
             LiteralAST::Lit_Str(ref s) => Ok(Type::Bottom),
+            LiteralAST::Lit_Qbit(_) => Ok(Type::Qbit),
         },
     }
 }
@@ -294,6 +295,7 @@ fn infer_expr(expr: &QccCell<Expr>) -> Option<Type> {
             return match *lit.as_ref().borrow() {
                 LiteralAST::Lit_Digit(_) => Some(Type::F64),
                 LiteralAST::Lit_Str(_) => Some(Type::Bottom),
+                LiteralAST::Lit_Qbit(_) => Some(Type::Qbit),
             };
         }
     }
