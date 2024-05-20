@@ -208,19 +208,21 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
                         let last_expr = last.as_ref().borrow();
                         if last_instruction_type.is_none() {
                             err.report(&format!(
-                                "between\n\t`{}` ({}) and `{}` ({})",
+                                "between\n\t`{}` ({}) and `{}` ({}) {}",
                                 last_expr,
                                 Type::Bottom,
                                 fn_name,
-                                fn_return_type
+                                fn_return_type,
+                                last.as_ref().borrow().get_location()
                             ));
                         } else {
                             err.report(&format!(
-                                "between\n\t`{}` ({}) and `{}` ({})",
+                                "between\n\t`{}` ({}) and `{}` ({}) {}",
                                 last_expr,
                                 last_instruction_type.unwrap(),
                                 fn_name,
-                                fn_return_type
+                                fn_return_type,
+                                last.as_ref().borrow().get_location()
                             ));
                         }
                     }
