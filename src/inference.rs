@@ -145,6 +145,17 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
             for instruction in function.iter_mut() {
                 let instruction_type = infer_expr(instruction);
 
+                if instruction_type.is_some_and(|ty| ty != Type::Bottom) {
+                    match *instruction.as_ref().borrow() {
+                        Expr::Let(ref var, _) => {
+                            if var.is_typed() {
+                                local_var_table.push(var.clone());
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
                 if instruction_type.is_none() || instruction_type == Some(Type::Bottom) {
                     // we couldn't infer all types for expression
                     // see if either symbol table contains any information
@@ -208,21 +219,21 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
                         let last_expr = last.as_ref().borrow();
                         if last_instruction_type.is_none() {
                             err.report(&format!(
-                                "between\n\t`{}` ({}) and `{}` ({}) {}",
-                                last_expr,
-                                Type::Bottom,
-                                fn_name,
-                                fn_return_type,
-                                last.as_ref().borrow().get_location()
+                                    "between\n\t`{}` ({}) and `{}` ({}) {}",
+                                    last_expr,
+                                    Type::Bottom,
+                                    fn_name,
+                                    fn_return_type,
+                                    last.as_ref().borrow().get_location()
                             ));
                         } else {
                             err.report(&format!(
-                                "between\n\t`{}` ({}) and `{}` ({}) {}",
-                                last_expr,
-                                last_instruction_type.unwrap(),
-                                fn_name,
-                                fn_return_type,
-                                last.as_ref().borrow().get_location()
+                                    "between\n\t`{}` ({}) and `{}` ({}) {}",
+                                    last_expr,
+                                    last_instruction_type.unwrap(),
+                                    fn_name,
+                                    fn_return_type,
+                                    last.as_ref().borrow().get_location()
                             ));
                         }
                     }
@@ -355,7 +366,7 @@ fn infer_from_table(
             let mut local_type = Type::Bottom;
             for param in param_st.iter() {
                 if param.name() == var.name() && param.is_typed()
-                /*trivial*/
+                    /*trivial*/
                 {
                     param_type = *param.get_type();
                 }
@@ -370,9 +381,9 @@ fn infer_from_table(
                 // return Some(var);
                 return Some(
                     Expr::Var(VarAST::new_with_type(
-                        var.name().clone(),
-                        var.location().clone(),
-                        *var.get_type(),
+                            var.name().clone(),
+                            var.location().clone(),
+                            *var.get_type(),
                     ))
                     .into(),
                 );
