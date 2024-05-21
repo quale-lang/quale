@@ -144,7 +144,6 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
 
             // infer local var types
             for instruction in function.iter_mut() {
-                println!("Before: {}", instruction.as_ref().borrow());
                 let instruction_type = infer_expr(instruction);
 
                 if instruction_type.is_some_and(|ty| ty != Type::Bottom) {
