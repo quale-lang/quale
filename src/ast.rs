@@ -283,7 +283,9 @@ impl std::str::FromStr for Qbit {
             Err(QccErrorKind::ExpectedParenth)?
         }
 
-        let (s1, s2) = s.trim_matches(&['(', ')']).split_once(',')
+        let (s1, s2) = s
+            .trim_matches(&['(', ')'])
+            .split_once(',')
             .ok_or(QccErrorKind::ExpectedParenth)?;
 
         let amp_0 = s1.trim().parse::<f64>();
@@ -298,7 +300,6 @@ impl std::str::FromStr for Qbit {
         let amp_1 = amp_1.unwrap();
 
         Ok(Self { amp_0, amp_1 })
-
     }
 }
 

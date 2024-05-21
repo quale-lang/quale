@@ -5,6 +5,7 @@ use crate::types::Type;
 use std::borrow::{Borrow, BorrowMut};
 
 /// A generic symbol table implementation.
+// TODO: Use HashSet, keep track of namespaces
 struct SymbolTable<T> {
     table: Vec<T>,
 }
@@ -143,6 +144,7 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
 
             // infer local var types
             for instruction in function.iter_mut() {
+                println!("Before: {}", instruction.as_ref().borrow());
                 let instruction_type = infer_expr(instruction);
 
                 if instruction_type.is_some_and(|ty| ty != Type::Bottom) {
@@ -219,21 +221,21 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
                         let last_expr = last.as_ref().borrow();
                         if last_instruction_type.is_none() {
                             err.report(&format!(
-                                    "between\n\t`{}` ({}) and `{}` ({}) {}",
-                                    last_expr,
-                                    Type::Bottom,
-                                    fn_name,
-                                    fn_return_type,
-                                    last.as_ref().borrow().get_location()
+                                "between\n\t`{}` ({}) and `{}` ({}) {}",
+                                last_expr,
+                                Type::Bottom,
+                                fn_name,
+                                fn_return_type,
+                                last.as_ref().borrow().get_location()
                             ));
                         } else {
                             err.report(&format!(
-                                    "between\n\t`{}` ({}) and `{}` ({}) {}",
-                                    last_expr,
-                                    last_instruction_type.unwrap(),
-                                    fn_name,
-                                    fn_return_type,
-                                    last.as_ref().borrow().get_location()
+                                "between\n\t`{}` ({}) and `{}` ({}) {}",
+                                last_expr,
+                                last_instruction_type.unwrap(),
+                                fn_name,
+                                fn_return_type,
+                                last.as_ref().borrow().get_location()
                             ));
                         }
                     }
@@ -366,7 +368,7 @@ fn infer_from_table(
             let mut local_type = Type::Bottom;
             for param in param_st.iter() {
                 if param.name() == var.name() && param.is_typed()
-                    /*trivial*/
+                /*trivial*/
                 {
                     param_type = *param.get_type();
                 }
@@ -381,9 +383,9 @@ fn infer_from_table(
                 // return Some(var);
                 return Some(
                     Expr::Var(VarAST::new_with_type(
-                            var.name().clone(),
-                            var.location().clone(),
-                            *var.get_type(),
+                        var.name().clone(),
+                        var.location().clone(),
+                        *var.get_type(),
                     ))
                     .into(),
                 );
@@ -445,6 +447,13 @@ fn infer_from_table(
             if rhs_info.is_some() {
                 return rhs_info;
             }
+            // if !var.is_typed() {
+            //     var.set_type(val.as_ref().borrow().get_type());
+            //     None
+            // } else {
+            //     Some(Expr::Var(VarAST::new(var.name().clone(), var.location().clone())).into())
+            // }
+            // FIXME: This sets type without checking if conflict can arise.
             var.set_type(val.as_ref().borrow().get_type());
             None
         }
