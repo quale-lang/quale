@@ -1,6 +1,6 @@
 module lib {
 
-fn bar(x: f64, y: f64) : qbit {
+fn bar() : qbit {
     return 0q(1.0, 0.0);
 }
 
@@ -30,7 +30,7 @@ fn main() {
     let e0: f64 = 1;
     let nonce = a;
     let e1 = e0;
-    let f2: f64 = bar(e0 * cos(a) / nonce, -e1 * sin(a));
+    let f2 : bit = bar(e0 * cos(a) / nonce, -e1 * sin(a));
     return f2;
 }
 
