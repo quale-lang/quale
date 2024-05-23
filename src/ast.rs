@@ -590,18 +590,22 @@ impl FunctionAST {
     //     }
     // }
 
+    #[inline]
     pub(crate) fn iter(&self) -> impl Iterator<Item = &QccCell<Expr>> + '_ {
         self.body.iter()
     }
 
+    #[inline]
     pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut QccCell<Expr>> + '_ {
         self.body.iter_mut()
     }
 
+    #[inline]
     pub(crate) fn iter_params(&self) -> impl Iterator<Item = &VarAST> + '_ {
         self.params.iter()
     }
 
+    #[inline]
     pub(crate) fn iter_params_mut(&mut self) -> impl Iterator<Item = &mut VarAST> + '_ {
         self.params.iter_mut()
     }
