@@ -211,7 +211,10 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
                 // get last expression's type
                 let last_instruction_type = infer_expr(last);
 
-                if fn_return_type == Type::Bottom && last_instruction_type.is_some() {
+                if fn_return_type == Type::Bottom
+                    && last_instruction_type.is_some()
+                    && last_instruction_type != Some(Type::Bottom)
+                {
                     function.set_output_type(last_instruction_type.unwrap());
                 } else {
                     if last_instruction_type != Some(fn_return_type) {

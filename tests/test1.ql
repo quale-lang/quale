@@ -4,12 +4,12 @@
 #[deter]
 fn main () {
     // #[deter] this is comment
-    foo()
+    return foo();
 }
 
 // non-deterministic quantum function
 #[nondeter]
 fn foo () {
     let x = -   42.4265;
-    x
+    return x;
 }
