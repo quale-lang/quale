@@ -103,17 +103,10 @@ impl ModuleAST {
         self.functions.push(Box::new(function));
     }
 
-    #[inline]
-    pub(crate) fn get_name(&self) -> Ident {
-        self.name.clone()
-    }
-
-    #[inline]
     pub(crate) fn iter(&self) -> impl Iterator<Item = &Box<FunctionAST>> + '_ {
         self.functions.iter()
     }
 
-    #[inline]
     pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut Box<FunctionAST>> + '_ {
         self.functions.iter_mut()
     }
@@ -565,10 +558,6 @@ impl FunctionAST {
     #[inline]
     pub(crate) fn get_name(&self) -> &Ident {
         &self.name
-    }
-
-    pub(crate) fn set_name(&mut self, name: Ident) {
-        self.name = name;
     }
 
     #[inline]

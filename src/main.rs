@@ -9,7 +9,6 @@ mod config;
 mod error;
 mod inference;
 mod lexer;
-mod mangler;
 mod optimizer;
 mod parser;
 mod types;
@@ -19,7 +18,6 @@ use crate::codegen::{qasm, Translator};
 use crate::error::Result;
 use crate::inference::infer;
 use crate::parser::Parser;
-use crate::mangler::mangle;
 
 fn init_session(args: Vec<&str>) -> Result<()> {
     let session = Parser::new(args)?;
@@ -29,9 +27,6 @@ fn init_session(args: Vec<&str>) -> Result<()> {
             let config = parser.get_config();
 
             let mut qast = parser.parse(&config.analyzer.src)?;
-
-            mangle(&mut qast)?;
-            println!("{qast}");
 
             // TODO: Error handling and bug reporting
             infer(&mut qast)?;
