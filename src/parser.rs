@@ -3,6 +3,7 @@
 use crate::ast::*;
 use crate::attributes::{Attribute, Attributes};
 use crate::config::*;
+use crate::mangler::sanitize;
 use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
 use crate::lexer::{Lexer, Location};
 use crate::types::Type;
@@ -513,7 +514,7 @@ impl Parser {
         let mut name: String = String::from("unnamed");
 
         if self.lexer.is_token(Token::Identifier) {
-            name = self.lexer.identifier();
+            name = sanitize(self.lexer.identifier());
             self.lexer.consume(Token::Identifier)?;
         }
 
@@ -556,7 +557,7 @@ impl Parser {
         let module_location = Location::new(src, 1, 1);
         // qast.add_module_info(module_name.clone(), module_location.clone());
         // representation for this module
-        let mut this = ModuleAST::new(module_name, module_location, Default::default());
+        let mut this = ModuleAST::new(sanitize(module_name), module_location, Default::default());
 
         // TODO: Move this entirely in parse_module, parse_module should return
         // a Qast and it can recursively call itself when `module` is seen
