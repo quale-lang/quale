@@ -3,7 +3,7 @@
 //! This simple mangler uses module name as prefix and underscored with function
 //! names.
 
-use crate::ast::{QccCell, Qast, Expr, Ident};
+use crate::ast::{Expr, Ident, Qast, QccCell};
 use crate::error::Result;
 
 pub(crate) fn mangle(ast: &mut Qast) -> Result<()> {
@@ -21,7 +21,8 @@ pub(crate) fn mangle(ast: &mut Qast) -> Result<()> {
     Ok(())
 }
 
-fn mangle_expr(expr: &mut QccCell<Expr>, prefix: Ident) { // TODO: prefix: &str
+fn mangle_expr(expr: &mut QccCell<Expr>, prefix: Ident) {
+    // TODO: prefix: &str
     match *expr.as_ref().borrow_mut() {
         Expr::BinaryExpr(ref mut lhs, _, ref mut rhs) => {
             mangle_expr(lhs, prefix.clone());

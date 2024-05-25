@@ -3,9 +3,9 @@
 use crate::ast::*;
 use crate::attributes::{Attribute, Attributes};
 use crate::config::*;
-use crate::mangler::sanitize;
 use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
 use crate::lexer::{Lexer, Location};
+use crate::mangler::sanitize;
 use crate::types::Type;
 use crate::utils::usage;
 use std::path::Path;
@@ -275,8 +275,7 @@ impl Parser {
 
     /// Parses the import statement and returns a pair of module name and
     /// function name that is being imported.
-    fn parse_import(&mut self, qast: &Qast)
-        -> core::result::Result<(Ident, Ident), QccErrorLoc> {
+    fn parse_import(&mut self, qast: &Qast) -> core::result::Result<(Ident, Ident), QccErrorLoc> {
         self.lexer.consume(Token::Import)?;
 
         if !self.lexer.is_token(Token::Identifier) {
@@ -318,7 +317,6 @@ impl Parser {
                         return Ok((mod_name, fn_name));
                     }
                 }
-
             }
         }
 
@@ -647,8 +645,7 @@ impl Parser {
                 if self.lexer.is_token(Token::Import) {
                     let line = self.lexer.line();
                     match self.parse_import(&qast) {
-                        Ok((mname, fname)) => {
-                        }
+                        Ok((mname, fname)) => {}
                         Err(err) => {
                             seen_errors = true;
                             err.report(line);

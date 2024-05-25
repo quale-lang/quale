@@ -18,8 +18,8 @@ mod utils;
 use crate::codegen::{qasm, Translator};
 use crate::error::Result;
 use crate::inference::infer;
-use crate::parser::Parser;
 use crate::mangler::mangle;
+use crate::parser::Parser;
 
 fn init_session(args: Vec<&str>) -> Result<()> {
     let session = Parser::new(args)?;
