@@ -14,6 +14,11 @@ fn cos(r: f64) : f64 {
 
 }
 
+import lib::sin;
+import lib::cos;
+import lib::far;
+import timbuktu::sin;
+
 #[nondeter]
 fn new (b: bit) {
     let q = 0q(1, 0);

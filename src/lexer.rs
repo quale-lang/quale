@@ -366,6 +366,7 @@ impl Lexer {
                 "extern" => Some(Token::Extern),
                 "module" => Some(Token::Module),
                 "let" => Some(Token::Let),
+                "import" => Some(Token::Import),
                 _ => Some(Token::Identifier),
             };
             return Ok(self.token);

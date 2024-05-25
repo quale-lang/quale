@@ -62,6 +62,8 @@ pub enum QccErrorKind {
     UnknownType,
     ExpectedQbit,
     ExpectedAmpinQbit,
+    ExpectedColon,
+    UnknownImport,
 }
 
 impl Display for QccErrorKind {
@@ -106,6 +108,8 @@ impl Display for QccErrorKind {
                 UnknownType => "type cannot be inferred",
                 ExpectedQbit => "expected a quantum bit of the form `0q(<amplitude>, <amplitude>)`",
                 ExpectedAmpinQbit => "expected pairs of probability amplitudes",
+                ExpectedColon => "expected colon `:`",
+                UnknownImport => "unknown imported function",
             }
         })(self))
     }

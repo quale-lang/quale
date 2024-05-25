@@ -273,6 +273,62 @@ impl Parser {
         ))
     }
 
+    /// Parses the import statement and returns a pair of module name and
+    /// function name that is being imported.
+    fn parse_import(&mut self, qast: &Qast)
+        -> core::result::Result<(Ident, Ident), QccErrorLoc> {
+        self.lexer.consume(Token::Import)?;
+
+        if !self.lexer.is_token(Token::Identifier) {
+            return Err(QccErrorKind::ExpectedMod)?;
+        }
+        let mod_name = self.lexer.identifier();
+        let mod_location = self.lexer.location.clone();
+        self.lexer.consume(Token::Identifier)?;
+
+        if !self.lexer.is_token(Token::Colon) {
+            return Err(QccErrorKind::ExpectedColon)?;
+        }
+        self.lexer.consume(Token::Colon)?;
+        if !self.lexer.is_token(Token::Colon) {
+            return Err(QccErrorKind::ExpectedColon)?;
+        }
+        self.lexer.consume(Token::Colon)?;
+
+        if !self.lexer.is_token(Token::Identifier) {
+            return Err(QccErrorKind::ExpectedFnName)?;
+        }
+        let fn_name = self.lexer.identifier();
+        let fn_location = self.lexer.location.clone();
+        self.lexer.consume(Token::Identifier)?;
+
+        if !self.lexer.is_token(Token::Semicolon) {
+            return Err(QccErrorKind::ExpectedSemicolon)?;
+        }
+        self.lexer.consume(Token::Semicolon);
+
+        // TODO: Move these checks when mod_name and fn_name are parsed. That
+        // way it can return QccErrorLoc back. But this may be more costly!
+        let mut unknown_module = true;
+        for module in qast.iter() {
+            if module.get_name() == mod_name {
+                unknown_module = false;
+                for function in module.iter() {
+                    if *function.get_name() == fn_name {
+                        return Ok((mod_name, fn_name));
+                    }
+                }
+
+            }
+        }
+
+        if unknown_module {
+            Err((QccErrorKind::UnknownModName, mod_location))?
+        } else {
+            Err((QccErrorKind::UnknownImport, fn_location))?
+        }
+    }
+
     fn parse_return(&mut self) -> Result<QccCell<Expr>> {
         if self.lexer.is_token(Token::Return) {
             self.lexer.consume(Token::Return)?;
@@ -588,7 +644,17 @@ impl Parser {
                     }
                 }
             } else {
-                self.lexer.consume(self.lexer.token.unwrap())?;
+                if self.lexer.is_token(Token::Import) {
+                    let line = self.lexer.line();
+                    match self.parse_import(&qast) {
+                        Ok((mname, fname)) => {
+                        }
+                        Err(err) => {
+                            seen_errors = true;
+                            err.report(line);
+                        }
+                    }
+                }
             }
         }
         qast.append_module(this);
