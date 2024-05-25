@@ -654,6 +654,8 @@ impl Parser {
                             err.report(line);
                         }
                     }
+                } else {
+                    self.lexer.consume(self.lexer.token.unwrap())?;
                 }
             }
         }
