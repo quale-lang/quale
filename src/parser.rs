@@ -5,7 +5,7 @@ use crate::attributes::{Attribute, Attributes};
 use crate::config::*;
 use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
 use crate::lexer::{Lexer, Location};
-use crate::mangler::sanitize;
+use crate::mangler::{mangle, mangle_module, sanitize};
 use crate::types::Type;
 use crate::utils::usage;
 use std::path::Path;
@@ -285,6 +285,7 @@ impl Parser {
         let mod_location = self.lexer.location.clone();
         self.lexer.consume(Token::Identifier)?;
 
+        // TODO: Colon location in error reporting is incorrect.
         if !self.lexer.is_token(Token::Colon) {
             return Err(QccErrorKind::ExpectedColon)?;
         }
@@ -612,6 +613,7 @@ impl Parser {
         // qast.add_module_info(module_name.clone(), module_location.clone());
         // representation for this module
         let mut this = ModuleAST::new(sanitize(module_name), module_location, Default::default());
+        let mut imports = Vec::new();
 
         // TODO: Move this entirely in parse_module, parse_module should return
         // a Qast and it can recursively call itself when `module` is seen
@@ -645,7 +647,9 @@ impl Parser {
                 if self.lexer.is_token(Token::Import) {
                     let line = self.lexer.line();
                     match self.parse_import(&qast) {
-                        Ok((mname, fname)) => {}
+                        Ok((mod_name, fn_name)) => {
+                            imports.push((mod_name, fn_name));
+                        }
                         Err(err) => {
                             seen_errors = true;
                             err.report(line);
@@ -655,6 +659,11 @@ impl Parser {
                     self.lexer.consume(self.lexer.token.unwrap())?;
                 }
             }
+        }
+
+        // collect all import statements and mangle accordingly
+        for (mod_name, fn_name) in imports {
+            mangle_module(&mut this, mod_name, fn_name);
         }
         qast.append_module(this);
 

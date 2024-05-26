@@ -18,7 +18,6 @@ mod utils;
 use crate::codegen::{qasm, Translator};
 use crate::error::Result;
 use crate::inference::infer;
-use crate::mangler::mangle;
 use crate::parser::Parser;
 
 fn init_session(args: Vec<&str>) -> Result<()> {
@@ -29,8 +28,6 @@ fn init_session(args: Vec<&str>) -> Result<()> {
             let config = parser.get_config();
 
             let mut qast = parser.parse(&config.analyzer.src)?;
-
-            mangle(&mut qast)?;
 
             // TODO: Error handling and bug reporting
             infer(&mut qast)?;
