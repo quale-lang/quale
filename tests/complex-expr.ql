@@ -16,8 +16,6 @@ fn cos(r: f64) : f64 {
 
 import lib::sin;
 import lib::cos;
-import lib::far;
-import timbuktu::sin;
 
 #[nondeter]
 fn new (b: bit) {
@@ -35,7 +33,7 @@ fn main() {
     let e0: f64 = 1;
     let nonce = a;
     let e1 = e0;
-    let f2 : bit = bar(e0 * cos(a) / nonce, -e1 * sin(a));
+    let f2 = bar(e0 * cos(a) / nonce, -e1 * sin(a));
     return f2;
 }
 
