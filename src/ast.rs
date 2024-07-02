@@ -64,13 +64,31 @@ impl Qast {
     pub(crate) fn append_module(&mut self, module: ModuleAST) {
         self.modules.push(Box::new(module));
     }
+}
 
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &Box<ModuleAST>> + '_ {
-        self.modules.iter()
+impl<'a> IntoIterator for &'a Qast {
+    type Item = &'a Box<ModuleAST>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut iter = vec![];
+        for module in &self.modules {
+            iter.push(module);
+        }
+        iter.into_iter()
     }
+}
 
-    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut Box<ModuleAST>> + '_ {
-        self.modules.iter_mut()
+impl<'a> IntoIterator for &'a mut Qast {
+    type Item = &'a mut Box<ModuleAST>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut iter = vec![];
+        for module in &mut self.modules {
+            iter.push(module);
+        }
+        iter.into_iter()
     }
 }
 
@@ -84,7 +102,7 @@ impl std::fmt::Display for Qast {
 }
 
 /// Representation of a module or namespace.
-pub(crate) struct ModuleAST {
+pub struct ModuleAST {
     name: Ident,
     location: Location,
     functions: Vec<Box<FunctionAST>>,

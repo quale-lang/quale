@@ -17,7 +17,7 @@ impl AnalyzerConfig {
     }
 
     pub fn analyze(&self, ast: &Qast) -> Result<()> {
-        for _fn in ast.iter() {}
+        for _fn in ast {}
         Ok(())
     }
 }

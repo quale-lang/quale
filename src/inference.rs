@@ -42,7 +42,7 @@ where
 
 /// Sanity type checker for entire Qast.
 pub(crate) fn checker(ast: &Qast) -> Result<()> {
-    for module in ast.iter() {
+    for module in ast {
         for function in module.iter() {
             for expr in function.iter() {
                 check_expr(expr);
@@ -110,7 +110,7 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
     let mut seen_errors = false;
     let mut function_table: SymbolTable<VarAST> = SymbolTable::new();
 
-    for module in ast.iter_mut() {
+    for module in ast {
         // functions but only collect their names and return types.
         for function in module.iter() {
             function_table.push(VarAST::new_with_type(

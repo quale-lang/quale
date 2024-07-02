@@ -310,7 +310,7 @@ impl Parser {
         // TODO: Move these checks when mod_name and fn_name are parsed. That
         // way it can return QccErrorLoc back. But this may be more costly!
         let mut unknown_module = true;
-        for module in qast.iter() {
+        for module in qast {
             if module.get_name() == mod_name {
                 unknown_module = false;
                 for function in module.iter() {
