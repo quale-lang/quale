@@ -9,7 +9,7 @@ use crate::error::Result;
 pub(crate) fn mangle(ast: &mut Qast) -> Result<()> {
     for mut module in ast {
         let mod_name = module.get_name();
-        for function in module.iter_mut() {
+        for function in &mut *module {
             function.set_name(format!("{}_{}", mod_name.clone(), function.get_name()).into());
 
             for instruction in function.iter_mut() {
@@ -71,7 +71,7 @@ fn mangle_expr_check(expr: &mut QccCell<Expr>, mod_name: &Ident, fn_name: &Ident
 /// a function name.
 pub(crate) fn mangle_module(module: &mut ModuleAST, mod_name: Ident, fn_name: Ident) -> Result<()> {
 
-    for function in module.iter_mut() {
+    for function in module {
         for instruction in function.iter_mut() {
             mangle_expr_check(instruction, &mod_name, &fn_name);
         }

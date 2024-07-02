@@ -313,7 +313,7 @@ impl Parser {
         for module in qast {
             if module.get_name() == mod_name {
                 unknown_module = false;
-                for function in module.iter() {
+                for function in &*module {
                     if *function.get_name() == fn_name {
                         return Ok((mod_name, fn_name));
                     }

@@ -66,7 +66,7 @@ impl Translator<Qast> for QasmModule {
     fn translate(ast: Qast) -> Result<Self> {
         let mut gates: Vec<QasmGate> = vec![];
         for module in &ast {
-            for f in module.iter() {
+            for f in &*module {
                 if *f.get_output_type() == Type::Qbit || f.get_input_type().contains(&Type::Qbit) {
                     let g: &FunctionAST = f.borrow();
                     gates.push(g.into());

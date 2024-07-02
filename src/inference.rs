@@ -43,7 +43,7 @@ where
 /// Sanity type checker for entire Qast.
 pub(crate) fn checker(ast: &Qast) -> Result<()> {
     for module in ast {
-        for function in module.iter() {
+        for function in &*module {
             for expr in function.iter() {
                 check_expr(expr);
             }
@@ -112,7 +112,7 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
 
     for mut module in ast {
         // functions but only collect their names and return types.
-        for function in module.iter() {
+        for function in &*module {
             function_table.push(VarAST::new_with_type(
                 function.get_name().clone(),
                 function.get_loc().clone(),
@@ -120,7 +120,7 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
             ));
         }
 
-        for function in module.iter_mut() {
+        for function in &mut *module {
             // parameter symbols
             let mut parameter_table: SymbolTable<VarAST> = SymbolTable::new();
             for param in function.iter_params() {

@@ -125,13 +125,31 @@ impl ModuleAST {
     pub(crate) fn get_name(&self) -> Ident {
         self.name.clone()
     }
+}
 
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &Box<FunctionAST>> + '_ {
-        self.functions.iter()
+impl<'a> IntoIterator for &'a ModuleAST {
+    type Item = &'a Box<FunctionAST>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut iter = vec![];
+        for function in &self.functions {
+            iter.push(function);
+        }
+        iter.into_iter()
     }
+}
 
-    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut Box<FunctionAST>> + '_ {
-        self.functions.iter_mut()
+impl<'a> IntoIterator for &'a mut ModuleAST {
+    type Item = &'a mut Box<FunctionAST>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut iter = vec![];
+        for function in &mut self.functions {
+            iter.push(function);
+        }
+        iter.into_iter()
     }
 }
 
@@ -531,7 +549,7 @@ impl std::fmt::Display for Expr {
     }
 }
 
-pub(crate) struct FunctionAST {
+pub struct FunctionAST {
     name: Ident,
     location: Location,
     // description: String,
