@@ -7,8 +7,8 @@ use crate::ast::{Expr, FunctionAST, Ident, ModuleAST, Qast, QccCell};
 use crate::error::Result;
 
 pub(crate) fn mangle(ast: &mut Qast) -> Result<()> {
-    for module in ast {
-        let mod_name = module.as_ref().get_name();
+    for mut module in ast {
+        let mod_name = module.get_name();
         for function in module.iter_mut() {
             function.set_name(format!("{}_{}", mod_name.clone(), function.get_name()).into());
 

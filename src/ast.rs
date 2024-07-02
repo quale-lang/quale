@@ -53,40 +53,40 @@ impl Token {
 // AST.
 #[derive(Default)]
 pub struct Qast {
-    modules: Vec<Box<ModuleAST>>,
+    modules: Vec<QccCell<ModuleAST>>,
 }
 
 impl Qast {
-    pub(crate) fn new(modules: Vec<Box<ModuleAST>>) -> Self {
+    pub(crate) fn new(modules: Vec<QccCell<ModuleAST>>) -> Self {
         Self { modules }
     }
 
     pub(crate) fn append_module(&mut self, module: ModuleAST) {
-        self.modules.push(Box::new(module));
+        self.modules.push(std::rc::Rc::new(module.into()));
     }
 }
 
 impl<'a> IntoIterator for &'a Qast {
-    type Item = &'a Box<ModuleAST>;
+    type Item = std::cell::Ref<'a, ModuleAST>;
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         let mut iter = vec![];
         for module in &self.modules {
-            iter.push(module);
+            iter.push(module.as_ref().borrow());
         }
         iter.into_iter()
     }
 }
 
 impl<'a> IntoIterator for &'a mut Qast {
-    type Item = &'a mut Box<ModuleAST>;
+    type Item = std::cell::RefMut<'a, ModuleAST>;
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         let mut iter = vec![];
-        for module in &mut self.modules {
-            iter.push(module);
+        for module in &self.modules {
+            iter.push(module.as_ref().borrow_mut());
         }
         iter.into_iter()
     }
@@ -95,7 +95,7 @@ impl<'a> IntoIterator for &'a mut Qast {
 impl std::fmt::Display for Qast {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for module in &self.modules {
-            writeln!(f, "{}", module)?;
+            writeln!(f, "{}", module.as_ref().borrow())?;
         }
         Ok(())
     }

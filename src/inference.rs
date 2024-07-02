@@ -110,7 +110,7 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
     let mut seen_errors = false;
     let mut function_table: SymbolTable<VarAST> = SymbolTable::new();
 
-    for module in ast {
+    for mut module in ast {
         // functions but only collect their names and return types.
         for function in module.iter() {
             function_table.push(VarAST::new_with_type(
