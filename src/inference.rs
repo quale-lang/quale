@@ -120,7 +120,7 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
             ));
         }
 
-        for function in &mut *module {
+        for mut function in &mut *module {
             // parameter symbols
             let mut parameter_table: SymbolTable<VarAST> = SymbolTable::new();
             for param in function.iter_params() {
@@ -202,7 +202,7 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
             // type check between function return type and the last returned
             // expression
             let fn_return_type = *function.get_output_type();
-            let fn_name = function.as_ref().borrow().get_name().clone();
+            let fn_name = function.borrow().get_name().clone();
 
             let last_instruction = function.iter_mut().last();
             if last_instruction.is_some() {

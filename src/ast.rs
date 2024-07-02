@@ -105,11 +105,11 @@ impl std::fmt::Display for Qast {
 pub struct ModuleAST {
     name: Ident,
     location: Location,
-    functions: Vec<Box<FunctionAST>>,
+    functions: Vec<QccCell<FunctionAST>>,
 }
 
 impl ModuleAST {
-    pub(crate) fn new(name: Ident, location: Location, functions: Vec<Box<FunctionAST>>) -> Self {
+    pub(crate) fn new(name: Ident, location: Location, functions: Vec<QccCell<FunctionAST>>) -> Self {
         Self {
             name,
             location,
@@ -118,7 +118,7 @@ impl ModuleAST {
     }
 
     pub(crate) fn append_function(&mut self, function: FunctionAST) {
-        self.functions.push(Box::new(function));
+        self.functions.push(std::rc::Rc::new(function.into()));
     }
 
     #[inline]
@@ -128,26 +128,26 @@ impl ModuleAST {
 }
 
 impl<'a> IntoIterator for &'a ModuleAST {
-    type Item = &'a Box<FunctionAST>;
+    type Item = std::cell::Ref<'a, FunctionAST>;
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         let mut iter = vec![];
         for function in &self.functions {
-            iter.push(function);
+            iter.push(function.as_ref().borrow());
         }
         iter.into_iter()
     }
 }
 
 impl<'a> IntoIterator for &'a mut ModuleAST {
-    type Item = &'a mut Box<FunctionAST>;
+    type Item = std::cell::RefMut<'a, FunctionAST>;
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         let mut iter = vec![];
-        for function in &mut self.functions {
-            iter.push(function);
+        for function in &self.functions {
+            iter.push(function.as_ref().borrow_mut());
         }
         iter.into_iter()
     }
@@ -158,7 +158,7 @@ impl std::fmt::Display for ModuleAST {
         writeln!(f, "module {} {{  // {}", self.name, self.location)?;
         for function in &self.functions {
             // TODO: Add tab before each function line for pretty printing.
-            writeln!(f, "{}", function)?;
+            writeln!(f, "{}", function.as_ref().borrow())?;
         }
         writeln!(f, "}}")?;
         Ok(())

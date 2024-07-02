@@ -578,10 +578,10 @@ impl Parser {
         }
         self.lexer.consume(Token::OCurly)?;
 
-        let mut functions: Vec<Box<FunctionAST>> = Default::default();
+        let mut functions: Vec<QccCell<FunctionAST>> = Default::default();
         while !self.lexer.is_token(Token::CCurly) {
             let function = self.parse_function()?;
-            functions.push(Box::new(function));
+            functions.push(std::rc::Rc::new(function.into()));
         }
 
         self.lexer.consume(Token::CCurly)?;
