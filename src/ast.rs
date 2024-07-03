@@ -432,7 +432,7 @@ impl std::fmt::Display for BinaryExprAST {
 
 pub(crate) type QccCell<T> = std::rc::Rc<std::cell::RefCell<T>>;
 
-pub(crate) enum Expr {
+pub enum Expr {
     Var(VarAST),
     BinaryExpr(QccCell<Expr>, Opcode, QccCell<Expr>),
     FnCall(FunctionAST, Vec<QccCell<Expr>>),
@@ -626,6 +626,16 @@ impl FunctionAST {
         &self.attrs
     }
 
+    #[inline]
+    pub(crate) fn last(&self) -> Option<&QccCell<Expr>> {
+        self.body.last()
+    }
+
+    #[inline]
+    pub(crate) fn last_mut(&mut self) -> Option<&mut QccCell<Expr>> {
+        self.body.last_mut()
+    }
+
     // /// If a return expression exists in function, return its reference.
     // // TODO:
     // pub(crate) fn get_return_expr(&self) -> Option<&Expr> {
@@ -637,16 +647,6 @@ impl FunctionAST {
     // }
 
     #[inline]
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &QccCell<Expr>> + '_ {
-        self.body.iter()
-    }
-
-    #[inline]
-    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut QccCell<Expr>> + '_ {
-        self.body.iter_mut()
-    }
-
-    #[inline]
     pub(crate) fn iter_params(&self) -> impl Iterator<Item = &VarAST> + '_ {
         self.params.iter()
     }
@@ -654,6 +654,33 @@ impl FunctionAST {
     #[inline]
     pub(crate) fn iter_params_mut(&mut self) -> impl Iterator<Item = &mut VarAST> + '_ {
         self.params.iter_mut()
+    }
+}
+
+impl<'a> IntoIterator for &'a FunctionAST {
+    type Item = &'a QccCell<Expr>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut iter = vec![];
+        for expr in &self.body {
+            iter.push(expr);
+        }
+        iter.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut FunctionAST {
+    // type Item = std::cell::RefMut<'a, Expr>;
+    type Item = &'a mut QccCell<Expr>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut iter = vec![];
+        for expr in &mut self.body {
+            iter.push(expr);
+        }
+        iter.into_iter()
     }
 }
 

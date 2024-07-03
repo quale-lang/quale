@@ -260,7 +260,7 @@ impl QasmGate {
 impl From<&FunctionAST> for QasmGate {
     fn from(f: &FunctionAST) -> Self {
         let mut instructions: Vec<Ident> = Default::default();
-        for expr in f.iter() {
+        for expr in f {
             match *expr.as_ref().borrow() {
                 Expr::Let(ref var, ref val) => {
                     if var.is_typed() && *var.get_type() == Type::Qbit {

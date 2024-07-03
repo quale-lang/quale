@@ -13,7 +13,7 @@ pub(crate) fn mangle(ast: &mut Qast) -> Result<()> {
             let  fn_name = function.get_name().clone();
             function.set_name(format!("{}_{}", mod_name.clone(), fn_name).into());
 
-            for instruction in function.iter_mut() {
+            for instruction in &mut *function {
                 mangle_expr(instruction, mod_name.clone() + "_");
             }
         }
@@ -73,7 +73,7 @@ fn mangle_expr_check(expr: &mut QccCell<Expr>, mod_name: &Ident, fn_name: &Ident
 pub(crate) fn mangle_module(module: &mut ModuleAST, mod_name: Ident, fn_name: Ident) -> Result<()> {
 
     for mut function in module {
-        for instruction in function.iter_mut() {
+        for instruction in &mut *function {
             mangle_expr_check(instruction, &mod_name, &fn_name);
         }
     }

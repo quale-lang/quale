@@ -44,7 +44,7 @@ where
 pub(crate) fn checker(ast: &Qast) -> Result<()> {
     for module in ast {
         for function in &*module {
-            for expr in function.iter() {
+            for expr in &*function {
                 check_expr(expr);
             }
         }
@@ -129,7 +129,7 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
 
             // local variables
             let mut local_var_table: SymbolTable<VarAST> = SymbolTable::new();
-            for instruction in function.iter() {
+            for instruction in &*function {
                 // only add let-lhs and only if they are type checked
                 match *instruction.as_ref().borrow() {
                     Expr::Let(ref def, _) => {
@@ -143,7 +143,7 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
             }
 
             // infer local var types
-            for instruction in function.iter_mut() {
+            for instruction in &mut *function {
                 let instruction_type = infer_expr(instruction);
 
                 if instruction_type.is_some_and(|ty| ty != Type::Bottom) {
@@ -204,7 +204,7 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
             let fn_return_type = *function.get_output_type();
             let fn_name = function.borrow().get_name().clone();
 
-            let last_instruction = function.iter_mut().last();
+            let last_instruction = function.last_mut();
             if last_instruction.is_some() {
                 let last = last_instruction.unwrap();
 
