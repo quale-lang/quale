@@ -1,13 +1,23 @@
 #!/usr/bin/env python3
-import os
+from scipy import stats
 import argparse
+import json
+import matplotlib.pyplot as plt
+import os
+import pprint
 import subprocess
+import sys
 
 parser = argparse.ArgumentParser(
         prog='benchmark',
         description='Benchmark the qcc compiler suite',
         epilog='')
 parser.add_argument('test', nargs='*', type=str, help='quale file to benchmark')
+parser.add_argument('--regression', action='store_true',
+                    help='show regression statistics')
+
+# This is indexed-list storing regression times for a particular test.
+regression_stats = {'current': [], 'previous': []}
 
 def gather_tests():
     tests = []
@@ -17,18 +27,73 @@ def gather_tests():
                 tests.append(os.path.join(root, filename))
     return tests
 
-def bench(tests):
+def bench(tests, hyperfine_flags=""):
     cmd = ''
     for each in tests:
         cmd += '"cargo run --release -- ' + each + '" '
-    cmd = "hyperfine -i -w 5 " + cmd
-    subprocess.run([cmd], shell=True)
+    cmd = "hyperfine " + hyperfine_flags + " -i -w 5 " + cmd
+    subprocess.run([cmd], shell=True, capture_output=False)
 
+
+def regression(tests):
+    '''
+    Given a list of tests, it runs hyperfine once with the HEAD commit and again
+    with HEAD~1 commit, and exports details in JSON to two different files. It
+    then performs a Welch's t-test for corresponding benchmarks.
+    '''
+    bench(tests, "--export-json current-commit.json --style none")
+    subprocess.run(['git', 'checkout', 'HEAD~1'], capture_output=True)
+    bench(tests, "--export-json previous-commit.json --style none")
+    subprocess.run(['git', 'switch', '-'], capture_output=True)
+
+    # read both jsons files and pick corresponding benchmarks
+    # put them in a file and run welsch's t-test
+    with open("current-commit.json") as current:
+        regression_stats['current'] = json.load(current)["results"]
+    with open("previous-commit.json") as previous:
+        regression_stats['previous'] = json.load(previous)["results"]
+
+    if len(regression_stats['current']) != len(regression_stats['previous']):
+        print("""
+Error: Wrong number of benchmarks in current and previous JSON logs.
+       Possibly some benchmarks were either not completed or failed during
+       execution.""",
+              file=sys.stderr)
+        sys.exit(1)
+
+    plot_X, plot_Y = [], []
+    for idx in range(len(regression_stats['current'])):
+        current_benchmark  = regression_stats['current'][idx]
+        previous_benchmark = regression_stats['previous'][idx]
+        if current_benchmark['command'] == previous_benchmark['command']:
+            X = current_benchmark['times']
+            Y = previous_benchmark['times']
+
+            t, p = stats.ttest_ind(X, Y, equal_var=False)
+            th = 0.05
+            dispose = p < th
+            plot_X.append(current_benchmark['command'].split(' ')[-1])
+            if dispose:
+                plot_Y.append(
+                        current_benchmark['mean'] - previous_benchmark['mean'])
+            else:
+                plot_Y.append(0)
+
+    plt.bar(plot_X, plot_Y)
+    plt.ylabel("Time [s]")
+    plt.xticks(rotation=45, ha='right')
+    plt.savefig('regression.svg', format='svg', bbox_inches='tight', dpi=300)
+    plt.show()
 
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    if not args.test:
+    if args.regression:
+        if not args.test:
+            regression(gather_tests())
+        else:
+            regression(args.test)
+    elif not args.test:
         bench(gather_tests())
     else:
         bench(args.test)
