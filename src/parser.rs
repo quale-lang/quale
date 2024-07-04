@@ -652,6 +652,7 @@ impl Parser {
                         }
                         Err(err) => {
                             seen_errors = true;
+                            let err: QccErrorLoc = (err, self.lexer.location.clone()).into();
                             err.report(line);
                         }
                     }
