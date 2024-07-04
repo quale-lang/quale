@@ -276,6 +276,7 @@ impl Parser {
     /// Parses the import statement and returns a pair of module name and
     /// function name that is being imported.
     fn parse_import(&mut self, qast: &Qast) -> core::result::Result<(Ident, Ident), QccErrorLoc> {
+        let line_loc = self.lexer.location.clone();
         self.lexer.consume(Token::Import)?;
 
         if !self.lexer.is_token(Token::Identifier) {
@@ -296,14 +297,14 @@ impl Parser {
         self.lexer.consume(Token::Colon)?;
 
         if !self.lexer.is_token(Token::Identifier) {
-            return Err(QccErrorKind::ExpectedFnName)?;
+            Err((QccErrorKind::ExpectedFnName, self.lexer.location.clone()))?
         }
         let fn_name = self.lexer.identifier();
         let fn_location = self.lexer.location.clone();
         self.lexer.consume(Token::Identifier)?;
 
         if !self.lexer.is_token(Token::Semicolon) {
-            return Err(QccErrorKind::ExpectedSemicolon)?;
+            Err((QccErrorKind::ExpectedSemicolon, line_loc))?
         }
         self.lexer.consume(Token::Semicolon);
 
