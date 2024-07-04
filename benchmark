@@ -62,7 +62,7 @@ Error: Wrong number of benchmarks in current and previous JSON logs.
               file=sys.stderr)
         sys.exit(1)
 
-    plot_X, plot_Y = [], []
+    plot_X, plot_Y, color = [], [], []
     for idx in range(len(regression_stats['current'])):
         current_benchmark  = regression_stats['current'][idx]
         previous_benchmark = regression_stats['previous'][idx]
@@ -75,12 +75,17 @@ Error: Wrong number of benchmarks in current and previous JSON logs.
             dispose = p < th
             plot_X.append(current_benchmark['command'].split(' ')[-1])
             if dispose:
-                plot_Y.append(
-                        current_benchmark['mean'] - previous_benchmark['mean'])
+                diff = current_benchmark['mean'] - previous_benchmark['mean']
+                plot_Y.append(diff)
+                if diff < 0:
+                    color.append('black')
+                else:
+                    color.append('red')
             else:
+                color.append('black')
                 plot_Y.append(0)
 
-    plt.bar(plot_X, plot_Y)
+    plt.bar(plot_X, plot_Y, color=color)
     plt.ylabel("Time [s]")
     plt.xticks(rotation=45, ha='right')
     plt.savefig('regression.svg', format='svg', bbox_inches='tight', dpi=300)
