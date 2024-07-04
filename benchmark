@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser(
         description='Benchmark the qcc compiler suite',
         epilog='')
 parser.add_argument('test', nargs='*', type=str, help='quale file to benchmark')
+parser.add_argument('-f', type=str, help='arguments to forward to hyperfine')
 parser.add_argument('--regression', action='store_true',
                     help='show regression statistics')
 
@@ -41,9 +42,9 @@ def regression(tests):
     with HEAD~1 commit, and exports details in JSON to two different files. It
     then performs a Welch's t-test for corresponding benchmarks.
     '''
-    bench(tests, "--export-json current-commit.json --style none")
+    bench(tests, "--export-json current-commit.json")
     subprocess.run(['git', 'checkout', 'HEAD~1'], capture_output=True)
-    bench(tests, "--export-json previous-commit.json --style none")
+    bench(tests, "--export-json previous-commit.json")
     subprocess.run(['git', 'switch', '-'], capture_output=True)
 
     # read both jsons files and pick corresponding benchmarks
@@ -88,12 +89,14 @@ Error: Wrong number of benchmarks in current and previous JSON logs.
 if __name__ == "__main__":
     args = parser.parse_args()
 
+    hyperfine_flags = args.f
+
     if args.regression:
         if not args.test:
             regression(gather_tests())
         else:
             regression(args.test)
     elif not args.test:
-        bench(gather_tests())
+        bench(gather_tests(), hyperfine_flags)
     else:
-        bench(args.test)
+        bench(args.test, hyperfine_flags)
