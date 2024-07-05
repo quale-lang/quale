@@ -10,7 +10,7 @@ pub(crate) fn mangle(ast: &mut Qast) -> Result<()> {
     for mut module in ast {
         let mod_name = module.get_name();
         for mut function in &mut *module {
-            let  fn_name = function.get_name().clone();
+            let fn_name = function.get_name().clone();
             function.set_name(format!("{}_{}", mod_name.clone(), fn_name).into());
 
             for instruction in &mut *function {
@@ -71,7 +71,6 @@ fn mangle_expr_check(expr: &mut QccCell<Expr>, mod_name: &Ident, fn_name: &Ident
 /// instances with a mangled string, which is calculated from a module name and
 /// a function name.
 pub(crate) fn mangle_module(module: &mut ModuleAST, mod_name: Ident, fn_name: Ident) -> Result<()> {
-
     for mut function in module {
         for instruction in &mut *function {
             mangle_expr_check(instruction, &mod_name, &fn_name);

@@ -109,7 +109,11 @@ pub struct ModuleAST {
 }
 
 impl ModuleAST {
-    pub(crate) fn new(name: Ident, location: Location, functions: Vec<QccCell<FunctionAST>>) -> Self {
+    pub(crate) fn new(
+        name: Ident,
+        location: Location,
+        functions: Vec<QccCell<FunctionAST>>,
+    ) -> Self {
         Self {
             name,
             location,
