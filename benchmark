@@ -94,7 +94,10 @@ Error: Wrong number of benchmarks in current and previous JSON logs.
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    hyperfine_flags = args.f
+    if args.f:
+        hyperfine_flags = args.f
+    else:
+        hyperfine_flags = ""
 
     if args.regression:
         if not args.test:
