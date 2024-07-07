@@ -38,15 +38,15 @@ def bench(tests, hyperfine_flags=""):
     subprocess.run([cmd], shell=True, capture_output=False)
 
 
-def regression(against, tests):
+def regression(against, tests, hyperfine_flags):
     '''
     Given a list of tests, it runs hyperfine once with the HEAD commit and again
     with HEAD~1 commit, and exports details in JSON to two different files. It
     then performs a Welch's t-test for corresponding benchmarks.
     '''
-    bench(tests, "--export-json current-commit.json")
+    bench(tests, "--export-json current-commit.json " + hyperfine_flags)
     subprocess.run(['git', 'checkout', against])
-    bench(tests, "--export-json previous-commit.json")
+    bench(tests, "--export-json previous-commit.json " + hyperfine_flags)
     subprocess.run(['git', 'switch', '-'])
 
     # read both jsons files and pick corresponding benchmarks
@@ -107,9 +107,9 @@ if __name__ == "__main__":
             sys.exit(1)
 
         if not args.test:
-            regression(args.against, gather_tests())
+            regression(args.against, gather_tests(), hyperfine_flags)
         else:
-            regression(args.against, args.test)
+            regression(args.against, args.test, hyperfine_flags)
     elif not args.test:
         bench(gather_tests(), hyperfine_flags)
     else:
