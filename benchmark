@@ -45,9 +45,9 @@ def regression(against, tests):
     then performs a Welch's t-test for corresponding benchmarks.
     '''
     bench(tests, "--export-json current-commit.json")
-    subprocess.run(['git', 'checkout', against], capture_output=True)
+    subprocess.run(['git', 'checkout', against])
     bench(tests, "--export-json previous-commit.json")
-    subprocess.run(['git', 'switch', '-'], capture_output=True)
+    subprocess.run(['git', 'switch', '-'])
 
     # read both jsons files and pick corresponding benchmarks
     # put them in a file and run welsch's t-test
