@@ -16,6 +16,8 @@ parser.add_argument('test', nargs='*', type=str, help='quale file to benchmark')
 parser.add_argument('-f', type=str, help='arguments to forward to hyperfine')
 parser.add_argument('--regression', action='store_true',
                     help='show regression statistics')
+parser.add_argument('--against', type=str,
+                    help='commit to benchmark regression against')
 
 # This is indexed-list storing regression times for a particular test.
 regression_stats = {'current': [], 'previous': []}
@@ -36,14 +38,14 @@ def bench(tests, hyperfine_flags=""):
     subprocess.run([cmd], shell=True, capture_output=False)
 
 
-def regression(tests):
+def regression(against, tests):
     '''
     Given a list of tests, it runs hyperfine once with the HEAD commit and again
     with HEAD~1 commit, and exports details in JSON to two different files. It
     then performs a Welch's t-test for corresponding benchmarks.
     '''
     bench(tests, "--export-json current-commit.json")
-    subprocess.run(['git', 'checkout', 'HEAD~1'], capture_output=True)
+    subprocess.run(['git', 'checkout', against], capture_output=True)
     bench(tests, "--export-json previous-commit.json")
     subprocess.run(['git', 'switch', '-'], capture_output=True)
 
@@ -100,10 +102,14 @@ if __name__ == "__main__":
         hyperfine_flags = ""
 
     if args.regression:
+        if not args.against:
+            print("Error: A commit is required via `--against` argument to run regression against.")
+            sys.exit(1)
+
         if not args.test:
-            regression(gather_tests())
+            regression(args.against, gather_tests())
         else:
-            regression(args.test)
+            regression(args.against, args.test)
     elif not args.test:
         bench(gather_tests(), hyperfine_flags)
     else:
