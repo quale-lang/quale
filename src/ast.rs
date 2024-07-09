@@ -171,7 +171,7 @@ impl std::fmt::Display for ModuleAST {
 
 /// A repr for a variable. It contains a `name` of the variable and its
 /// `location`.
-#[derive(Clone)]
+#[derive(Clone, Hash, Eq, PartialEq)]
 pub(crate) struct VarAST {
     name: Ident,
     location: Location,

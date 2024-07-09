@@ -7,16 +7,17 @@ use std::borrow::{Borrow, BorrowMut};
 /// A generic symbol table implementation.
 // TODO: Use HashSet, keep track of namespaces
 struct SymbolTable<T> {
-    table: Vec<T>,
+    table: std::collections::HashSet<T>,
 }
 
-impl<T> SymbolTable<T> {
+impl<T> SymbolTable<T>
+where T: std::cmp::Eq + std::hash::Hash {
     fn new() -> Self {
-        Self { table: vec![] }
+        Self { table: std::collections::HashSet::new() }
     }
 
     fn push(&mut self, value: T) {
-        self.table.push(value);
+        self.table.insert(value);
     }
 
     fn extend(&mut self, values: Vec<T>) {
@@ -30,7 +31,7 @@ impl<T> SymbolTable<T> {
 
 impl<T> std::fmt::Display for SymbolTable<T>
 where
-    T: std::fmt::Display,
+    T: std::fmt::Display + std::cmp::Eq + std::hash::Hash,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for entry in self.iter() {

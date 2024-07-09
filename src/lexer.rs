@@ -4,7 +4,7 @@ use crate::error::{QccErrorKind, Result};
 
 use std::fmt;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub(crate) struct Location {
     path: String, // TODO: immutable std::rc::Rc<>
     row: usize,

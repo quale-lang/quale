@@ -4,7 +4,7 @@
 
 use crate::error::QccErrorKind;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Hash)]
 pub(crate) enum Type {
     #[default]
     Bottom,
