@@ -175,7 +175,7 @@ impl std::fmt::Display for ModuleAST {
 pub(crate) struct VarAST {
     name: Ident,
     location: Location,
-    type_: std::cell::RefCell<Type>,
+    type_: Type,
     unary_negative: bool, // represent unary negative named variables
 }
 
@@ -193,7 +193,7 @@ impl VarAST {
         Self {
             name,
             location,
-            type_: std::cell::RefCell::new(type_),
+            type_,
             unary_negative: false,
         }
     }
@@ -230,13 +230,13 @@ impl VarAST {
     ///
     /// # NOTE: It does not check for untyped variables.
     #[inline]
-    pub(crate) fn get_type(&self) -> std::cell::Ref<'_, Type> {
-        self.type_.borrow()
+    pub(crate) fn get_type(&self) -> Type {
+        self.type_
     }
 
     #[inline]
-    pub(crate) fn get_type_mut(&mut self) -> std::cell::RefMut<'_, Type> {
-        self.type_.borrow_mut()
+    pub(crate) fn get_type_mut(&mut self) -> Type {
+        self.type_
     }
 }
 
@@ -461,7 +461,7 @@ impl Expr {
 
     pub(crate) fn get_type(&self) -> Type {
         match &self {
-            Self::Var(v) => *v.get_type(),
+            Self::Var(v) => v.get_type(),
             Self::BinaryExpr(lhs, op, rhs) => {
                 if lhs.as_ref().borrow().get_type() == rhs.as_ref().borrow().get_type() {
                     return lhs.as_ref().borrow().get_type();
@@ -471,7 +471,7 @@ impl Expr {
                 }
             }
             Self::FnCall(f, args) => *f.get_output_type(),
-            Self::Let(var, val) => *var.get_type(),
+            Self::Let(var, val) => var.get_type(),
             Self::Literal(lit) => match *lit.as_ref().borrow() {
                 LiteralAST::Lit_Str(_) => Type::Bottom,
                 LiteralAST::Lit_Digit(_) => Type::F64,

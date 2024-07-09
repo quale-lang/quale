@@ -263,7 +263,7 @@ impl From<&FunctionAST> for QasmGate {
         for expr in f {
             match *expr.as_ref().borrow() {
                 Expr::Let(ref var, ref val) => {
-                    if var.is_typed() && *var.get_type() == Type::Qbit {
+                    if var.is_typed() && var.get_type() == Type::Qbit {
                         instructions.push(format!("qreg {}[1];", var.name()));
                     }
                 }

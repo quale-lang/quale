@@ -61,7 +61,7 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
             if !v.is_typed() {
                 return Err(QccErrorKind::UnknownType)?;
             } else {
-                return Ok(*v.get_type());
+                return Ok(v.get_type());
             }
         }
         Expr::BinaryExpr(ref lhs, _, ref rhs) => {
@@ -91,7 +91,7 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
             }
             let val_type = check_expr(val)?;
 
-            if *var.get_type() != val_type {
+            if var.get_type() != val_type {
                 return Err(QccErrorKind::TypeMismatch)?;
             }
 
@@ -259,10 +259,10 @@ fn infer_expr(expr: &QccCell<Expr>) -> Option<Type> {
     match *expr.as_ref().borrow_mut() {
         Expr::Var(ref var) => {
             // return Some(*var.get_type());
-            if *var.get_type() == Type::Bottom {
+            if var.get_type() == Type::Bottom {
                 return None;
             } else {
-                return Some(*var.get_type());
+                return Some(var.get_type());
             }
         }
 
@@ -293,13 +293,13 @@ fn infer_expr(expr: &QccCell<Expr>) -> Option<Type> {
 
         Expr::Let(ref mut var, ref val) => {
             // val is an expression and it must have the same type as var
-            if *var.get_type() == Type::Bottom {
+            if var.get_type() == Type::Bottom {
                 // we need to type check from expression first
                 let rhs_type = infer_expr(&val)?;
                 var.set_type(rhs_type);
                 return Some(rhs_type);
             } else {
-                let lhs_type = *var.get_type();
+                let lhs_type = var.get_type();
                 let rhs_type = infer_expr(&val)?;
                 if lhs_type != rhs_type {
                     return None;
@@ -372,12 +372,12 @@ fn infer_from_table(
                 if param.name() == var.name() && param.is_typed()
                 /*trivial*/
                 {
-                    param_type = *param.get_type();
+                    param_type = param.get_type();
                 }
             }
             for local in local_st.iter() {
                 if local.name() == var.name() && local.is_typed() {
-                    local_type = *local.get_type();
+                    local_type = local.get_type();
                 }
             }
             if param_type == local_type && param_type == Type::Bottom {
@@ -387,7 +387,7 @@ fn infer_from_table(
                     Expr::Var(VarAST::new_with_type(
                         var.name().clone(),
                         var.location().clone(),
-                        *var.get_type(),
+                        var.get_type(),
                     ))
                     .into(),
                 );
@@ -422,7 +422,7 @@ fn infer_from_table(
 
             for func in function_st.iter() {
                 if func.name() == f.get_name() && func.is_typed() {
-                    f.set_output_type(*func.get_type());
+                    f.set_output_type(func.get_type());
                     return None;
                 }
             }
