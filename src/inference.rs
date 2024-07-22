@@ -11,9 +11,13 @@ struct SymbolTable<T> {
 }
 
 impl<T> SymbolTable<T>
-where T: std::cmp::Eq + std::hash::Hash {
+where
+    T: std::cmp::Eq + std::hash::Hash,
+{
     fn new() -> Self {
-        Self { table: std::collections::HashSet::new() }
+        Self {
+            table: std::collections::HashSet::new(),
+        }
     }
 
     fn push(&mut self, value: T) {
@@ -192,9 +196,25 @@ pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
                         }
                         Some(untyped) => {
                             seen_errors = true;
-                            let err: QccError = QccErrorKind::UnknownType.into();
-                            let expr = untyped.as_ref().borrow();
-                            err.report(format!("for `{}` {}", expr, expr.get_location()).as_str());
+                            match untyped {
+                                Ok(expr) => {
+                                    // unknown type of expression err
+                                    let err: QccError = QccErrorKind::UnknownType.into();
+                                    let expr = expr.as_ref().borrow();
+                                    err.report(
+                                        format!("for `{}` {}", expr, expr.get_location()).as_str(),
+                                    );
+                                }
+                                Err(err) => {
+                                    // err is returned
+                                    let row = instruction.as_ref().borrow().get_location().row();
+                                    err.report(&format!(
+                                        "on\n\t{}\t{}",
+                                        row,
+                                        instruction.as_ref().borrow()
+                                    ));
+                                }
+                            }
                         }
                     }
                 }
@@ -358,13 +378,13 @@ fn gather_already_typed(expr: &QccCell<Expr>) -> Vec<VarAST> {
 /// Infer types for each part of expression from symbol tables. If some
 /// expression cannot be typed, because no information was found in symbol
 /// tables, then return that expression. Otherwise if complete expression is
-/// typed then return None.
+/// typed then return None. If any mismatch is seen, return appropriate error.
 fn infer_from_table(
     expr: &QccCell<Expr>,
     param_st: &SymbolTable<VarAST>,
     local_st: &SymbolTable<VarAST>,
     function_st: &SymbolTable<VarAST>,
-) -> Option<QccCell<Expr>> {
+) -> Option<Result<QccCell<Expr>>> {
     match *expr.as_ref().borrow_mut() {
         Expr::Var(ref mut var) => {
             let mut param_type = Type::Bottom;
@@ -384,14 +404,12 @@ fn infer_from_table(
             if param_type == local_type && param_type == Type::Bottom {
                 // couldn't find any type information
                 // return Some(var);
-                return Some(
-                    Expr::Var(VarAST::new_with_type(
-                        var.name().clone(),
-                        var.location().clone(),
-                        var.get_type(),
-                    ))
-                    .into(),
-                );
+                return Some(Ok(Expr::Var(VarAST::new_with_type(
+                    var.name().clone(),
+                    var.location().clone(),
+                    var.get_type(),
+                ))
+                .into()));
             }
             if param_type != Type::Bottom {
                 var.set_type(param_type);
@@ -429,36 +447,39 @@ fn infer_from_table(
             }
 
             // unable to infer return type for function, returning it
-            Some(
-                Expr::FnCall(
-                    FunctionAST::new(
-                        f.get_name().clone(),
-                        f.get_loc().clone(),
-                        Default::default(),
-                        Default::default(),
-                        *f.get_output_type(),
-                        Default::default(),
-                        Default::default(),
-                    ),
-                    vec![],
-                )
-                .into(),
+            Some(Ok(Expr::FnCall(
+                FunctionAST::new(
+                    f.get_name().clone(),
+                    f.get_loc().clone(),
+                    Default::default(),
+                    Default::default(),
+                    *f.get_output_type(),
+                    Default::default(),
+                    Default::default(),
+                ),
+                vec![],
             )
+            .into()))
         }
         Expr::Let(ref mut var, ref val) => {
             let rhs_info = infer_from_table(val, param_st, local_st, function_st);
+
             if rhs_info.is_some() {
                 return rhs_info;
             }
-            // if !var.is_typed() {
-            //     var.set_type(val.as_ref().borrow().get_type());
-            //     None
-            // } else {
-            //     Some(Expr::Var(VarAST::new(var.name().clone(), var.location().clone())).into())
-            // }
-            // FIXME: This sets type without checking if conflict can arise.
-            var.set_type(val.as_ref().borrow().get_type());
-            None
+
+            if !var.is_typed() {
+                var.set_type(val.as_ref().borrow().get_type());
+                None
+            } else if var.get_type() != val.as_ref().borrow().get_type() {
+                Some(Err(QccErrorKind::TypeMismatch.into()))
+            } else {
+                Some(Ok(Expr::Var(VarAST::new(
+                    var.name().clone(),
+                    var.location().clone(),
+                ))
+                .into()))
+            }
         }
         _ => None,
     }
