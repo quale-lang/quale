@@ -5,7 +5,6 @@ use crate::types::Type;
 use std::borrow::{Borrow, BorrowMut};
 
 /// A generic symbol table implementation.
-// TODO: Use HashSet, keep track of namespaces
 struct SymbolTable<T> {
     table: std::collections::HashSet<T>,
 }
