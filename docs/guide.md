@@ -169,11 +169,16 @@ and returns a qbit. So its type would be `Hadamard: qbit -> qbit`. This will
 be defined in standard library of quale. We will assume it as a black box for
 now. The first `let` statement creates a qubit in state zero. We can represent 0
 as either a classical bit 0 or a qubit in state zero (represented as |0〉). The
-type determines whether it will be a bit or a qbit. The second `let` calls the
-Hadamard function and receives a qubit in superposition.  Notice that,
-`superpositioned` is inferred to be of qbit type (`toss`'s return type is qbit
-and superpositioned is returned), so there wouldn't be a measurement operator
-here.
+type determines whether it will be a bit or a qbit. There is also a verbose
+way to write qubit states similar to how binaries and octals values are written.
+The syntax for that is `0q($\alpha$, $\beta$)`, where `$\alpha$` and `$\beta$`
+are probability amplitudes for basis vectors |0〉 and |1〉. Say for a zero state
+qubit which has amplitude 1 for |0〉 and 0 for |1〉, we write `0q(1, 0)`.
+
+The second `let` calls the Hadamard function and receives a qubit in
+superposition.  Notice that, `superpositioned` is inferred to be of qbit type
+(`toss`'s return type is qbit and superpositioned is returned), so there
+wouldn't be a measurement operator here.
 
 This pretty much covers the program for a fair coin toss. We create a qubit in
 state 0 and then put that qubit in superposition, followed by a measurement of
