@@ -34,3 +34,31 @@ Analyzer Configuration
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn check_new_analyzer_config() -> Result<()> {
+        let analyzer_config = AnalyzerConfig::new();
+        assert_eq!(
+            format!("{}", analyzer_config),
+            "\nAnalyzer Configuration\n-----------------------\n: false"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn check_analyzer_config() -> Result<()> {
+        let analyzer_config = AnalyzerConfig {
+            src: "tmp".into(),
+            status: true,
+        };
+        assert_eq!(
+            format!("{}", analyzer_config),
+            "\nAnalyzer Configuration\n-----------------------\ntmp: true"
+        );
+        Ok(())
+    }
+}
