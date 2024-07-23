@@ -36,7 +36,7 @@ impl fmt::Display for QasmVersion {
 /// NOTE: Does the Sea of Nodes IR work here? Because we only have to worry
 /// about `barrier` and `measure` operations. So, ideally control-flow
 /// in-between should not bother us.
-pub(crate) struct QasmModule {
+pub struct QasmModule {
     version: QasmVersion,
     includes: Vec<QasmInclude>,
     gates: Vec<QasmGate>,

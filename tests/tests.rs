@@ -1,5 +1,7 @@
 use qcc::assert_eq_any;
+use qcc::codegen::{qasm, Translator};
 use qcc::error::QccErrorKind;
+use qcc::inference::infer;
 use qcc::parser::Parser;
 
 #[test]
@@ -21,7 +23,21 @@ fn compile() -> Result<(), Box<dyn std::error::Error>> {
         let config = parser.get_config();
 
         match parser.parse(&config.analyzer.src) {
-            Ok(ast) => println!("{ast}"),
+            Ok(mut ast) => {
+                match infer(&mut ast) {
+                    Ok(_) => {}
+                    Err(err) => {
+                        assert_eq_any!(err, [QccErrorKind::TypeError]);
+                        continue;
+                    }
+                }
+
+                match qasm::QasmModule::translate(ast) {
+                    Ok(_) => {}
+                    Err(err) => assert_eq_any!(err, [QccErrorKind::TranslationError]),
+                }
+            }
+
             Err(err) => assert_eq_any!(err, [QccErrorKind::LexerError, QccErrorKind::ParseError]),
         }
     }

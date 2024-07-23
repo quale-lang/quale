@@ -6,6 +6,6 @@ use crate::error::Result;
 /// with the following two IRs:
 ///     Quale IR   --------->   OpenQASM
 /// translating from the higher-source to quantum assembly.
-pub(crate) trait Translator<T>: Sized {
+pub trait Translator<T>: Sized {
     fn translate(ir: T) -> Result<Self>;
 }

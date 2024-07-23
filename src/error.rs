@@ -64,6 +64,7 @@ pub enum QccErrorKind {
     ExpectedAmpinQbit,
     ExpectedColon,
     UnknownImport,
+    TranslationError,
 }
 
 impl Display for QccErrorKind {
@@ -110,6 +111,7 @@ impl Display for QccErrorKind {
                 ExpectedAmpinQbit => "expected pairs of probability amplitudes",
                 ExpectedColon => "expected colon `:`",
                 UnknownImport => "unknown imported function",
+                TranslationError => "translation failed",
             }
         })(self))
     }

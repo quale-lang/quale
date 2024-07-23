@@ -111,7 +111,7 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
 }
 
 /// Type inference method.
-pub(crate) fn infer(ast: &mut Qast) -> Result<()> {
+pub fn infer(ast: &mut Qast) -> Result<()> {
     let mut seen_errors = false;
     let mut function_table: SymbolTable<VarAST> = SymbolTable::new();
 
