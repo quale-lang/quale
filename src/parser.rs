@@ -458,8 +458,13 @@ impl Parser {
             }
             self.lexer.consume(Token::Digit)?;
 
+            let mut digit_value = digit.unwrap();
+            if unary_negative {
+                digit_value = -digit_value;
+            }
+
             let digit = Expr::Literal(std::rc::Rc::new(std::cell::RefCell::new(
-                LiteralAST::Lit_Digit(digit.unwrap()),
+                LiteralAST::Lit_Digit(digit_value),
             )));
 
             if self.lexer.is_any_token(Token::all_binops()) {

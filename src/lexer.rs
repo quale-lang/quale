@@ -323,13 +323,6 @@ impl Lexer {
             }
         }
 
-        if single_token == Token::Sub {
-            while self.buffer[self.ptr.current].is_ascii_whitespace() {
-                self.ptr.current += 1;
-                self.location.col += 1;
-            }
-        }
-
         if self.current().is_ascii_digit() {
             self.ptr.current += 1;
 
