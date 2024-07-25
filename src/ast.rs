@@ -720,3 +720,16 @@ impl std::fmt::Display for FunctionAST {
 /// A type for representing identifiers of all kinds. It includes
 /// language-specific keywords and also variable names.
 pub(crate) type Ident = String;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn check_var_ast() {
+        let x = VarAST::new(String::from("x"), Location::default());
+        assert!(x.is_typed() == false);
+        assert!(*x.name() == String::from("x"));
+        assert!(*x.location() == Location::new("unknown", 0, 0));
+    }
+}
