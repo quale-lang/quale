@@ -261,6 +261,12 @@ impl std::fmt::Display for VarAST {
     }
 }
 
+impl From<VarAST> for QccCell<Expr> {
+    fn from(var: VarAST) -> Self {
+        Expr::Var(var).into()
+    }
+}
+
 /// Mathematical operators.
 pub(crate) enum Opcode {
     Add,
@@ -724,6 +730,8 @@ pub(crate) type Ident = String;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
     #[test]
     fn check_var_ast() {
@@ -732,4 +740,42 @@ mod tests {
         assert!(*x.name() == String::from("x"));
         assert!(*x.location() == Location::new("unknown", 0, 0));
     }
+
+    #[test]
+    fn check_function_ast() {
+        let x = VarAST::new(String::from("x"), Default::default());
+        let y = VarAST::new(String::from("y"), Default::default());
+        let z = VarAST::new(String::from("z"), Default::default());
+        let w = VarAST::new(String::from("w"), Default::default());
+
+        // Example:
+        //  fn foo(x, y) {
+        //    let z = x * y;
+        //    let w = z + x;
+        //    return w;
+        //  }
+        let let_z = Expr::Let(
+            z.clone(),
+            Expr::BinaryExpr(x.clone().into(), Opcode::Mul, y.clone().into()).into(),
+        );
+        let let_w = Expr::Let(
+            w.clone(),
+            Expr::BinaryExpr(z.into(), Opcode::Add, x.clone().into()).into(),
+        );
+        let ret_w = Expr::Var(w);
+
+        let foo = FunctionAST::new(
+            String::from("foo"),
+            Default::default(),
+            vec![x, y],
+            vec![],
+            Type::Bottom,
+            Attributes::default(),
+            vec![let_z.into(), let_w.into(), ret_w.into()],
+        );
+        assert!(foo.last().is_some());
+    }
+
+    #[test]
+    fn check_qast() {}
 }
