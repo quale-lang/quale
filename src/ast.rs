@@ -731,9 +731,22 @@ mod tests {
     #[test]
     fn check_var_ast() {
         let x = VarAST::new(String::from("x"), Location::default());
-        assert!(x.is_typed() == false);
+
+        assert!(!x.is_typed());
         assert!(*x.name() == String::from("x"));
         assert!(*x.location() == Location::new("unknown", 0, 0));
+
+        let y = VarAST::new_with_sign(String::from("y"), Location::default(), true);
+
+        assert!(!y.is_typed());
+        assert!(*y.name() == String::from("y"));
+        assert_eq!(format!("{y}"), "-y");
+
+        let z = VarAST::new_with_type(String::from("z"), Location::default(), Type::F64);
+
+        assert!(z.is_typed());
+        assert!(*z.name() == String::from("z"));
+        assert_eq!(format!("{z}"), "z: float64");
     }
 
     #[test]
