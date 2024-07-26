@@ -233,11 +233,6 @@ impl VarAST {
     pub(crate) fn get_type(&self) -> Type {
         self.type_
     }
-
-    #[inline]
-    pub(crate) fn get_type_mut(&mut self) -> Type {
-        self.type_
-    }
 }
 
 impl std::fmt::Display for VarAST {
