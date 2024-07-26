@@ -777,5 +777,49 @@ mod tests {
     }
 
     #[test]
-    fn check_qast() {}
+    fn check_qast() {
+        let x = VarAST::new(String::from("x"), Default::default());
+        let y = VarAST::new(String::from("y"), Default::default());
+        let z = VarAST::new(String::from("z"), Default::default());
+        let w = VarAST::new(String::from("w"), Default::default());
+
+        let let_z = Expr::Let(
+            z.clone(),
+            Expr::BinaryExpr(x.clone().into(), Opcode::Mul, y.clone().into()).into(),
+        );
+        let let_w = Expr::Let(
+            w.clone(),
+            Expr::BinaryExpr(z.into(), Opcode::Add, x.clone().into()).into(),
+        );
+        let ret_w = Expr::Var(w);
+
+        let foo = FunctionAST::new(
+            String::from("foo"),
+            Default::default(),
+            vec![x, y],
+            vec![],
+            Type::Bottom,
+            Attributes::default(),
+            vec![let_z.into(), let_w.into(), ret_w.into()],
+        );
+
+        let module = ModuleAST::new(
+            String::from("Main"),
+            Default::default(),
+            vec![Rc::new(foo.into())],
+        );
+
+        let qast = Qast::new(vec![Rc::new(module.into())]);
+
+        assert_eq!(format!("{qast}"), "module Main {  // @unknown:0:0
+fn foo (x, y) : <bottom> {  // @unknown:0:0
+    z = (x * y)
+    w = (z + x)
+    w
+}
+
+}
+
+");
+    }
 }
