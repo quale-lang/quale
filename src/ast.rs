@@ -332,7 +332,7 @@ impl std::str::FromStr for Qbit {
         let (s1, s2) = s
             .trim_matches(&['(', ')'])
             .split_once(',')
-            .ok_or(QccErrorKind::ExpectedParenth)?;
+            .ok_or(QccErrorKind::ExpectedComma)?;
 
         let amp_0 = s1.trim().parse::<f64>();
         if amp_0.is_err() {
@@ -829,5 +829,33 @@ fn foo (x, y) : <bottom> {  // @unknown:0:0
 }
 
 ");
+    }
+
+    #[test]
+    fn check_qbit() {
+        let s0 = "0q(0.5, 0.5)";
+        let qbit = s0.parse::<Qbit>();
+        assert!(qbit.is_ok());
+        assert_eq!(format!("{}", qbit.unwrap()), "0q0.5_0.5");
+
+        let s1 = "0(1, 0)";
+        let qbit1 = s1.parse::<Qbit>();
+        assert!(qbit1.is_err());
+        assert_eq!(qbit1.err().unwrap(), QccErrorKind::ExpectedQbit);
+
+        let s2 = "0q0.5, 0.5";
+        let qbit2 = s2.parse::<Qbit>();
+        assert!(qbit2.is_err());
+        assert_eq!(qbit2.err().unwrap(), QccErrorKind::ExpectedParenth);
+
+        let s3 = "0q(1, a)";
+        let qbit3 = s3.parse::<Qbit>();
+        assert!(qbit3.is_err());
+        assert_eq!(qbit3.err().unwrap(), QccErrorKind::ExpectedAmpinQbit);
+
+        let s4 = "0q(0.75 0.25)";
+        let err_qbit = s4.parse::<Qbit>();
+        assert!(err_qbit.is_err());
+        assert_eq!(err_qbit.err().unwrap(), QccErrorKind::ExpectedComma);
     }
 }
