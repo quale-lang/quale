@@ -819,7 +819,9 @@ mod tests {
 
         let qast = Qast::new(vec![Rc::new(module.into())]);
 
-        assert_eq!(format!("{qast}"), "module Main {  // @unknown:0:0
+        assert_eq!(
+            format!("{qast}"),
+            "module Main {  // @unknown:0:0
 fn foo (x, y) : <bottom> {  // @unknown:0:0
     z = (x * y)
     w = (z + x)
@@ -828,7 +830,8 @@ fn foo (x, y) : <bottom> {  // @unknown:0:0
 
 }
 
-");
+"
+        );
     }
 
     #[test]
