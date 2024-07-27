@@ -28,3 +28,43 @@ impl std::fmt::Display for Config {
         write!(f, "{}\n{}", self.analyzer, self.optimizer)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn check_config() {
+        let config = Config::new();
+        assert!(!config.dump_ast);
+        assert!(!config.dump_ast_only);
+        assert!(!config.dump_qasm);
+        assert_eq!(
+            format!("{}", config.analyzer),
+            "
+Analyzer Configuration
+-----------------------
+: false"
+        );
+
+        assert_eq!(
+            format!("{}", config.optimizer),
+            "
+Optimizer Configuration
+-----------------------
+Stage: O0"
+        );
+
+        assert_eq!(
+            format!("{}", config),
+            "
+Analyzer Configuration
+-----------------------
+: false
+
+Optimizer Configuration
+-----------------------
+Stage: O0"
+        );
+    }
+}
