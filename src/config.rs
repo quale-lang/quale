@@ -43,7 +43,7 @@ mod tests {
             format!("{}", config.analyzer),
             "
 Analyzer Configuration
------------------------
+----------------------
 : false"
         );
 
@@ -59,7 +59,7 @@ Stage: O0"
             format!("{}", config),
             "
 Analyzer Configuration
------------------------
+----------------------
 : false
 
 Optimizer Configuration

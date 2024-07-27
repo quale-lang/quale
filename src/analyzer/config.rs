@@ -28,7 +28,7 @@ impl std::fmt::Display for AnalyzerConfig {
             f,
             "
 Analyzer Configuration
------------------------
+----------------------
 {}: {}",
             self.src, self.status
         )
@@ -44,7 +44,7 @@ mod tests {
         let analyzer_config = AnalyzerConfig::new();
         assert_eq!(
             format!("{}", analyzer_config),
-            "\nAnalyzer Configuration\n-----------------------\n: false"
+            "\nAnalyzer Configuration\n----------------------\n: false"
         );
         Ok(())
     }
@@ -57,7 +57,10 @@ mod tests {
         };
         assert_eq!(
             format!("{}", analyzer_config),
-            "\nAnalyzer Configuration\n-----------------------\ntmp: true"
+            "
+Analyzer Configuration
+----------------------
+tmp: true"
         );
         Ok(())
     }
