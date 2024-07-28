@@ -137,7 +137,10 @@ pub fn infer(ast: &mut Qast) -> Result<()> {
                 // only add let-lhs and only if they are type checked
                 match *instruction.as_ref().borrow() {
                     Expr::Let(ref def, _) => {
-                        let checked = check_expr(instruction);
+                        // don't type check lhs-rhs, otherwise along with a
+                        // mismatch error, an unknown type error would also be
+                        // raised if local st does'nt find typed lhs.
+                        let checked: Result<Type> = Ok(def.get_type()); 
                         if checked.is_ok_and(|ty| ty != Type::Bottom) {
                             local_var_table.push(def.clone());
                         }
