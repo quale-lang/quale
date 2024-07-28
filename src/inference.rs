@@ -139,8 +139,8 @@ pub fn infer(ast: &mut Qast) -> Result<()> {
                     Expr::Let(ref def, _) => {
                         // don't type check lhs-rhs, otherwise along with a
                         // mismatch error, an unknown type error would also be
-                        // raised if local st does'nt find typed lhs.
-                        let checked: Result<Type> = Ok(def.get_type()); 
+                        // raised if local st doesn't find typed lhs.
+                        let checked: Result<Type> = Ok(def.get_type());
                         if checked.is_ok_and(|ty| ty != Type::Bottom) {
                             local_var_table.push(def.clone());
                         }
