@@ -4,6 +4,7 @@ use crate::optimizer::config::*;
 
 #[derive(Debug, Clone)]
 pub struct Config {
+    pub(crate) debug: bool,
     pub(crate) dump_ast: bool,
     pub(crate) dump_ast_only: bool,
     pub(crate) dump_qasm: bool,
@@ -14,6 +15,7 @@ pub struct Config {
 impl Config {
     pub(crate) fn new() -> Self {
         Self {
+            debug: false,
             dump_ast: false,
             dump_ast_only: false,
             dump_qasm: false,

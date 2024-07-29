@@ -38,6 +38,7 @@ pub(crate) fn usage() {
     {:14}\t{:<20}
     {:14}\t{:<20}
     {:14}\t{:<20}
+    {:14}\t{:<20}
 ",
         "--help",
         "show this page",
@@ -55,6 +56,8 @@ pub(crate) fn usage() {
         "enable first-level optimizations (NA)",
         "-Og",
         "enable all optimizations (NA)",
+        "-d,--debug",
+        "run compiler in debug-mode",
         "-o",
         "compiled output"
     );
