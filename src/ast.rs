@@ -207,6 +207,20 @@ impl VarAST {
         }
     }
 
+    pub(crate) fn new_with_type_and_sign(
+        name: Ident,
+        location: Location,
+        type_: Type,
+        unary_negative: bool,
+    ) -> Self {
+        Self {
+            name,
+            location,
+            type_,
+            unary_negative,
+        }
+    }
+
     pub(crate) fn set_type(&mut self, type_: Type) {
         self.type_ = type_.into();
     }
@@ -747,6 +761,13 @@ mod tests {
         assert!(z.is_typed());
         assert!(*z.name() == String::from("z"));
         assert_eq!(format!("{z}"), "z: float64");
+
+        let w =
+            VarAST::new_with_type_and_sign(String::from("w"), Location::default(), Type::F64, true);
+
+        assert!(w.is_typed());
+        assert!(*w.name() == String::from("w"));
+        assert_eq!(format!("{}", w), "-w: float64");
     }
 
     #[test]
