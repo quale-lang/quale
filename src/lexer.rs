@@ -286,8 +286,7 @@ impl Lexer {
                 return Ok(self.token);
             }
 
-            // FIXME: stackoverflow, too much recursion, see bug
-            // only-whitespace-no-eof.ql
+            // FIXME: stackoverflow, too much recursion
             return self.next_token();
         }
 
