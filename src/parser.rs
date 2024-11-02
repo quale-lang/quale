@@ -5,9 +5,8 @@ use crate::attributes::{Attribute, Attributes};
 use crate::config::*;
 use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
 use crate::lexer::{Lexer, Location};
-use crate::mangler::{mangle, mangle_module, sanitize};
+use crate::utils::{mangle, mangle_module, sanitize, usage};
 use crate::types::Type;
-use crate::utils::usage;
 use std::path::Path;
 
 pub struct Parser {
