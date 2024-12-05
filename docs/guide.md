@@ -18,7 +18,7 @@ Installing quale is simple if you have a working rust toolchain. As the
 compiler is writtern in Rust, you can fetch the source and directly build it
 yourself.
 
-```bash
+```
 git clone https://github.com/quale-lang/quale.git
 cd quale
 cargo build --release
@@ -32,7 +32,7 @@ The last command `cargo install` will install `qcc` binary in your
 
 The help page can be viewed by using `--help` or `-h` command-line option.
 
-```bash
+```
 $ qcc --help
 usage: qcc [options] <quale-file>
     --help              show this page      
