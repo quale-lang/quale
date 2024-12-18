@@ -138,7 +138,11 @@ impl QccError {
 
 impl Display for QccError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "\x1b[99;1mqcc\x1b[0m: \x1b[91;1merror\x1b[0m: {}", self.0)
+        write!(
+            f,
+            "\x1b[99;1mqcc\x1b[0m: \x1b[91;1merror\x1b[0m: {}",
+            self.0
+        )
     }
 }
 

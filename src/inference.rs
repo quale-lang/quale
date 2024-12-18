@@ -470,10 +470,37 @@ fn infer_from_table(
                 return rhs_info;
             }
 
+            let var_type = var.get_type();
+            let val_type = val.as_ref().borrow().get_type();
+
             if !var.is_typed() {
                 var.set_type(val.as_ref().borrow().get_type());
                 None
-            } else if var.get_type() != val.as_ref().borrow().get_type() {
+            } else if (var_type == Type::Qbit || var_type == Type::Bit)
+                && (val_type == Type::Qbit || val_type == Type::Bit)
+                && (var_type != val_type)
+            {
+                // If one of lhs or rhs is qbit while the other is bit, then we
+                // will put a measure operator before it is assigned during
+                // codegen.
+                //
+                //  let x: bit = y;     # y := qbit
+                //
+                // This holds according to our subtyping rules. Codegen will
+                // lower this to:
+                //
+                //  let x0: bit = measure(y);
+                //  let x: bit  = x0;
+                //
+                // Similarily,
+                //
+                //  let x: qbit = y;    # y := bit
+                //
+                // This is also fine. When codegen lowers this code, it
+                // automatically puts required stub to create a logical qubit.
+                None
+            } else if var_type != val_type {
+                // if one is qbit and other is bit, pass
                 Some(Err(QccErrorKind::TypeMismatch.into()))
             } else {
                 Some(Ok(Expr::Var(VarAST::new(
