@@ -510,7 +510,15 @@ fn infer_from_table(
                 .into()))
             }
         }
-        _ => None,
+        Expr::Literal(ref mut l) => {
+            // A literal is usually typed but if it isn't then it should follow
+            // based on what the context says.
+            match *l.as_ref().borrow() {
+                LiteralAST::Lit_Qbit(_) => todo!("perhaps a qubit"),
+                LiteralAST::Lit_Digit(_) => todo!("perhaps a digit"),
+                LiteralAST::Lit_Str(_) => todo!("perhaps a string"),
+            }
+        }
     }
 }
 
