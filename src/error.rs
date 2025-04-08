@@ -135,7 +135,6 @@ impl QccError {
         self.0 == kind
     }
 }
-
 impl Display for QccError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -339,13 +338,19 @@ mod tests {
         let e1: Result<()> = Err(QccError(UnexpectedAttr));
         match e1 {
             Ok(_) => unreachable!(),
-            Err(ref e) => assert_eq!(e.to_string(), "qcc: unexpected attribute"),
+            Err(ref e) => assert_eq!(
+                e.to_string(),
+                "\x1b[99;1mqcc\x1b[0m: \x1b[91;1merror:\x1b[0m unexpected attribute"
+            ),
         }
 
         let e2: Result<()> = Err(QccError(NoFile));
         match e2 {
             Ok(_) => unreachable!(),
-            Err(ref e) => assert_eq!(e.to_string(), "qcc: no such file"),
+            Err(ref e) => assert_eq!(
+                e.to_string(),
+                "\x1b[99;1mqcc\x1b[0m: \x1b[91;1merror:\x1b[0m no such file"
+            ),
         }
         Ok(())
     }
