@@ -35,15 +35,16 @@ The help page can be viewed by using `--help` or `-h` command-line option.
 ```
 $ qcc --help
 usage: qcc [options] <quale-file>
-    --help              show this page      
-    --dump-ast          print AST           
-    --dump-ast-only     print AST without translating to assembly
-    --dump-qasm         print OpenQASM IR   
-    --analyze           run static analyzer 
+    --help              show this page
+    --print-ast         print AST
+    --print-ast-only    print AST without translating to assemmbly
+    --print-qasm        print OpenQASM IR
+    --analyze           run static analyzer
     -O0                 disable optimizations (NA)
     -O1                 enable first-level optimizations (NA)
     -Og                 enable all optimizations (NA)
-    -o                  compiled output     
+    -d,--debug          run compiler in debug-mode
+    -o                  compiled output
 ```
 
 The options are pretty self-explanatory but the `--analyze` and all of

@@ -63,9 +63,9 @@ impl Parser {
                         return Ok(None);
                     }
                     "--analyze" => config.analyzer.status = true,
-                    "--dump-ast" => config.dump_ast = true,
-                    "--dump-ast-only" => config.dump_ast_only = true,
-                    "--dump-qasm" => config.dump_qasm = true,
+                    "--print-ast" => config.dump_ast = true,
+                    "--print-ast-only" => config.dump_ast_only = true,
+                    "--print-qasm" => config.dump_qasm = true,
                     "--debug" => config.debug = true,
                     _ => {
                         let err: QccError = QccErrorKind::NoSuchArg.into();
