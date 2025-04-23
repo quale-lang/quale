@@ -115,10 +115,20 @@ pub fn infer(ast: &mut Qast) -> Result<()> {
     let mut function_table: SymbolTable<VarAST> = SymbolTable::new();
 
     for mut module in ast {
+        let module_name = module.get_name();
         // functions but only collect their names and return types.
         for function in &*module {
             function_table.push(VarAST::new_with_type(
                 function.get_name().clone(),
+                function.get_loc().clone(),
+                function.get_output_type().clone(),
+            ));
+            // A copy of function prepended with its module name is also added.
+            // If the function is used inside the module, then we check against
+            // the value pushed above, and it is called from other module, then
+            // we check against the value pushed below.
+            function_table.push(VarAST::new_with_type(
+                module_name.clone() + "_" + function.get_name(),
                 function.get_loc().clone(),
                 function.get_output_type().clone(),
             ));
