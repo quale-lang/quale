@@ -515,8 +515,8 @@ fn infer_from_table(
             // based on what the context says.
             match *l.as_ref().borrow() {
                 LiteralAST::Lit_Qbit(ref q) => todo!("{q} perhaps a qubit"),
-                LiteralAST::Lit_Digit(ref d) =>
-                    Some(Ok(Expr::Literal(LiteralAST::Lit_Digit(*d).into()).into())),
+                // digits are trivially typed
+                LiteralAST::Lit_Digit(ref d) => None,
                 LiteralAST::Lit_Str(ref s) => todo!("{:?} perhaps a string", s),
             }
         }
