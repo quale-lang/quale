@@ -95,7 +95,7 @@ impl<'a> IntoIterator for &'a mut Qast {
 impl std::fmt::Display for Qast {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for module in &self.modules {
-            writeln!(f, "{}", module.as_ref().borrow())?;
+            writeln!(f, "|_ {}", module.as_ref().borrow())?;
         }
         Ok(())
     }
@@ -159,12 +159,12 @@ impl<'a> IntoIterator for &'a mut ModuleAST {
 
 impl std::fmt::Display for ModuleAST {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "module {} {{  // {}", self.name, self.location)?;
+        writeln!(f, "{}\t\t\t// {}", self.name, self.location)?;
         for function in &self.functions {
             // TODO: Add tab before each function line for pretty printing.
-            writeln!(f, "{}", function.as_ref().borrow())?;
+            writeln!(f, "  |_ {}", function.as_ref().borrow())?;
         }
-        writeln!(f, "}}")?;
+        // writeln!(f, "}}")?;
         Ok(())
     }
 }
@@ -705,7 +705,7 @@ impl<'a> IntoIterator for &'a mut FunctionAST {
 
 impl std::fmt::Display for FunctionAST {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "fn ")?;
+        // write!(f, "fn ")?;
         if self.attrs.0.len() != 0 {
             write!(f, "[[{}]] ", self.attrs)?;
         }
@@ -719,14 +719,14 @@ impl std::fmt::Display for FunctionAST {
 
         writeln!(
             f,
-            "{} ({}) : {} {{  // {}",
+            "{} ({}) : {}\t\t// {}",
             self.name, params, self.output_type, self.location
         )?;
 
         for expr in &self.body {
-            writeln!(f, "    {}", *expr.as_ref().borrow())?;
+            writeln!(f, "    |_ {}", *expr.as_ref().borrow())?;
         }
-        writeln!(f, "}}")?;
+        // writeln!(f, "}}")?;
 
         Ok(())
     }
@@ -839,17 +839,16 @@ mod tests {
         );
 
         let qast = Qast::new(vec![Rc::new(module.into())]);
+        println!("{}", qast);
 
         assert_eq!(
             format!("{qast}"),
-            "module Main {  // @unknown:0:0
-fn foo (x, y) : <bottom> {  // @unknown:0:0
-    z = (x * y)
-    w = (z + x)
-    w
-}
+"|_ Main\t\t\t// @unknown:0:0
+  |_ foo (x, y) : <bottom>\t\t// @unknown:0:0
+    |_ z = (x * y)
+    |_ w = (z + x)
+    |_ w
 
-}
 
 "
         );
