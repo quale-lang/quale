@@ -843,7 +843,7 @@ mod tests {
 
         assert_eq!(
             format!("{qast}"),
-"|_ Main\t\t\t// @unknown:0:0
+            "|_ Main\t\t\t// @unknown:0:0
   |_ foo (x, y) : <bottom>\t\t// @unknown:0:0
     |_ z = (x * y)
     |_ w = (z + x)

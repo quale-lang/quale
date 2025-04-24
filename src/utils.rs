@@ -67,7 +67,7 @@ pub(crate) fn usage() {
 
 /// Simple Name Mangler
 ///
-/// This simple mangler uses module name as prefix and underscored with function
+/// This simple mangler uses module name as prefix and dollar'ed with function
 /// names.
 pub(crate) fn mangle(ast: &mut Qast) -> Result<()> {
     for mut module in ast {
@@ -77,7 +77,7 @@ pub(crate) fn mangle(ast: &mut Qast) -> Result<()> {
             function.set_name(format!("{}_{}", mod_name.clone(), fn_name).into());
 
             for instruction in &mut *function {
-                mangle_expr(instruction, mod_name.clone() + "_");
+                mangle_expr(instruction, mod_name.clone() + "$");
             }
         }
     }
@@ -123,7 +123,7 @@ fn mangle_expr_check(expr: &mut QccCell<Expr>, mod_name: &Ident, fn_name: &Ident
             }
 
             if *f.get_name() == *fn_name {
-                f.set_name(mod_name.to_owned() + "_" + f.get_name());
+                f.set_name(mod_name.to_owned() + "$" + f.get_name());
             }
         }
         _ => {}

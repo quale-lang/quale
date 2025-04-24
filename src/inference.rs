@@ -128,7 +128,7 @@ pub fn infer(ast: &mut Qast) -> Result<()> {
             // the value pushed above, and it is called from other module, then
             // we check against the value pushed below.
             function_table.push(VarAST::new_with_type(
-                module_name.clone() + "_" + function.get_name(),
+                module_name.clone() + "$" + function.get_name(),
                 function.get_loc().clone(),
                 function.get_output_type().clone(),
             ));
