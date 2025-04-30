@@ -509,6 +509,8 @@ fn infer_from_table(
                 // This is also fine. When codegen lowers this code, it
                 // automatically puts required stub to create a logical qubit.
                 None
+            } else if var_type == val_type {
+                None
             } else if var_type != val_type {
                 // if one is qbit and other is bit, pass
                 Some(Err(QccErrorKind::TypeMismatch.into()))

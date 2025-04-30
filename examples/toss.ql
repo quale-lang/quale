@@ -9,7 +9,7 @@ fn toss() : qbit {
 }
 
 fn main() {
-    let choice = toss();
+    let choice : qbit = toss();
     if choice == 0 {
         print("Heads");
     } else {
