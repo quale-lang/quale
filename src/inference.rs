@@ -78,6 +78,19 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
 
             Ok(lhs_type)
         }
+        Expr::Tensor(ref tensor) => {
+            let mut tensor_type = Type::Bottom;
+            let mut previous_type = tensor_type;
+
+            for value in tensor {
+                let _type = value.as_ref().borrow().get_type();
+                if previous_type != _type {
+                    return Err(QccErrorKind::TypeMismatch)?;
+                }
+            }
+
+            Ok(tensor_type)
+        }
         Expr::FnCall(ref f, ref args) => {
             for arg in args {
                 check_expr(arg)?;
@@ -309,6 +322,29 @@ fn infer_expr(expr: &QccCell<Expr>) -> Option<Type> {
             return Some(lhs_type);
         }
 
+        Expr::Tensor(ref tensor) => {
+            for value in tensor {
+                let val_type = infer_expr(value);
+                if val_type.is_none() {
+                    return None;
+                }
+            }
+
+            let mut tensor_type = Type::Bottom;
+            if tensor.len() > 0 {
+                tensor_type = tensor[0].as_ref().borrow().get_type();
+            }
+
+            for value in tensor {
+                let val_type = infer_expr(value)?;
+                if val_type != tensor_type {
+                    return None;
+                }
+            }
+
+            return Some(tensor_type);
+        }
+
         Expr::FnCall(ref mut f, ref args) => {
             if *f.get_output_type() == Type::Bottom && args.len() != 0 {
                 // we can only infer input types by matching against args
@@ -439,6 +475,16 @@ fn infer_from_table(
             let rhs_info = infer_from_table(rhs, param_st, local_st, function_st);
             if rhs_info.is_some() {
                 return rhs_info;
+            }
+            None
+        }
+
+        Expr::Tensor(ref tensor) => {
+            for value in tensor {
+                let val_info = infer_from_table(value, param_st, local_st, function_st);
+                if val_info.is_some() {
+                    return val_info;
+                }
             }
             None
         }

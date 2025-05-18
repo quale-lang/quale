@@ -404,8 +404,53 @@ impl Parser {
         self.parse_fn_call_args(name, location)
     }
 
+    /// Parse a 1-dimension tensor (as vector).
+    fn parse_vector(&mut self) -> Result<QccCell<Expr>> {
+        self.lexer.consume(Token::OBracket)?;
+        let mut vector: Vec<QccCell<Expr>> = vec![];
+
+        while !self.lexer.is_token(Token::CBracket) {
+            let expr = self.parse_expr()?;
+
+            if self.lexer.is_token(Token::CBracket) {
+                continue;
+            } else if !self.lexer.is_token(Token::Comma) {
+                return Err(QccErrorKind::ExpectedComma)?;
+            }
+            self.lexer.consume(Token::Comma)?;
+        }
+        self.lexer.consume(Token::CBracket)?;
+
+        return Ok(Expr::Tensor(vector).into());
+    }
+
+    /// Parse a tensor of n-dimensions.
+    fn parse_tensor(&mut self) -> Result<QccCell<Expr>> {
+        if !self.lexer.is_token(Token::OBracket) {
+            return Err(QccErrorKind::ExpectedOpenBracket)?;
+        }
+        self.lexer.consume(Token::OBracket)?;
+
+        let mut tensor = vec![];
+        while !self.lexer.is_token(Token::CBracket) {
+            let expr = self.parse_expr()?;
+            tensor.push(expr);
+
+            if self.lexer.is_token(Token::Comma) {
+                self.lexer.consume(Token::Comma)?;
+            }
+        }
+        self.lexer.consume(Token::CBracket)?;
+
+        Ok(Expr::Tensor(tensor).into())
+    }
+
     /// Returns the parsed expression.
     fn parse_expr(&mut self) -> Result<QccCell<Expr>> {
+        if self.lexer.is_token(Token::OBracket) {
+            return self.parse_tensor();
+        }
+
         if self.lexer.is_token(Token::Qbit) {
             let qbit = self.lexer.identifier().parse::<Qbit>()?;
             self.lexer.consume(Token::Qbit)?;

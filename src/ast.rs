@@ -452,6 +452,7 @@ pub(crate) type QccCell<T> = std::rc::Rc<std::cell::RefCell<T>>;
 pub enum Expr {
     Var(VarAST),
     BinaryExpr(QccCell<Expr>, Opcode, QccCell<Expr>),
+    Tensor(Vec<QccCell<Expr>>),
     FnCall(FunctionAST, Vec<QccCell<Expr>>),
     Let(VarAST, QccCell<Expr>),
     Literal(QccCell<LiteralAST>),
@@ -462,6 +463,9 @@ impl Expr {
         match &self {
             Self::Var(v) => v.location().clone(),
             Self::BinaryExpr(lhs, _, _) => lhs.as_ref().borrow().get_location(),
+            Self::Tensor(_) => Default::default(), // TODO: This will require
+                                                   // subtracting the dimension
+                                                   // of tensor
             Self::FnCall(f, _) => f.get_loc().clone(),
             Self::Let(var, _) => var.location.clone(),
             Self::Literal(lit) =>
@@ -481,6 +485,13 @@ impl Expr {
                 } else {
                     // TODO
                     return Type::Bottom;
+                }
+            }
+            Self::Tensor(v) => {
+                if v.len() == 0 {
+                    Type::Bottom
+                } else {
+                    v[0].as_ref().borrow().get_type()
                 }
             }
             Self::FnCall(f, args) => *f.get_output_type(),
@@ -544,6 +555,16 @@ impl std::fmt::Display for Expr {
                     op,
                     *rhs.as_ref().borrow()
                 )
+            }
+            Self::Tensor(tensor) => {
+                write!(f, "[");
+                let tensor_str = tensor
+                    .iter()
+                    .map(|p| p.as_ref().borrow().to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "{tensor_str}")?;
+                write!(f, "]")
             }
             Self::FnCall(function, args) => {
                 if *function.get_output_type() != Type::Bottom {

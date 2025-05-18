@@ -65,6 +65,8 @@ pub enum QccErrorKind {
     ExpectedColon,
     UnknownImport,
     TranslationError,
+    ExpectedOpenBracket,
+    ExpectedClosedBracket,
 }
 
 impl Display for QccErrorKind {
@@ -112,6 +114,8 @@ impl Display for QccErrorKind {
                 ExpectedColon => "expected colon `:`",
                 UnknownImport => "unknown imported function",
                 TranslationError => "translation failed",
+                ExpectedOpenBraket => "expected '['",
+                ExpectedClosedBracket => "expected ']'",
             }
         })(self))
     }
