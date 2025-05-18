@@ -463,9 +463,7 @@ impl Expr {
         match &self {
             Self::Var(v) => v.location().clone(),
             Self::BinaryExpr(lhs, _, _) => lhs.as_ref().borrow().get_location(),
-            Self::Tensor(_) => Default::default(), // TODO: This will require
-                                                   // subtracting the dimension
-                                                   // of tensor
+            Self::Tensor(_) => Default::default(), // TODO: This will require subtracting the dimension of tensor
             Self::FnCall(f, _) => f.get_loc().clone(),
             Self::Let(var, _) => var.location.clone(),
             Self::Literal(lit) =>
