@@ -316,6 +316,20 @@ fn infer_expr(expr: &QccCell<Expr>) -> Option<Type> {
             let lhs_type = infer_expr(&lhs)?;
             let rhs_type = infer_expr(&rhs)?;
 
+            // A qubit can be operated by a float. So a binary expression like:
+            //   2 * 0q(1, 0)
+            // where a qubit is multiplied by 2, is valid. The resulting type
+            // will be of a qubit.
+            // TODO: Need a partial ordering in enum Type so that these kinds of
+            // constraints can be written efficiently like:
+            //      Type::Qbit > Type::F64
+            // return the bigger type. This should mimick the type lattice.
+            if (lhs_type == Type::F64 && rhs_type == Type::Qbit)
+                || (lhs_type == Type::F64 && rhs_type == Type::Qbit)
+            {
+                return Some(Type::Qbit);
+            }
+
             if lhs_type != rhs_type {
                 return None;
             }
