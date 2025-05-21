@@ -48,8 +48,8 @@ usage: qcc [options] <quale-file>
 ```
 
 The options are pretty self-explanatory but the `--analyze` and all of
-optimization options don't do anything. They are placeholders for now. `--dump`
-options print the requested IR on the standard output.
+optimization options don't do anything. They are placeholders for now.
+`--print-*` options print the requested IR on the standard output.
 
 We will begin our quick introduction with quale by simulating a fair coin toss.
 In classical computing, if we have to write a coin toss program, we will call a
@@ -187,8 +187,8 @@ this superpositioned qubit which resulted in a 0 or 1 with exactly 0.5
 probability.
 
 Put the above code into a file `toss.ql` and you can dump its AST as `qcc
---dump-ast toss.ql`. This command will print the AST on stdout and also create a
-`.s` file in the same place. This `.s` file is the readable format of OpenQASM
+--print-ast toss.ql`. This command will print the AST on stdout and also create
+a `.s` file in the same place. This `.s` file is the readable format of OpenQASM
 IR.
 
 Before we move forward, it should be explained how these qubits are used in a
