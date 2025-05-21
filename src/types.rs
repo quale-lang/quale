@@ -4,14 +4,27 @@
 
 use crate::error::QccErrorKind;
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Hash, PartialOrd)]
 pub(crate) enum Type {
+    // Don't change the order. Partial ordering in place.
     #[default]
     Bottom,
     Rad,
-    Qbit,
     Bit,
     F64,
+    Qbit,
+}
+
+impl Type {
+    #[inline]
+    pub(crate) fn bigtype(t1: Type, t2: Type) -> Type {
+        return if t1 > t2 { t1 } else { t2 };
+    }
+
+    #[inline]
+    pub(crate) fn smalltype(t1: Type, t2: Type) -> Type {
+        return if t1 < t2 { t1 } else { t2 };
+    }
 }
 
 impl std::fmt::Display for Type {
@@ -39,5 +52,14 @@ impl std::str::FromStr for Type {
             "f64" => Self::F64,
             _ => Err(QccErrorKind::UnexpectedType)?,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn check_types() {
+        assert!(Type::Qbit > Type::F64);
     }
 }
