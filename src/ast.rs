@@ -478,10 +478,18 @@ impl Expr {
         match &self {
             Self::Var(v) => v.get_type(),
             Self::BinaryExpr(lhs, op, rhs) => {
-                if lhs.as_ref().borrow().get_type() == rhs.as_ref().borrow().get_type() {
-                    return lhs.as_ref().borrow().get_type();
+                let lhs_type = lhs.as_ref().borrow().get_type();
+                let rhs_type = rhs.as_ref().borrow().get_type();
+
+                if lhs_type == rhs_type {
+                    return lhs_type;
                 } else {
-                    // TODO
+                    if (lhs_type == Type::Qbit && rhs_type == Type::F64)
+                        || (lhs_type == Type::F64 && rhs_type == Type::Qbit)
+                    {
+                        return Type::Qbit;
+                    }
+                    // TODO: more type rules.
                     return Type::Bottom;
                 }
             }
