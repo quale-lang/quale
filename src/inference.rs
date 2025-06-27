@@ -321,7 +321,7 @@ fn infer_expr(expr: &QccCell<Expr>) -> Option<Type> {
             // where a qubit is multiplied by 2, is valid. The resulting type
             // will be of a qubit.
             if (lhs_type == Type::F64 && rhs_type == Type::Qbit)
-                || (lhs_type == Type::F64 && rhs_type == Type::Qbit)
+                || (lhs_type == Type::Qbit && rhs_type == Type::F64)
             {
                 return Some(Type::bigtype(lhs_type, rhs_type));
             }
