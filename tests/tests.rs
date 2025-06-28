@@ -11,7 +11,7 @@ macro_rules! test {
 
         let mut parser = Parser::new(vec![$path])?.unwrap();
         let config = parser.get_config();
-        let mut ast =  parser.parse(&config.analyzer.src)?;
+        let mut ast = parser.parse(&config.analyzer.src)?;
 
         match infer(&mut ast) {
             Ok(_) => {
@@ -25,6 +25,7 @@ macro_rules! test {
 }
 
 // Always keep a newline between two test macro invocations.
+#[rustfmt::skip]
 #[test]
 fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     // TODO: error, but how to reflect this in
