@@ -4,6 +4,230 @@ use qcc::error::QccErrorKind;
 use qcc::inference::infer;
 use qcc::parser::Parser;
 
+#[macro_export]
+macro_rules! test {
+    ($path:expr, $repr:expr) => {{
+        println!(">> Testing {} ...", $path);
+
+        let mut parser = Parser::new(vec![$path])?.unwrap();
+        let config = parser.get_config();
+        let mut ast =  parser.parse(&config.analyzer.src)?;
+
+        match infer(&mut ast) {
+            Ok(_) => {
+                assert_eq!(format!("{}", ast), $repr);
+            }
+            Err(err) => {
+                assert_eq_any!(err, [QccErrorKind::TypeError]);
+            }
+        }
+    }};
+}
+
+// Always keep a newline between two test macro invocations.
+#[test]
+fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
+    // TODO: error, but how to reflect this in
+    // macro? We can do Result<&str, QccError>.
+    // The commented out tests are those which fail compilation (either at
+    // lexing/parsing stage, or at type checking stage).
+    // test!("tests/attr-panic.ql", "");
+
+//     // FIXME: This is failing cargo test *randomly*.
+//     test!("tests/complex-expr.ql",
+// "|_ lib			// @complex-expr.ql:1:1
+//   |_ fn bar () : qubit		// @complex-expr.ql:3:4
+//     |_ 0q1_0
+
+//   |_ fn sin (r: float64) : float64		// @complex-expr.ql:7:4
+//     |_ (r: float64 / 180)
+
+//   |_ fn cos (r: float64) : float64		// @complex-expr.ql:11:4
+//     |_ (r: float64 / 90)
+
+// |_ complex_expr			// @complex-expr.ql:1:1
+//   |_ fn [[nondeter]] new (b: bit) : qubit		// @complex-expr.ql:21:4
+//     |_ q: qubit = 0q1_0
+//     |_ q: qubit
+
+//   |_ fn bar (x: float64, y: float64) : float64		// @complex-expr.ql:27:4
+//     |_ ((x: float64 + y: float64) / 42)
+
+//   |_ fn main () : qubit		// @complex-expr.ql:31:4
+//     |_ a: float64 = 3.14
+//     |_ e0: float64 = 1
+//     |_ nonce: float64 = a: float64
+//     |_ e1: float64 = e0: float64
+//     |_ f2: qubit = bar: qubit (((e0: float64 * lib$cos: float64 (a: float64)) / nonce: float64), (-e1: float64 * lib$sin: float64 (a: float64)))
+//     |_ f2: qubit
+
+// ");
+
+    // test!("tests/expected-attr.ql", "");
+
+    // test!("tests/let-as-expr.ql", "");
+
+    test!("tests/let-both-typed.ql",
+"|_ let_both_typed			// @let-both-typed.ql:1:1
+  |_ fn foo () : qubit		// @let-both-typed.ql:1:4
+    |_ q: qubit = 0q0_1
+
+  |_ fn main () : qubit		// @let-both-typed.ql:6:4
+    |_ choice: qubit = foo: qubit ()
+
+");
+
+    // test!("tests/let-fn-call.ql", "");
+
+    test!("tests/no-eof.ql",
+"|_ no_eof			// @no-eof.ql:1:1
+  |_ fn [[nondeter]] main (param: qubit) : float64		// @no-eof.ql:2:20
+    |_ 0
+
+");
+
+    test!("tests/only-whitespaces-no-eof.ql",
+"|_ only_whitespaces_no_eof			// @only-whitespaces-no-eof.ql:1:1
+");
+
+    test!("tests/qbit-float.ql",
+"|_ qbit_float			// @qbit-float.ql:1:1
+  |_ fn foo (q0: qubit) : qubit		// @qbit-float.ql:1:4
+    |_ q1: qubit = (2 * q0: qubit)
+
+  |_ fn bar (q0: qubit) : qubit		// @qbit-float.ql:6:4
+    |_ q1: qubit = (q0: qubit * 2)
+
+  |_ fn main () : qubit		// @qbit-float.ql:11:4
+    |_ x: qubit = foo: qubit ()
+    |_ y: qubit = bar: qubit ()
+
+");
+
+    // test!("tests/tabbed-comments-fn.ql", "");
+
+    test!("tests/tabbed-comments.ql",
+"|_ _foo			// @tabbed-comments.ql:1:1
+|_ tabbed_comments			// @tabbed-comments.ql:1:1
+");
+
+    // test!("tests/tensors.ql", "");
+
+    test!("tests/tensors2.ql",
+"|_ tensors2			// @tensors2.ql:1:1
+  |_ fn sin (x: float64) : float64		// @tensors2.ql:1:4
+
+  |_ fn cos (x: float64) : float64		// @tensors2.ql:5:4
+
+  |_ fn main () : <bottom>		// @tensors2.ql:9:4
+    |_ t1 = [[], []]
+    |_ t2 = [[[], []], [[]]]
+
+  |_ fn foo () : float64		// @tensors2.ql:14:4
+    |_ x: float64 = 42
+    |_ e0: float64 = 2.718
+    |_ e1: float64 = (e0: float64 * 2)
+    |_ a: float64 = 0.707
+    |_ t1 = []
+    |_ t2: float64 = [x: float64]
+    |_ t3: float64 = [t2: float64, t2: float64]
+    |_ t4: float64 = [(e0: float64 * cos: float64 (a: float64)), (-e1: float64 * sin: float64 (a: float64))]
+    |_ t5 = [[]]
+    |_ t7: float64 = [[x: float64]]
+    |_ t8: float64 = [[(e0: float64 * cos: float64 (a: float64)), (-e1: float64 * sin: float64 (a: float64))], [(e1: float64 * sin: float64 (a: float64)), (e0: float64 * cos: float64 (a: float64))]]
+    |_ t6 = [[], []]
+    |_ t9 = [[[], []], [[]]]
+    |_ t3: float64
+
+");
+
+    // test!("tests/test1.ql", "");
+
+    // test!("tests/test2.ql", "");
+
+    test!("tests/test3.ql",
+"|_ test3			// @test3.ql:1:1
+");
+
+    test!("tests/test4.ql",
+"|_ test4			// @test4.ql:1:1
+");
+
+    // test!("tests/test5.ql", "");
+
+    // test!("tests/test6.ql", "");
+
+    // test!("tests/test7.ql", "");
+
+    // test!("tests/test8.ql", "");
+
+    test!("tests/test9.ql",
+"|_ test9			// @test9.ql:1:1
+  |_ fn main () : float64		// @test9.ql:1:4
+    |_ x: float64 = -42
+
+");
+
+    // test!("tests/test10.ql", "");
+
+    test!("tests/test11.ql",
+"|_ test11			// @test11.ql:1:1
+  |_ fn main () : float64		// @test11.ql:3:4
+    |_ x: float64 = 42
+    |_ y: float64 = (x: float64 - 99)
+    |_ y: float64
+
+");
+
+    test!("tests/test12.ql",
+"|_ test12			// @test12.ql:1:1
+  |_ fn create_new_state (b: bit) : qubit		// @test12.ql:1:4
+    |_ q: qubit = b: bit
+    |_ q: qubit
+
+");
+
+    test!("tests/test13.ql",
+"|_ test13			// @test13.ql:1:1
+  |_ fn foo (transform: float64, q0: qubit) : qubit		// @test13.ql:1:4
+    |_ tmp: qubit = (transform: float64 * q0: qubit)
+    |_ (transform: float64 * q0: qubit)
+
+  |_ fn main () : qubit		// @test13.ql:6:4
+    |_ choice: qubit = foo: qubit ()
+
+");
+
+    test!("examples/toss.ql",
+"|_ toss			// @toss.ql:1:1
+  |_ fn sin (x: float64) : float64		// @toss.ql:2:4
+
+  |_ fn cos (x: float64) : float64		// @toss.ql:7:4
+
+  |_ fn exp (x: float64) : float64		// @toss.ql:11:4
+
+  |_ fn U (theta: float64, phi: float64, lambda: float64, q0: qubit) : qubit		// @toss.ql:15:4
+    |_ e0: float64 = exp: float64 (((phi: float64 + lambda: float64) / 2))
+    |_ e1: float64 = exp: float64 (((phi: float64 - lambda: float64) / 2))
+    |_ a: float64 = (theta: float64 / 2)
+    |_ transform: float64 = [[(e0: float64 * cos: float64 (a: float64)), (-e1: float64 * sin: float64 (a: float64))], [(e1: float64 * sin: float64 (a: float64)), (e0: float64 * cos: float64 (a: float64))]]
+    |_ (transform: float64 * q0: qubit)
+
+  |_ fn Hadamard (q: qubit) : qubit		// @toss.ql:30:4
+    |_ pi: float64 = 3.14
+    |_ U: qubit ((pi: float64 / 2), 0, 0, q: qubit)
+
+  |_ fn toss () : qubit		// @toss.ql:35:4
+    |_ zero_state: qubit = 0q0_1
+    |_ superpositioned: qubit = Hadamard: qubit (zero_state: qubit)
+
+  |_ fn main () : qubit		// @toss.ql:41:4
+    |_ choice: qubit = toss: qubit ()
+
+");
+    Ok(())
+}
+
 #[test]
 fn compile() -> Result<(), Box<dyn std::error::Error>> {
     let paths = std::fs::read_dir("./tests")?;
