@@ -15,6 +15,9 @@ macro_rules! test {
 
         match infer(&mut ast) {
             Ok(_) => {
+                // TODO: write own macro to assert ast, so that diff is better
+                // presented at test failure. The stdlib macros just dump left
+                // and right strings without showing the diff.
                 assert_eq!(format!("{}", ast), $repr);
             }
             Err(err) => {
