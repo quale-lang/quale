@@ -31,11 +31,11 @@ fn init_session(args: Vec<&str>) -> Result<()> {
             // TODO: Error handling and bug reporting
             infer(&mut qast)?;
 
-            if config.dump_ast_only {
+            if config.print_ast_only {
                 println!("{qast}");
                 return Ok(());
             }
-            if config.dump_ast {
+            if config.print_ast {
                 println!("{qast}");
             }
 
@@ -44,7 +44,7 @@ fn init_session(args: Vec<&str>) -> Result<()> {
             }
 
             let asm = qasm::QasmModule::translate(qast)?;
-            if config.dump_qasm {
+            if config.print_qasm {
                 println!("{asm}");
             }
             asm.generate(&config.optimizer.asm)?;

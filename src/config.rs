@@ -5,9 +5,9 @@ use crate::optimizer::config::*;
 #[derive(Debug, Clone)]
 pub struct Config {
     pub(crate) debug: bool,
-    pub(crate) dump_ast: bool,
-    pub(crate) dump_ast_only: bool,
-    pub(crate) dump_qasm: bool,
+    pub(crate) print_ast: bool,
+    pub(crate) print_ast_only: bool,
+    pub(crate) print_qasm: bool,
     pub analyzer: AnalyzerConfig,
     pub optimizer: OptConfig,
 }
@@ -16,9 +16,9 @@ impl Config {
     pub(crate) fn new() -> Self {
         Self {
             debug: false,
-            dump_ast: false,
-            dump_ast_only: false,
-            dump_qasm: false,
+            print_ast: false,
+            print_ast_only: false,
+            print_qasm: false,
             optimizer: OptConfig::new(),
             analyzer: AnalyzerConfig::new(),
         }
@@ -38,9 +38,9 @@ mod tests {
     #[test]
     fn check_config() {
         let config = Config::new();
-        assert!(!config.dump_ast);
-        assert!(!config.dump_ast_only);
-        assert!(!config.dump_qasm);
+        assert!(!config.print_ast);
+        assert!(!config.print_ast_only);
+        assert!(!config.print_qasm);
         assert_eq!(
             format!("{}", config.analyzer),
             "
