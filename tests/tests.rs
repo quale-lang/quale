@@ -35,6 +35,13 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     // test!("tests/attr-panic.ql", "");
 
 //     // FIXME: This is failing cargo test *randomly*.
+//     // This is a big bug where wrong types are being inferred. So based on the
+//     // code execution either one kind of type or other is inferred. Ambiguity in
+//     // type inference is due to the lack of support for measurement operator. So
+//     // if a function is returning a qubit, then the caller expression may be of
+//     // type qubit, or it may be of a concrete type if lhs is already typed
+//     // before. This should be fixed once the codegen will support addition of
+//     // measurement operator.
 //     test!("tests/complex-expr.ql",
 // "|_ lib			// @complex-expr.ql:1:1
 //   |_ fn bar () : qubit		// @complex-expr.ql:3:4
