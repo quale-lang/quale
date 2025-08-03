@@ -272,7 +272,7 @@ impl From<&FunctionAST> for QasmGate {
         }
 
         Self {
-            name: f.get_name().clone(),
+            name: f.get_name().clone().replace("$", "_"),
             params: vec![],
             qargs: vec![],
             instructions,

@@ -6,7 +6,7 @@ use crate::config::*;
 use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
 use crate::lexer::{Lexer, Location};
 use crate::types::Type;
-use crate::utils::{mangle, mangle_module, sanitize, usage};
+use crate::utils::{mangle_module, sanitize, usage};
 use std::path::Path;
 
 pub struct Parser {
@@ -276,58 +276,41 @@ impl Parser {
 
     /// Parses the import statement and returns a pair of module name and
     /// function name that is being imported.
-    fn parse_import(&mut self, qast: &Qast) -> core::result::Result<(Ident, Ident), QccErrorLoc> {
-        let line_loc = self.lexer.location.clone();
+    fn parse_import(&mut self, qast: &mut Qast) -> Result<(Ident, Ident)> {
+        let loc = self.lexer.location.clone();
         self.lexer.consume(Token::Import)?;
 
         if !self.lexer.is_token(Token::Identifier) {
-            return Err(QccErrorKind::ExpectedMod)?;
+            Err(QccErrorKind::ExpectedMod)?
         }
-        let mod_name = self.lexer.identifier();
-        let mod_location = self.lexer.location.clone();
+        let module = self.lexer.identifier();
+        let module_loc = self.lexer.location.clone();
         self.lexer.consume(Token::Identifier)?;
 
-        // TODO: Colon location in error reporting is incorrect.
+        // TODO: Colon location in error reporting is incorrect. (#testit)
         if !self.lexer.is_token(Token::Colon) {
-            return Err(QccErrorKind::ExpectedColon)?;
+            Err(QccErrorKind::ExpectedColon)?
         }
         self.lexer.consume(Token::Colon)?;
+
         if !self.lexer.is_token(Token::Colon) {
             return Err(QccErrorKind::ExpectedColon)?;
         }
         self.lexer.consume(Token::Colon)?;
 
         if !self.lexer.is_token(Token::Identifier) {
-            Err((QccErrorKind::ExpectedFnName, self.lexer.location.clone()))?
+            Err((QccErrorKind::ExpectedFnName))?
         }
-        let fn_name = self.lexer.identifier();
-        let fn_location = self.lexer.location.clone();
+        let function = self.lexer.identifier();
+        let func_loc = self.lexer.location.clone();
         self.lexer.consume(Token::Identifier)?;
 
         if !self.lexer.is_token(Token::Semicolon) {
-            Err((QccErrorKind::ExpectedSemicolon, line_loc))?
+            Err((QccErrorKind::ExpectedSemicolon))?
         }
         self.lexer.consume(Token::Semicolon);
 
-        // TODO: Move these checks when mod_name and fn_name are parsed. That
-        // way it can return QccErrorLoc back. But this may be more costly!
-        let mut unknown_module = true;
-        for module in qast {
-            if module.get_name() == mod_name {
-                unknown_module = false;
-                for function in &*module {
-                    if *function.get_name() == fn_name {
-                        return Ok((mod_name, fn_name));
-                    }
-                }
-            }
-        }
-
-        if unknown_module {
-            Err((QccErrorKind::UnknownModName, mod_location))?
-        } else {
-            Err((QccErrorKind::UnknownImport, fn_location))?
-        }
+        Ok((module, function))
     }
 
     fn parse_return(&mut self) -> Result<QccCell<Expr>> {
@@ -653,19 +636,30 @@ impl Parser {
         let mut seen_errors = false;
 
         let module_basename = src.rsplit_once('/');
+        let mut dir_name: &str;
         let mut module_name: &str;
         if module_basename.is_none() {
             module_name = src;
+            dir_name = "";
         } else {
-            (_, module_name) = module_basename.unwrap();
+            (dir_name, module_name) = module_basename.unwrap();
         }
         // TODO: We need a mangler for sanitizing module name.
         let module_name: Ident = module_name.trim_end_matches(".ql").into();
+
         let module_location = Location::new(src, 1, 1);
+
         // qast.add_module_info(module_name.clone(), module_location.clone());
         // representation for this module
-        let mut this = ModuleAST::new(sanitize(module_name), module_location, Default::default());
+        let mut this = ModuleAST::new(
+            sanitize(module_name.clone()),
+            module_location,
+            Default::default(),
+        );
         let mut imports = Vec::new();
+        // let mut imports = ImportAST::new(); // collect all imports
+        //                                                // then at once parse
+        //                                                // them
 
         // TODO: Move this entirely in parse_module, parse_module should return
         // a Qast and it can recursively call itself when `module` is seen
@@ -698,13 +692,14 @@ impl Parser {
             } else {
                 if self.lexer.is_token(Token::Import) {
                     let line = self.lexer.line();
-                    match self.parse_import(&qast) {
-                        Ok((mod_name, fn_name)) => {
-                            imports.push((mod_name, fn_name));
+
+                    match self.parse_import(&mut qast) {
+                        Ok((module, function)) => {
+                            imports.push((module, function));
                         }
                         Err(err) => {
                             seen_errors = true;
-                            err.report(line);
+                            err.report(&self.lexer.line());
                         }
                     }
                 } else {
@@ -713,11 +708,55 @@ impl Parser {
             }
         }
 
-        // collect all import statements and mangle accordingly
-        for (mod_name, fn_name) in imports {
-            mangle_module(&mut this, mod_name, fn_name);
+        // Collect all import statements and mangle accordingly
+        for (mod_name, fn_name) in &imports {
+            mangle_module(&mut this, mod_name.clone(), fn_name.clone());
         }
         qast.append_module(this);
+
+        let mut imports_ast = ImportAST::new();
+        for (module, function) in imports {
+            let mut found_module = false;
+            let mut found_function = false;
+
+            for mut m in &qast {
+                if m.get_name() == module {
+                    found_module = true;
+
+                    for f in m.get_functions() {
+                        if *f.borrow().get_name() == function {
+                            imports_ast.push(&m, f);
+                            found_function = true;
+                            break;
+                        }
+                    }
+
+                    if !found_function {
+                        // let err: QccError = QccErrorKind::NoSuchArg.into();
+                        // err.report(&self.lexer.line());
+                        // seen_errors = true;
+                        Err(QccErrorKind::UnknownImport)?
+                    }
+                }
+            }
+
+            if !found_module {
+                let import_file = module.clone() + ".ql";
+                // TODO: Pass other config options. If certain optimization
+                // levels are set for one module, it should be set of all other
+                // modules as well.
+                let import_sess = Parser::new(vec![import_file.as_str()])?;
+
+                match import_sess {
+                    Some(mut parser) => {
+                        let config = parser.get_config();
+                        let mut import_qast: Qast = parser.parse(&import_file)?;
+                        qast.extend(&mut import_qast);
+                    }
+                    None => {} // ??
+                }
+            }
+        }
 
         if seen_errors {
             Err(QccErrorKind::ParseError)?

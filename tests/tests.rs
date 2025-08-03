@@ -80,11 +80,11 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     test!("tests/let-both-typed.ql",
 "|_ let_both_typed			// @let-both-typed.ql:1:1
-  |_ fn foo () : qubit		// @let-both-typed.ql:1:4
+  |_ fn let_both_typed$foo () : qubit		// @let-both-typed.ql:1:4
     |_ q: qubit = 0q0_1
 
-  |_ fn main () : qubit		// @let-both-typed.ql:6:4
-    |_ choice: qubit = foo: qubit ()
+  |_ fn let_both_typed$main () : qubit		// @let-both-typed.ql:6:4
+    |_ choice: qubit = let_both_typed$foo: qubit ()
 
 ");
 
@@ -92,7 +92,7 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     test!("tests/no-eof.ql",
 "|_ no_eof			// @no-eof.ql:1:1
-  |_ fn [[nondeter]] main (param: qubit) : float64		// @no-eof.ql:2:20
+  |_ fn [[nondeter]] no_eof$main (param: qubit) : float64		// @no-eof.ql:2:20
     |_ 0
 
 ");
@@ -103,15 +103,15 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     test!("tests/qbit-float.ql",
 "|_ qbit_float			// @qbit-float.ql:1:1
-  |_ fn foo (q0: qubit) : qubit		// @qbit-float.ql:1:4
+  |_ fn qbit_float$foo (q0: qubit) : qubit		// @qbit-float.ql:1:4
     |_ q1: qubit = (2 * q0: qubit)
 
-  |_ fn bar (q0: qubit) : qubit		// @qbit-float.ql:6:4
+  |_ fn qbit_float$bar (q0: qubit) : qubit		// @qbit-float.ql:6:4
     |_ q1: qubit = (q0: qubit * 2)
 
-  |_ fn main () : qubit		// @qbit-float.ql:11:4
-    |_ x: qubit = foo: qubit ()
-    |_ y: qubit = bar: qubit ()
+  |_ fn qbit_float$main () : qubit		// @qbit-float.ql:11:4
+    |_ x: qubit = qbit_float$foo: qubit ()
+    |_ y: qubit = qbit_float$bar: qubit ()
 
 ");
 
@@ -126,15 +126,15 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     test!("tests/tensors2.ql",
 "|_ tensors2			// @tensors2.ql:1:1
-  |_ fn sin (x: float64) : float64		// @tensors2.ql:1:4
+  |_ fn tensors2$sin (x: float64) : float64		// @tensors2.ql:1:4
 
-  |_ fn cos (x: float64) : float64		// @tensors2.ql:5:4
+  |_ fn tensors2$cos (x: float64) : float64		// @tensors2.ql:5:4
 
-  |_ fn main () : <bottom>		// @tensors2.ql:9:4
+  |_ fn tensors2$main () : <bottom>		// @tensors2.ql:9:4
     |_ t1 = [[], []]
     |_ t2 = [[[], []], [[]]]
 
-  |_ fn foo () : float64		// @tensors2.ql:14:4
+  |_ fn tensors2$foo () : float64		// @tensors2.ql:14:4
     |_ x: float64 = 42
     |_ e0: float64 = 2.718
     |_ e1: float64 = (e0: float64 * 2)
@@ -142,10 +142,10 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ t1 = []
     |_ t2: float64 = [x: float64]
     |_ t3: float64 = [t2: float64, t2: float64]
-    |_ t4: float64 = [(e0: float64 * cos: float64 (a: float64)), (-e1: float64 * sin: float64 (a: float64))]
+    |_ t4: float64 = [(e0: float64 * tensors2$cos: float64 (a: float64)), (-e1: float64 * tensors2$sin: float64 (a: float64))]
     |_ t5 = [[]]
     |_ t7: float64 = [[x: float64]]
-    |_ t8: float64 = [[(e0: float64 * cos: float64 (a: float64)), (-e1: float64 * sin: float64 (a: float64))], [(e1: float64 * sin: float64 (a: float64)), (e0: float64 * cos: float64 (a: float64))]]
+    |_ t8: float64 = [[(e0: float64 * tensors2$cos: float64 (a: float64)), (-e1: float64 * tensors2$sin: float64 (a: float64))], [(e1: float64 * tensors2$sin: float64 (a: float64)), (e0: float64 * tensors2$cos: float64 (a: float64))]]
     |_ t6 = [[], []]
     |_ t9 = [[[], []], [[]]]
     |_ t3: float64
@@ -174,7 +174,7 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     test!("tests/test9.ql",
 "|_ test9			// @test9.ql:1:1
-  |_ fn main () : float64		// @test9.ql:1:4
+  |_ fn test9$main () : float64		// @test9.ql:1:4
     |_ x: float64 = -42
 
 ");
@@ -183,7 +183,7 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     test!("tests/test11.ql",
 "|_ test11			// @test11.ql:1:1
-  |_ fn main () : float64		// @test11.ql:3:4
+  |_ fn test11$main () : float64		// @test11.ql:3:4
     |_ x: float64 = 42
     |_ y: float64 = (x: float64 - 99)
     |_ y: float64
@@ -192,7 +192,7 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     test!("tests/test12.ql",
 "|_ test12			// @test12.ql:1:1
-  |_ fn create_new_state (b: bit) : qubit		// @test12.ql:1:4
+  |_ fn test12$create_new_state (b: bit) : qubit		// @test12.ql:1:4
     |_ q: qubit = b: bit
     |_ q: qubit
 
@@ -200,40 +200,40 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     test!("tests/test13.ql",
 "|_ test13			// @test13.ql:1:1
-  |_ fn foo (transform: float64, q0: qubit) : qubit		// @test13.ql:1:4
+  |_ fn test13$foo (transform: float64, q0: qubit) : qubit		// @test13.ql:1:4
     |_ tmp: qubit = (transform: float64 * q0: qubit)
     |_ (transform: float64 * q0: qubit)
 
-  |_ fn main () : qubit		// @test13.ql:6:4
-    |_ choice: qubit = foo: qubit ()
+  |_ fn test13$main () : qubit		// @test13.ql:6:4
+    |_ choice: qubit = test13$foo: qubit ()
 
 ");
 
     test!("examples/toss.ql",
 "|_ toss			// @toss.ql:1:1
-  |_ fn sin (x: float64) : float64		// @toss.ql:2:4
+  |_ fn toss$sin (x: float64) : float64		// @toss.ql:2:4
 
-  |_ fn cos (x: float64) : float64		// @toss.ql:7:4
+  |_ fn toss$cos (x: float64) : float64		// @toss.ql:7:4
 
-  |_ fn exp (x: float64) : float64		// @toss.ql:11:4
+  |_ fn toss$exp (x: float64) : float64		// @toss.ql:11:4
 
-  |_ fn U (theta: float64, phi: float64, lambda: float64, q0: qubit) : qubit		// @toss.ql:15:4
-    |_ e0: float64 = exp: float64 (((phi: float64 + lambda: float64) / 2))
-    |_ e1: float64 = exp: float64 (((phi: float64 - lambda: float64) / 2))
+  |_ fn toss$U (theta: float64, phi: float64, lambda: float64, q0: qubit) : qubit		// @toss.ql:15:4
+    |_ e0: float64 = toss$exp: float64 (((phi: float64 + lambda: float64) / 2))
+    |_ e1: float64 = toss$exp: float64 (((phi: float64 - lambda: float64) / 2))
     |_ a: float64 = (theta: float64 / 2)
-    |_ transform: float64 = [[(e0: float64 * cos: float64 (a: float64)), (-e1: float64 * sin: float64 (a: float64))], [(e1: float64 * sin: float64 (a: float64)), (e0: float64 * cos: float64 (a: float64))]]
+    |_ transform: float64 = [[(e0: float64 * toss$cos: float64 (a: float64)), (-e1: float64 * toss$sin: float64 (a: float64))], [(e1: float64 * toss$sin: float64 (a: float64)), (e0: float64 * toss$cos: float64 (a: float64))]]
     |_ (transform: float64 * q0: qubit)
 
-  |_ fn Hadamard (q: qubit) : qubit		// @toss.ql:30:4
+  |_ fn toss$Hadamard (q: qubit) : qubit		// @toss.ql:30:4
     |_ pi: float64 = 3.14
-    |_ U: qubit ((pi: float64 / 2), 0, 0, q: qubit)
+    |_ toss$U: qubit ((pi: float64 / 2), 0, 0, q: qubit)
 
-  |_ fn toss () : qubit		// @toss.ql:35:4
+  |_ fn toss$toss () : qubit		// @toss.ql:35:4
     |_ zero_state: qubit = 0q0_1
-    |_ superpositioned: qubit = Hadamard: qubit (zero_state: qubit)
+    |_ superpositioned: qubit = toss$Hadamard: qubit (zero_state: qubit)
 
-  |_ fn main () : qubit		// @toss.ql:41:4
-    |_ choice: qubit = toss: qubit ()
+  |_ fn toss$main () : qubit		// @toss.ql:41:4
+    |_ choice: qubit = toss$toss: qubit ()
 
 ");
     Ok(())
@@ -273,7 +273,15 @@ fn compile() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
-            Err(err) => assert_eq_any!(err, [QccErrorKind::LexerError, QccErrorKind::ParseError]),
+            Err(err) => assert_eq_any!(
+                err,
+                [
+                    QccErrorKind::NoFile,
+                    QccErrorKind::UnknownImport,
+                    QccErrorKind::LexerError,
+                    QccErrorKind::ParseError
+                ]
+            ),
         }
     }
 
@@ -324,7 +332,15 @@ fn analyzer() -> Result<(), Box<dyn std::error::Error>> {
             Ok(ast) => {
                 config.analyzer.analyze(&ast)?;
             }
-            Err(err) => assert_eq_any!(err, [QccErrorKind::LexerError, QccErrorKind::ParseError]),
+            Err(err) => assert_eq_any!(
+                err,
+                [
+                    QccErrorKind::NoFile,
+                    QccErrorKind::UnknownImport,
+                    QccErrorKind::LexerError,
+                    QccErrorKind::ParseError
+                ]
+            ),
         }
     }
 

@@ -3,6 +3,7 @@ use crate::attributes::Attributes;
 use crate::error::{QccError, QccErrorKind};
 use crate::lexer::Location;
 use crate::types::Type;
+use crate::utils::mangle_fns;
 use std::borrow::Borrow;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -57,12 +58,62 @@ pub struct Qast {
 }
 
 impl Qast {
+    #[inline]
     pub(crate) fn new(modules: Vec<QccCell<ModuleAST>>) -> Self {
         Self { modules }
     }
 
+    #[inline]
+    pub(crate) fn len(&self) -> usize {
+        self.modules.len()
+    }
+
+    #[inline]
     pub(crate) fn append_module(&mut self, module: ModuleAST) {
         self.modules.push(std::rc::Rc::new(module.into()));
+    }
+
+    #[inline]
+    pub(crate) fn extend(&mut self, other: &mut Qast) {
+        self.modules.append(&mut other.modules);
+    }
+
+    /// Merge all modules in AST to one monolith module. Ensure mangling happens
+    /// and function calls are referenced to their definitions.
+    pub(crate) fn merge(&mut self) -> Qast {
+        let flattened_ast = self
+            .modules
+            .iter()
+            .flat_map(|s| {
+                let mut module = s.borrow_mut();
+                let module_name = module.get_name();
+
+                let functions = module
+                    .get_functions()
+                    .clone()
+                    .iter()
+                    .map(|s| s.as_ref().borrow().get_name().clone())
+                    .collect::<Vec<_>>();
+                for mut function in &mut *module {
+                    let function_name = function.get_name().clone();
+                    function.set_name(module_name.clone() + "$" + &function_name);
+
+                    for mut expr in &mut *function {
+                        mangle_fns(expr, &module_name, &functions);
+                    }
+                }
+
+                module.functions.clone()
+            })
+            .collect::<Vec<_>>();
+
+        let module = ModuleAST {
+            name: "Main".into(),
+            location: Location::default(),
+            functions: flattened_ast,
+        };
+
+        Qast::new(vec![std::rc::Rc::new(module.into())])
     }
 }
 
@@ -129,6 +180,11 @@ impl ModuleAST {
     pub(crate) fn get_name(&self) -> Ident {
         self.name.clone()
     }
+
+    #[inline]
+    pub(crate) fn get_functions(&self) -> &Vec<QccCell<FunctionAST>> {
+        &self.functions
+    }
 }
 
 impl<'a> IntoIterator for &'a ModuleAST {
@@ -162,6 +218,43 @@ impl std::fmt::Display for ModuleAST {
         writeln!(f, "{}\t\t\t// {}", self.name, self.location)?;
         for function in &self.functions {
             write!(f, "  |_ {}", function.as_ref().borrow())?;
+        }
+        Ok(())
+    }
+}
+
+pub(crate) struct ImportAST(Vec<(ModuleAST, Vec<QccCell<FunctionAST>>)>);
+
+impl ImportAST {
+    pub(crate) fn new() -> Self {
+        Self(vec![])
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    // FIXME: What should be the param type?
+    pub(crate) fn push(&mut self, module: &ModuleAST, function: &QccCell<FunctionAST>) {
+        for (m, fns) in &mut self.0 {
+            if m.get_name() == module.get_name() {
+                fns.push(function.clone()); // FIXME: no clone pls
+            }
+        }
+    }
+}
+
+impl std::fmt::Display for ImportAST {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (module, functions) in &self.0 {
+            write!(f, "import {}::{{", module.get_name())?;
+            let functions_str = functions
+                .iter()
+                .map(|p| p.as_ref().borrow().to_string())
+                .collect::<Vec<String>>()
+                .join(", ");
+            write!(f, "{functions_str}")?;
+            writeln!(f, "}}")?;
         }
         Ok(())
     }

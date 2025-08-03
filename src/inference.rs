@@ -2,6 +2,7 @@
 use crate::ast::{Expr, FunctionAST, LiteralAST, Qast, QccCell, VarAST};
 use crate::error::{QccError, QccErrorKind, Result};
 use crate::types::Type;
+use crate::utils::{mangle, mangle_module};
 use std::borrow::{Borrow, BorrowMut};
 
 /// A generic symbol table implementation.
@@ -127,7 +128,11 @@ pub fn infer(ast: &mut Qast) -> Result<()> {
     let mut seen_errors = false;
     let mut function_table: SymbolTable<VarAST> = SymbolTable::new();
 
-    for mut module in ast {
+    // Merge all modules in one giant monolith module. Easier to do DCE and type
+    // inference.
+    let mut ast = ast.merge();
+
+    for mut module in &mut ast {
         let module_name = module.get_name();
         // functions but only collect their names and return types.
         for function in &*module {
