@@ -644,9 +644,8 @@ impl Parser {
         } else {
             (dir_name, module_name) = module_basename.unwrap();
         }
-        // TODO: We need a mangler for sanitizing module name.
-        let module_name: Ident = module_name.trim_end_matches(".ql").into();
 
+        let module_name: Ident = module_name.trim_end_matches(".ql").into();
         let module_location = Location::new(src, 1, 1);
 
         // qast.add_module_info(module_name.clone(), module_location.clone());
@@ -657,9 +656,6 @@ impl Parser {
             Default::default(),
         );
         let mut imports = Vec::new();
-        // let mut imports = ImportAST::new(); // collect all imports
-        //                                                // then at once parse
-        //                                                // them
 
         // TODO: Move this entirely in parse_module, parse_module should return
         // a Qast and it can recursively call itself when `module` is seen
@@ -699,7 +695,7 @@ impl Parser {
                         }
                         Err(err) => {
                             seen_errors = true;
-                            err.report(&self.lexer.line());
+                            err.report(&line);
                         }
                     }
                 } else {
@@ -732,9 +728,6 @@ impl Parser {
                     }
 
                     if !found_function {
-                        // let err: QccError = QccErrorKind::NoSuchArg.into();
-                        // err.report(&self.lexer.line());
-                        // seen_errors = true;
                         Err(QccErrorKind::UnknownImport)?
                     }
                 }
