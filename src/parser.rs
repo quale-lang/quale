@@ -111,6 +111,7 @@ impl Parser {
         }
 
         if !Path::new(&path).is_file() {
+            // TODO: Print unknown file name.
             Err(QccErrorKind::NoFile)?;
         }
 
@@ -743,6 +744,8 @@ impl Parser {
                 match import_sess {
                     Some(mut parser) => {
                         let config = parser.get_config();
+                        // FIXME: This will overflow stack if circular imports
+                        // are added in two files.
                         let mut import_qast: Qast = parser.parse(&import_file)?;
                         qast.extend(&mut import_qast);
                     }
