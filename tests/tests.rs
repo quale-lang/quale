@@ -277,6 +277,7 @@ fn compile() -> Result<(), Box<dyn std::error::Error>> {
                 err,
                 [
                     QccErrorKind::NoFile,
+                    QccErrorKind::CmdlineErr,
                     QccErrorKind::UnknownImport,
                     QccErrorKind::LexerError,
                     QccErrorKind::ParseError
@@ -310,7 +311,7 @@ fn non_existing_src() -> Result<(), Box<dyn std::error::Error>> {
     let args = vec![path, "--analyze"];
     match Parser::new(args) {
         Ok(_) => unreachable!(),
-        Err(err) => assert_eq!(err, QccErrorKind::NoFile.into()),
+        Err(err) => assert_eq!(err, QccErrorKind::CmdlineErr.into()),
     }
     Ok(())
 }
@@ -336,6 +337,7 @@ fn analyzer() -> Result<(), Box<dyn std::error::Error>> {
                 err,
                 [
                     QccErrorKind::NoFile,
+                    QccErrorKind::CmdlineErr,
                     QccErrorKind::UnknownImport,
                     QccErrorKind::LexerError,
                     QccErrorKind::ParseError

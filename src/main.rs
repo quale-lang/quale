@@ -84,13 +84,13 @@ mod tests {
 
     #[test]
     fn check_wrong_parser_uses() -> Result<()> {
-        use crate::error::QccErrorKind::NoFile;
+        use crate::error::QccErrorKind::{NoFile, CmdlineErr};
 
         let path = "non_existing_src.ql";
         let args = vec![path];
         Ok(match Parser::new(args) {
             Ok(_) => unreachable!(),
-            Err(err) => assert_eq!(err, NoFile.into()),
+            Err(err) => assert_eq_any!(err, [NoFile, CmdlineErr]),
         })
     }
 }

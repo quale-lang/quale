@@ -111,8 +111,10 @@ impl Parser {
         }
 
         if !Path::new(&path).is_file() {
-            // TODO: Print unknown file name.
-            Err(QccErrorKind::NoFile)?;
+            let err: QccError = QccErrorKind::NoFile.into();
+            let s = format!("{}", path);
+            err.report(&s);
+            return Err(QccErrorKind::CmdlineErr)?;
         }
 
         Ok(Some(config))
