@@ -121,10 +121,13 @@ impl Display for QccErrorKind {
     }
 }
 
+/// A suggestion that can be tagged along with Kind.
+pub(crate) type Suggestion = (&'static str);
+
 /// This is the main error which any stage processing returns. For example, the
 /// parser returns it. We are only concerned with kind of an error.
 #[derive(Debug, PartialEq)]
-pub struct QccError(pub(crate) QccErrorKind);
+pub struct QccError(pub(crate) QccErrorKind, pub(crate) Suggestion);
 
 impl QccError {
     #[inline]
@@ -139,6 +142,7 @@ impl QccError {
         self.0 == kind
     }
 }
+
 impl Display for QccError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -153,7 +157,13 @@ impl Error for QccError {}
 
 impl From<QccErrorKind> for QccError {
     fn from(value: QccErrorKind) -> Self {
-        QccError(value)
+        QccError(value, "")
+    }
+}
+
+impl From<(QccErrorKind, Suggestion)> for QccError {
+    fn from(value: (QccErrorKind, Suggestion)) -> Self {
+        QccError(value.0, value.1)
     }
 }
 
@@ -165,19 +175,19 @@ impl From<QccErrorLoc> for QccError {
 
 impl From<std::io::Error> for QccError {
     fn from(_: std::io::Error) -> Self {
-        Self(QccErrorKind::NoFile)
+        Self(QccErrorKind::NoFile, "")
     }
 }
 
 impl From<String> for QccError {
     fn from(_: String) -> Self {
-        Self(QccErrorKind::NoFile)
+        Self(QccErrorKind::NoFile, "")
     }
 }
 
 impl From<&str> for QccError {
     fn from(_: &str) -> Self {
-        Self(QccErrorKind::NoFile)
+        Self(QccErrorKind::NoFile, "")
     }
 }
 
@@ -191,7 +201,7 @@ pub struct QccErrorLoc(QccError, LocationRef);
 
 impl QccErrorLoc {
     pub(crate) fn new(kind: QccErrorKind, loc: Location) -> Self {
-        Self(QccError(kind), LocationRef::new(loc.into()))
+        Self(kind.into(), LocationRef::new(loc.into()))
     }
 
     pub(crate) fn get_error(&self) -> &QccError {
@@ -267,7 +277,7 @@ impl Display for QccErrorLoc {
 
 impl From<QccErrorKind> for QccErrorLoc {
     fn from(kind: QccErrorKind) -> Self {
-        Self(QccError(kind), LocationRef::new(Default::default()))
+        Self(kind.into(), LocationRef::new(Default::default()))
     }
 }
 
@@ -307,7 +317,7 @@ impl Error for QccErrorLoc {}
 impl From<std::io::Error> for QccErrorLoc {
     fn from(_: std::io::Error) -> Self {
         Self(
-            QccError(QccErrorKind::NoFile),
+            QccErrorKind::NoFile.into(),
             LocationRef::new(Default::default()),
         )
     }
@@ -316,7 +326,7 @@ impl From<std::io::Error> for QccErrorLoc {
 impl From<String> for QccErrorLoc {
     fn from(_: String) -> Self {
         Self(
-            QccError(QccErrorKind::NoFile),
+            QccErrorKind::NoFile.into(),
             LocationRef::new(Default::default()),
         )
     }
@@ -325,7 +335,7 @@ impl From<String> for QccErrorLoc {
 impl From<&str> for QccErrorLoc {
     fn from(_: &str) -> Self {
         Self(
-            QccError(QccErrorKind::NoFile),
+            QccErrorKind::NoFile.into(),
             LocationRef::new(Default::default()),
         )
     }
@@ -339,7 +349,7 @@ mod tests {
     fn check_errors() -> Result<()> {
         use QccErrorKind::*;
 
-        let e1: Result<()> = Err(QccError(UnexpectedAttr));
+        let e1: Result<()> = Err(UnexpectedAttr.into());
         match e1 {
             Ok(_) => unreachable!(),
             Err(ref e) => assert_eq!(
@@ -348,7 +358,7 @@ mod tests {
             ),
         }
 
-        let e2: Result<()> = Err(QccError(NoFile));
+        let e2: Result<()> = Err(NoFile.into());
         match e2 {
             Ok(_) => unreachable!(),
             Err(ref e) => assert_eq!(
