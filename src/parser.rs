@@ -692,6 +692,9 @@ impl Parser {
                 if self.lexer.is_token(Token::Import) {
                     let line = self.lexer.line();
 
+                    // FIXME: Parsing cyclic imports will stackoverflow. Either:
+                    // 1. Cache modules amongst different parsing sessions.
+                    // 2. Explicit module system preventing cyclic dependency.
                     match self.parse_import(&mut qast) {
                         Ok((module, function)) => {
                             imports.push((module, function));
