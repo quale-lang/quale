@@ -401,3 +401,41 @@ fn check_output_directives() -> Result<(), Box<dyn std::error::Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn check_package() -> Result<(), Box<dyn std::error::Error>> {
+    let main = "./tests/package/toss.ql";
+    let args = vec![main];
+
+    let mut parser = Parser::new(args)?.unwrap();
+    let config = parser.get_config();
+
+    match parser.parse(&config.analyzer.src) {
+        Ok(mut ast) => {
+            match infer(&mut ast) {
+                Ok(_) => {}
+                Err(err) => {
+                    assert_eq_any!(err, [QccErrorKind::TypeError]);
+                }
+            }
+
+            match qasm::QasmModule::translate(ast) {
+                Ok(_) => {}
+                Err(err) => assert_eq_any!(err, [QccErrorKind::TranslationError]),
+            }
+        }
+
+        Err(err) => assert_eq_any!(
+            err,
+            [
+                QccErrorKind::NoFile,
+                // TODO: How to reference that package is throwing CyclicImport
+                // error.
+                // QccErrorKind::UnknownImport,
+                // QccErrorKind::ParseError
+            ]
+        ),
+    }
+
+    Ok(())
+}

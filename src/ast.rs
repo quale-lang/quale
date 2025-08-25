@@ -52,7 +52,7 @@ impl Token {
 // --------------
 // We will target OpenQASM and our high-level IR for now is simply a classic
 // AST.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Qast {
     modules: Vec<QccCell<ModuleAST>>,
 }
@@ -153,6 +153,7 @@ impl std::fmt::Display for Qast {
 }
 
 /// Representation of a module or namespace.
+#[derive(Debug)]
 pub struct ModuleAST {
     name: Ident,
     location: Location,
@@ -262,7 +263,7 @@ impl std::fmt::Display for ImportAST {
 
 /// A repr for a variable. It contains a `name` of the variable and its
 /// `location`.
-#[derive(Clone, Hash, Eq, PartialEq)]
+#[derive(Clone, Hash, Eq, PartialEq, Debug)]
 pub(crate) struct VarAST {
     name: Ident,
     location: Location,
@@ -368,6 +369,7 @@ impl From<VarAST> for QccCell<Expr> {
 }
 
 /// Mathematical operators.
+#[derive(Debug)]
 pub(crate) enum Opcode {
     Add,
     Sub,
@@ -406,6 +408,7 @@ impl std::fmt::Display for Opcode {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct Qbit {
     amp_0: f64,
     amp_1: f64,
@@ -454,6 +457,7 @@ impl std::str::FromStr for Qbit {
     }
 }
 
+#[derive(Debug)]
 pub(crate) enum LiteralAST {
     Lit_Qbit(Qbit),
     Lit_Digit(f64),
@@ -542,6 +546,7 @@ impl std::fmt::Display for BinaryExprAST {
 
 pub(crate) type QccCell<T> = std::rc::Rc<std::cell::RefCell<T>>;
 
+#[derive(Debug)]
 pub enum Expr {
     Var(VarAST),
     BinaryExpr(QccCell<Expr>, Opcode, QccCell<Expr>),
@@ -686,6 +691,7 @@ impl std::fmt::Display for Expr {
     }
 }
 
+#[derive(Debug)]
 pub struct FunctionAST {
     name: Ident,
     location: Location,

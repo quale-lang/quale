@@ -7,10 +7,14 @@ use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
 use crate::lexer::{Lexer, Location};
 use crate::types::Type;
 use crate::utils::{mangle_module, sanitize, usage};
+use std::collections::BTreeSet;
+use std::collections::HashSet;
 use std::path::Path;
 
 pub struct Parser {
     // args: Vec<String>,
+    parsed: HashSet<String>,
+    modules_waitlist: BTreeSet<String>, // store list of modules that are seen
     config: Config,
     lexer: Box<Lexer>,
 }
@@ -26,6 +30,8 @@ impl Parser {
             let mut lexer = Lexer::new(lines, config.analyzer.src.clone());
 
             Ok(Some(Self {
+                parsed: Default::default(),
+                modules_waitlist: Default::default(),
                 config,
                 lexer: lexer.into(),
             }))
@@ -38,6 +44,12 @@ impl Parser {
     /// Returns a reference to `Config` for current parser session.
     pub fn get_config(&self) -> Config {
         self.config.clone()
+    }
+
+    pub(crate) fn extend_modules_ref(&mut self, modules: BTreeSet<String>) {
+        for module in modules {
+            self.modules_waitlist.insert(module);
+        }
     }
 
     /// Parses the cmdline arguments and populate the `Config` options. This
@@ -641,11 +653,14 @@ impl Parser {
         let module_basename = src.rsplit_once('/');
         let mut dir_name: &str;
         let mut module_name: &str;
+        let mut delimited_dir_name: String;
         if module_basename.is_none() {
             module_name = src;
             dir_name = "";
+            delimited_dir_name = dir_name.into();
         } else {
             (dir_name, module_name) = module_basename.unwrap();
+            delimited_dir_name = format!("{dir_name}/");
         }
 
         let module_name: Ident = module_name.trim_end_matches(".ql").into();
@@ -697,6 +712,7 @@ impl Parser {
                     // 2. Explicit module system preventing cyclic dependency.
                     match self.parse_import(&mut qast) {
                         Ok((module, function)) => {
+                            self.modules_waitlist.insert(module.clone());
                             imports.push((module, function));
                         }
                         Err(err) => {
@@ -717,6 +733,31 @@ impl Parser {
         qast.append_module(this);
 
         let mut imports_ast = ImportAST::new();
+
+        self.parsed.insert(module_name.clone());
+
+        while let Some(import_module) = self.modules_waitlist.pop_first() {
+            if self.parsed.contains(&import_module) {
+                // TODO: Improve information.
+                let err: QccError = QccErrorKind::CyclicImport.into();
+                err.report(format!("{} in {}.ql", &import_module, &module_name).as_str());
+                Err(QccErrorKind::ParseError)?
+            }
+
+            // TODO:
+            let import_file = delimited_dir_name.clone() + &import_module + ".ql";
+            let import_session = Parser::new(vec![import_file.as_str()])?;
+            match import_session {
+                Some(mut parser) => {
+                    parser.parsed.extend(self.parsed.clone());
+
+                    let mut import_qast = parser.parse(&import_file)?;
+                    qast.extend(&mut import_qast);
+                }
+                None => unreachable!(),
+            }
+        }
+
         for (module, function) in imports {
             let mut found_module = false;
             let mut found_function = false;
@@ -734,30 +775,38 @@ impl Parser {
                     }
 
                     if !found_function {
+                        // TODO: Improve information.
                         Err(QccErrorKind::UnknownImport)?
                     }
                 }
             }
-
-            if !found_module {
-                let import_file = module.clone() + ".ql";
-                // TODO: Pass other config options. If certain optimization
-                // levels are set for one module, it should be set of all other
-                // modules as well.
-                let import_sess = Parser::new(vec![import_file.as_str()])?;
-
-                match import_sess {
-                    Some(mut parser) => {
-                        let config = parser.get_config();
-                        // FIXME: This will overflow stack if circular imports
-                        // are added in two files.
-                        let mut import_qast: Qast = parser.parse(&import_file)?;
-                        qast.extend(&mut import_qast);
-                    }
-                    None => {} // ??
-                }
-            }
         }
+
+        //     if !found_module {
+        //         let import_file = module.clone() + ".ql";
+        //         // TODO: Pass other config options. If certain optimization
+        //         // levels are set for one module, it should be set of all other
+        //         // modules as well.
+        //         let import_sess = Parser::new(vec![import_file.as_str()])?;
+
+        //         match import_sess {
+        //             Some(mut parser) => {
+        //                 parser.extend_modules_ref(self.modules.clone());
+
+        //                 let config = parser.get_config();
+        //                 // FIXME: This will overflow stack if circular imports
+        //                 // are added in two files.
+
+        //                 if !parser.modules.contains(&module) {
+        //                     let mut import_qast: Qast = parser.parse(&import_file)?;
+        //                     qast.extend(&mut import_qast);
+        //                 }
+
+        //             }
+        //             None => {} // ??
+        //         }
+        //     }
+        // }
 
         if seen_errors {
             Err(QccErrorKind::ParseError)?
