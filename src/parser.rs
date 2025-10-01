@@ -639,8 +639,6 @@ impl Parser {
         Ok(ModuleAST::new(name, location, functions))
     }
 
-    /* TODO: If we have more than one quale file in a parsing session
-     * (inside Config), then we can select which one to parse via here */
     /// Parses the source file.
     pub fn parse(&mut self, src: &String) -> Result<Qast> {
         if !src.ends_with(".ql") {
@@ -707,9 +705,6 @@ impl Parser {
                 if self.lexer.is_token(Token::Import) {
                     let line = self.lexer.line();
 
-                    // FIXME: Parsing cyclic imports will stackoverflow. Either:
-                    // 1. Cache modules amongst different parsing sessions.
-                    // 2. Explicit module system preventing cyclic dependency.
                     match self.parse_import(&mut qast) {
                         Ok((module, function)) => {
                             self.modules_waitlist.insert(module.clone());
@@ -775,8 +770,12 @@ impl Parser {
                     }
 
                     if !found_function {
-                        // TODO: Improve information.
-                        Err(QccErrorKind::UnknownImport)?
+                        // TODO: Improve information. Only return ParseError!
+                        // Here and in the cyclic import case as well.
+                        let err: QccError = QccErrorKind::UnknownImport.into();
+                        err.report(&function);
+                        // err.report(format!("{} {}", function, self.lexer.location).as_str());
+                        Err(QccErrorKind::ParseError)?
                     }
                 }
             }
