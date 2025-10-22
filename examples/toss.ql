@@ -28,7 +28,7 @@ fn U (theta: f64, phi: f64, lambda: f64, q0: qbit) : qbit {
 }
 
 fn Hadamard(q: qbit) : qbit {
-    let pi: f64 = 3.14;
+    let pi = 3.14;
     return U(pi/2, 0, 0, q);
 }
 
@@ -39,7 +39,7 @@ fn toss() : qbit {
 }
 
 fn main() {
-    let choice : qbit = toss();
+    let choice = toss();
     if choice == 0 {
         print("Heads");
     } else {
