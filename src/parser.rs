@@ -174,6 +174,42 @@ impl Parser {
         Ok(attrs)
     }
 
+    /// Parses a scope containing expressions. It is like parsing a function
+    /// except the function header, parameter and return type. The scope must
+    /// start and end with curly braces.
+    fn parse_scope(&mut self) -> Result<Vec<QccCell<Expr>>> {
+        if !self.lexer.is_token(Token::OCurly) {
+            return Err(QccErrorKind::ExpectedOpenCurly)?;
+        }
+        self.lexer.consume(Token::OCurly)?;
+
+        let mut body: Vec<QccCell<Expr>> = Default::default();
+
+        while !self.lexer.is_token(Token::CCurly) {
+            if self.lexer.is_token(Token::Let) {
+                let expr = self.parse_let()?;
+                body.push(expr);
+            } else if self.lexer.is_token(Token::Return) {
+                let expr = self.parse_return()?;
+                body.push(expr);
+            } else if self.lexer.is_token(Token::If) {
+                let expr = self.parse_if_block()?;
+                body.push(expr);
+            } else {
+                // function calls with no return or dropped return value.
+                if self.lexer.token.is_some() {
+                    self.lexer.consume(self.lexer.token.unwrap());
+                } else {
+                    // TODO: Replicate this in parse_function too.
+                    return Err(QccErrorKind::ExpectedCloseCurly)?;
+                }
+            }
+        }
+        self.lexer.consume(Token::CCurly)?;
+
+        Ok(body)
+    }
+
     /// Parses a function.
     fn parse_function(&mut self) -> Result<FunctionAST> {
         let mut attrs: Attributes = Default::default();
@@ -268,6 +304,9 @@ impl Parser {
             } else if self.lexer.is_token(Token::Return) {
                 let expr = self.parse_return()?;
                 body.push(expr);
+            } else if self.lexer.is_token(Token::If) {
+                let expr = self.parse_if_block()?;
+                body.push(expr);
             } else {
                 if self.lexer.token.is_some() {
                     self.lexer.consume(self.lexer.token.unwrap());
@@ -354,19 +393,17 @@ impl Parser {
 
         let mut args: Vec<QccCell<Expr>> = vec![];
         while !self.lexer.is_token(Token::CParenth) {
-            let expr = self.parse_expr();
-            if expr.is_ok() {
-                let tmp = expr.unwrap();
-                args.push(tmp);
-            }
+            let expr = self.parse_expr()?;
+            args.push(expr);
 
-            if !self.lexer.is_any_token(&[Token::Comma, Token::CParenth]) {
-                if !self.lexer.is_token(Token::Comma) {
-                    return Err(QccErrorKind::ExpectedComma)?;
-                } else {
-                    return Err(QccErrorKind::ExpectedParenth)?;
-                }
-            }
+            // // FIXME: This shouldn't be here.
+            // if !self.lexer.is_any_token(&[Token::Comma, Token::CParenth]) {
+            //     if !self.lexer.is_token(Token::Comma) {
+            //         return Err(QccErrorKind::ExpectedComma)?;
+            //     } else {
+            //         return Err(QccErrorKind::ExpectedParenth)?;
+            //     }
+            // }
             if self.lexer.is_token(Token::Comma) {
                 self.lexer.consume(Token::Comma)?;
             }
@@ -480,6 +517,8 @@ impl Parser {
                 Token::Sub,
                 Token::Mul,
                 Token::Div,
+                Token::Equal,
+                Token::Unequal,
             ]) {
                 // if none of the above tokens are seen then it is a named
                 // variable
@@ -571,6 +610,27 @@ impl Parser {
         }
         let lhs = self.parse_expr()?;
         self.parse_binary_expr_with_lhs(lhs)
+    }
+
+    /// Parse an if-else block.
+    fn parse_if_block(&mut self) -> Result<QccCell<Expr>> {
+        if !self.lexer.is_token(Token::If) {
+            return Err(QccErrorKind::ExpectedIf)?;
+        }
+        self.lexer.consume(Token::If)?;
+
+        let conditional = self.parse_expr()?;
+
+        let mut truth_block: Vec<QccCell<Expr>> = self.parse_scope()?;
+        let mut false_block: Vec<QccCell<Expr>> = vec![];
+
+        if self.lexer.is_token(Token::Else) {
+            self.lexer.consume(Token::Else)?;
+
+            false_block = self.parse_scope()?;
+        }
+
+        Ok(Expr::Conditional(conditional, truth_block, false_block).into())
     }
 
     fn parse_let(&mut self) -> Result<QccCell<Expr>> {

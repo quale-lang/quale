@@ -83,8 +83,10 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
   |_ fn let_both_typed$foo () : qubit		// @let-both-typed.ql:1:4
     |_ q: qubit = 0q0_1
 
-  |_ fn let_both_typed$main () : qubit		// @let-both-typed.ql:6:4
+  |_ fn let_both_typed$main () : <bottom>		// @let-both-typed.ql:6:4
     |_ choice: qubit = let_both_typed$foo: qubit ()
+    |_ (choice == 0)
+
 
 ");
 
@@ -232,8 +234,10 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ zero_state: qubit = 0q0_1
     |_ superpositioned: qubit = toss$Hadamard: qubit (zero_state: qubit)
 
-  |_ fn toss$main () : qubit		// @toss.ql:41:4
+  |_ fn toss$main () : <bottom>		// @toss.ql:41:4
     |_ choice: qubit = toss$toss: qubit ()
+    |_ (choice == 0)
+
 
 ");
     Ok(())

@@ -40,11 +40,25 @@ pub(crate) enum Token {
     Import = -11,
     Let = -12,
     Qbit = -13,
+    If = -14,
+    Else = -15,
+
+    // Comparison operators
+    Equal = -16, // ==
+    Unequal = -17, // !=
+                 // TODO: {L|G}T{E}
 }
 
 impl Token {
     pub(crate) fn all_binops() -> &'static [Self] {
-        &[Self::Add, Self::Sub, Self::Mul, Self::Div]
+        &[
+            Self::Add,
+            Self::Sub,
+            Self::Mul,
+            Self::Div,
+            Self::Equal,
+            Self::Unequal,
+        ]
     }
 }
 
@@ -553,6 +567,11 @@ pub enum Expr {
     Tensor(Vec<QccCell<Expr>>),
     FnCall(FunctionAST, Vec<QccCell<Expr>>),
     Let(VarAST, QccCell<Expr>),
+    Conditional(
+        QccCell<Expr>,
+        Vec<QccCell<Expr>>, /* truth_block */
+        Vec<QccCell<Expr>>, /* false_block */
+    ),
     Literal(QccCell<LiteralAST>),
 }
 
@@ -564,6 +583,7 @@ impl Expr {
             Self::Tensor(_) => Default::default(), // TODO: This will require subtracting the dimension of tensor
             Self::FnCall(f, _) => f.get_loc().clone(),
             Self::Let(var, _) => var.location.clone(),
+            Self::Conditional(c, _, _) => c.as_ref().borrow().get_location(),
             Self::Literal(lit) =>
             /*TODO*/
             {
@@ -600,6 +620,12 @@ impl Expr {
             }
             Self::FnCall(f, args) => *f.get_output_type(),
             Self::Let(var, val) => var.get_type(),
+            Self::Conditional(cond, _, _) => {
+                // TODO: Conditionals should be like functional languages, they
+                // must always return something. And how to accomodate
+                // conditionals with quantum variables in expressions?
+                Type::Bottom
+            }
             Self::Literal(lit) => match *lit.as_ref().borrow() {
                 LiteralAST::Lit_Str(_) => Type::Bottom,
                 LiteralAST::Lit_Digit(_) => Type::F64,
@@ -686,6 +712,30 @@ impl std::fmt::Display for Expr {
                 Ok(())
             }
             Self::Let(var, val) => write!(f, "{} = {}", var, *val.as_ref().borrow()),
+            Self::Conditional(cond, _truth, _false) => {
+                writeln!(f, "{}", *cond.as_ref().borrow())?;
+
+                // TODO: Formatting needs work.
+                if !_truth.is_empty() {
+                    let truth_block = _truth
+                        .iter()
+                        .map(|p| p.as_ref().borrow().to_string())
+                        .collect::<Vec<String>>()
+                        .join("\n\t\t");
+                    writeln!(f, "\ttrue  |_ {truth_block}")?;
+                }
+
+                if !_false.is_empty() {
+                    let false_block = _false
+                        .iter()
+                        .map(|p| p.as_ref().borrow().to_string())
+                        .collect::<Vec<String>>()
+                        .join("\n\t\t");
+                    writeln!(f, "\tfalse |_ {false_block}")?;
+                }
+
+                Ok(())
+            }
             Self::Literal(lit) => write!(f, "{}", *lit.as_ref().borrow()),
         }
     }

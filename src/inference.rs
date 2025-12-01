@@ -115,6 +115,7 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
 
             Ok(val_type)
         }
+        Expr::Conditional(_, _, _) => Ok(Type::Bottom),
         Expr::Literal(ref lit) => match *lit.as_ref().borrow() {
             LiteralAST::Lit_Digit(ref digit) => Ok(Type::F64),
             LiteralAST::Lit_Str(ref s) => Ok(Type::Bottom),
@@ -392,6 +393,12 @@ fn infer_expr(expr: &QccCell<Expr>) -> Option<Type> {
             }
         }
 
+        Expr::Conditional(_, _, _) =>
+        // TODO:
+        {
+            return Some(Type::Bottom);
+        }
+
         Expr::Literal(ref lit) => {
             return match *lit.as_ref().borrow() {
                 LiteralAST::Lit_Digit(_) => Some(Type::F64),
@@ -582,6 +589,10 @@ fn infer_from_table(
                 ))
                 .into()))
             }
+        }
+        Expr::Conditional(ref mut conditional, ref mut truth_block, ref mut false_block) => {
+            // TODO
+            None
         }
         Expr::Literal(ref mut l) => {
             // A literal is usually typed but if it isn't then it should follow

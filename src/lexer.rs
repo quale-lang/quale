@@ -317,6 +317,16 @@ impl Lexer {
             self.ptr.current += 1;
             self.token = Some(single_token);
 
+            // Lexing for '==' operator.
+            if self.current() == '=' as u8 {
+                self.token = Some(Token::Equal);
+                self.ptr.current += 1;
+
+                return Ok(Some(Token::Equal));
+            } else if single_token == Token::Assign {
+                return Ok(self.token);
+            }
+
             if single_token != Token::Sub {
                 return Ok(self.token);
             }
@@ -359,6 +369,8 @@ impl Lexer {
                 "module" => Some(Token::Module),
                 "let" => Some(Token::Let),
                 "import" => Some(Token::Import),
+                "if" => Some(Token::If),
+                "else" => Some(Token::Else),
                 _ => Some(Token::Identifier),
             };
             return Ok(self.token);

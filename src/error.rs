@@ -68,6 +68,9 @@ pub enum QccErrorKind {
     ExpectedOpenBracket,
     ExpectedClosedBracket,
     CyclicImport,
+    ExpectedIf,
+    ExpectedOpenCurly,
+    ExpectedCloseCurly,
 }
 
 impl Display for QccErrorKind {
@@ -118,6 +121,9 @@ impl Display for QccErrorKind {
                 ExpectedOpenBracket => "expected '['",
                 ExpectedClosedBracket => "expected ']'",
                 CyclicImport => "cyclic import",
+                ExpectedIf => "expected 'if'",
+                ExpectedOpenCurly => "expected '{'",
+                ExpectedCloseCurly => "expected '}'",
             }
         })(self))
     }
