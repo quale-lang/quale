@@ -200,8 +200,7 @@ impl Parser {
                 if self.lexer.token.is_some() {
                     self.lexer.consume(self.lexer.token.unwrap());
                 } else {
-                    // TODO: Replicate this in parse_function too.
-                    return Err(QccErrorKind::ExpectedCloseCurly)?;
+                    break;
                 }
             }
         }
@@ -291,31 +290,7 @@ impl Parser {
             self.lexer.consume(Token::Identifier)?;
         }
 
-        if !self.lexer.is_token(Token::OCurly) {
-            return Err(QccErrorKind::ExpectedFnBody)?;
-        }
-        self.lexer.consume(Token::OCurly)?;
-
-        let mut body: Vec<QccCell<Expr>> = Default::default();
-        while !self.lexer.is_token(Token::CCurly) {
-            if self.lexer.is_token(Token::Let) {
-                let expr = self.parse_let()?;
-                body.push(expr);
-            } else if self.lexer.is_token(Token::Return) {
-                let expr = self.parse_return()?;
-                body.push(expr);
-            } else if self.lexer.is_token(Token::If) {
-                let expr = self.parse_if_block()?;
-                body.push(expr);
-            } else {
-                if self.lexer.token.is_some() {
-                    self.lexer.consume(self.lexer.token.unwrap());
-                } else {
-                    break;
-                }
-            }
-        }
-        self.lexer.consume(Token::CCurly)?;
+        let mut body = self.parse_scope()?;
 
         Ok(FunctionAST::new(
             name,
