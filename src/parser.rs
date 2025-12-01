@@ -602,7 +602,11 @@ impl Parser {
         if self.lexer.is_token(Token::Else) {
             self.lexer.consume(Token::Else)?;
 
-            false_block = self.parse_scope()?;
+            if self.lexer.is_token(Token::If) {
+                false_block.push(self.parse_if_block()?);
+            } else {
+                false_block = self.parse_scope()?;
+            }
         }
 
         Ok(Expr::Conditional(conditional, truth_block, false_block).into())
