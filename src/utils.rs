@@ -107,8 +107,14 @@ pub(crate) fn mangle_expr(expr: &mut QccCell<Expr>, prefix: Ident) {
                 mangle_expr(expr, prefix.clone());
             }
         }
-        Expr::Conditional(_, _, _) => {
-            // TODO:
+        Expr::Conditional(ref mut c, ref mut t, ref mut f) => {
+            mangle_expr(c, prefix.clone());
+            for expr in t {
+                mangle_expr(expr, prefix.clone());
+            }
+            for expr in f {
+                mangle_expr(expr, prefix.clone());
+            }
         }
         Expr::Var(_) => {}
         Expr::Literal(_) => {}
@@ -141,8 +147,14 @@ pub(crate) fn mangle_fns(expr: &mut QccCell<Expr>, module_name: &String, functio
                 mangle_fns(expr, module_name, functions);
             }
         }
-        Expr::Conditional(_, _, _) => {
-            // TODO:
+        Expr::Conditional(ref mut c, ref mut t, ref mut f) => {
+            mangle_fns(c, module_name, functions);
+            for expr in t {
+                mangle_fns(expr, module_name, functions);
+            }
+            for expr in f {
+                mangle_fns(expr, module_name, functions);
+            }
         }
         Expr::Var(_) => {}
         Expr::Literal(_) => {}
@@ -175,8 +187,14 @@ fn mangle_expr_check(expr: &mut QccCell<Expr>, mod_name: &Ident, fn_name: &Ident
                 mangle_expr_check(expr, mod_name, fn_name);
             }
         }
-        Expr::Conditional(_, _, _) => {
-            // TODO
+        Expr::Conditional(ref mut c, ref mut t, ref mut f) => {
+            mangle_expr_check(c, mod_name, fn_name);
+            for expr in t {
+                mangle_expr_check(expr, mod_name, fn_name);
+            }
+            for expr in f {
+                mangle_expr_check(expr, mod_name, fn_name);
+            }
         }
         Expr::Var(_) => {}
         Expr::Literal(_) => {}
