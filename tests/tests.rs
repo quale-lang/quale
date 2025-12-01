@@ -238,7 +238,6 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ choice: qubit = toss$toss: qubit ()
     |_ (choice == 0)
 
-
 ");
     Ok(())
 }
