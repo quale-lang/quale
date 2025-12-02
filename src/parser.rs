@@ -494,6 +494,8 @@ impl Parser {
                 Token::Div,
                 Token::Equal,
                 Token::Unequal,
+                Token::LessThan,
+                Token::GreaterThan,
             ]) {
                 // if none of the above tokens are seen then it is a named
                 // variable

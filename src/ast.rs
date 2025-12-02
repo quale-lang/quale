@@ -46,7 +46,8 @@ pub(crate) enum Token {
     // Comparison operators
     Equal = -16, // ==
     Unequal = -17, // !=
-                 // TODO: {L|G}T{E}
+    LessThan = -18,
+    GreaterThan = -19,
 }
 
 impl Token {
@@ -58,6 +59,8 @@ impl Token {
             Self::Div,
             Self::Equal,
             Self::Unequal,
+            Self::LessThan,
+            Self::GreaterThan,
         ]
     }
 }
@@ -391,6 +394,10 @@ pub(crate) enum Opcode {
     Div,
     Eq,
     Neq,
+    LT,
+    GT,
+    LTE,
+    GTE,
 }
 
 impl std::str::FromStr for Opcode {
@@ -403,6 +410,10 @@ impl std::str::FromStr for Opcode {
             "/" => Ok(Self::Div),
             "==" => Ok(Self::Eq),
             "!=" => Ok(Self::Neq),
+            "<" => Ok(Self::LT),
+            ">" => Ok(Self::GT),
+            "<=" => Ok(Self::LTE),
+            ">=" => Ok(Self::GTE),
             _ => Err(QccErrorKind::UnknownOpcode.into()),
         }
     }
@@ -417,6 +428,10 @@ impl std::fmt::Display for Opcode {
             Self::Div => write!(f, "/")?,
             Self::Eq => write!(f, "==")?,
             Self::Neq => write!(f, "!=")?,
+            Self::LT => write!(f, "<")?,
+            Self::GT => write!(f, ">")?,
+            Self::LTE => write!(f, "<=")?,
+            Self::GTE => write!(f, ">=")?,
         }
         Ok(())
     }

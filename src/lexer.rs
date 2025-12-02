@@ -309,6 +309,8 @@ impl Lexer {
             '-' => Token::Sub,
             '*' => Token::Mul,
             '/' => Token::Div,
+            '<' => Token::LessThan,
+            '>' => Token::GreaterThan,
             _ => Token::Multi,
         };
 
