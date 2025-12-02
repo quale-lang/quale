@@ -44,7 +44,7 @@ pub(crate) enum Token {
     Else = -15,
 
     // Comparison operators
-    Equal = -16, // ==
+    Equal = -16,   // ==
     Unequal = -17, // !=
     LessThan = -18,
     GreaterThan = -19,

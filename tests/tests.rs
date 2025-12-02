@@ -211,6 +211,12 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
 ");
 
+    // test!("tests/test_if.ql", "");
+
+    // test!("tests/test_else_if.ql", "");
+
+    // test!("tests/test_binary_expressions.ql", "");
+
     test!("examples/toss.ql",
 "|_ toss			// @toss.ql:1:1
   |_ fn toss$sin (x: float64) : float64		// @toss.ql:2:4
