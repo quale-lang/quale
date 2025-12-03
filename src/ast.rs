@@ -701,6 +701,7 @@ impl std::fmt::Display for Expr {
                     *rhs.as_ref().borrow()
                 )
             }
+
             Self::Tensor(tensor) => {
                 write!(f, "[");
                 let tensor_str = tensor
@@ -711,6 +712,7 @@ impl std::fmt::Display for Expr {
                 write!(f, "{tensor_str}")?;
                 write!(f, "]")
             }
+
             Self::FnCall(function, args) => {
                 if *function.get_output_type() != Type::Bottom {
                     write!(f, "{}: {} (", function.name, function.output_type)?;
@@ -726,31 +728,35 @@ impl std::fmt::Display for Expr {
                 write!(f, ")")?;
                 Ok(())
             }
+
             Self::Let(var, val) => write!(f, "{} = {}", var, *val.as_ref().borrow()),
+
             Self::Conditional(cond, _truth, _false) => {
                 writeln!(f, "{}", *cond.as_ref().borrow())?;
 
-                // TODO: Formatting needs work.
                 if !_truth.is_empty() {
+                    writeln!(f, "      |_ True ")?;
                     let truth_block = _truth
                         .iter()
                         .map(|p| p.as_ref().borrow().to_string())
                         .collect::<Vec<String>>()
-                        .join("\n\t\t");
-                    writeln!(f, "\ttrue  |_ {truth_block}")?;
+                        .join("\n        |_ ");
+                    writeln!(f, "        |_ {truth_block}")?;
                 }
 
                 if !_false.is_empty() {
+                    writeln!(f, "      |_ False")?;
                     let false_block = _false
                         .iter()
                         .map(|p| p.as_ref().borrow().to_string())
                         .collect::<Vec<String>>()
-                        .join("\n\t\t");
-                    writeln!(f, "\tfalse |_ {false_block}")?;
+                        .join("\n        |_ ");
+                    writeln!(f, "        |_ {false_block}")?;
                 }
 
                 Ok(())
             }
+
             Self::Literal(lit) => write!(f, "{}", *lit.as_ref().borrow()),
         }
     }
