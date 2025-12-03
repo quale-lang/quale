@@ -735,7 +735,7 @@ impl std::fmt::Display for Expr {
                 writeln!(f, "{}", *cond.as_ref().borrow())?;
 
                 if !_truth.is_empty() {
-                    writeln!(f, "      |_ True ")?;
+                    writeln!(f, "      |_ True")?;
                     let truth_block = _truth
                         .iter()
                         .map(|p| p.as_ref().borrow().to_string())

@@ -211,11 +211,81 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
 ");
 
-    // test!("tests/test_if.ql", "");
+    test!("tests/test_if.ql",
+"|_ test_if			// @test_if.ql:1:1
+  |_ fn test_if$foo () : qubit		// @test_if.ql:1:4
+    |_ x: qubit = 0q0_1
+    |_ x: qubit
 
-    // test!("tests/test_else_if.ql", "");
+  |_ fn test_if$main () : <bottom>		// @test_if.ql:6:4
+    |_ choice: qubit = test_if$foo: qubit ()
+    |_ (choice == 0)
+      |_ True
+        |_ x = 42
+        |_ _ = print(\", Heads, \")
+      |_ False
+        |_ x = 2
+        |_ _ = print(\", Tails, \")
 
-    // test!("tests/test_binary_expressions.ql", "");
+    |_ (1 != 2)
+      |_ True
+        |_ x = 42
+      |_ False
+        |_ x = 32
+
+
+");
+
+    test!("tests/test_else_if.ql",
+"|_ test_else_if			// @test_else_if.ql:1:1
+  |_ fn test_else_if$pseudo_random () : float64		// @test_else_if.ql:1:4
+    |_ 42
+
+  |_ fn test_else_if$main () : <bottom>		// @test_else_if.ql:5:4
+    |_ choice: float64 = test_else_if$pseudo_random: float64 ()
+    |_ (choice == 0)
+      |_ True
+        |_ _ = print(\", Heads, \")
+      |_ False
+        |_ (choice == 1)
+      |_ True
+        |_ _ = print(\", Tails, \")
+      |_ False
+        |_ (choice == 2)
+      |_ True
+        |_ _ = print(\", Don, ', t, know, \")
+      |_ False
+        |_ x = 42
+
+
+
+
+");
+
+    test!("tests/test_binary_expressions.ql",
+"|_ test_binary_expressions			// @test_binary_expressions.ql:1:1
+  |_ fn test_binary_expressions$main () : float64		// @test_binary_expressions.ql:1:4
+    |_ x: float64 = (1 != 2)
+    |_ y: float64 = (3 == 3)
+    |_ b0: float64 = (1 < 2)
+    |_ b1: float64 = (2 > 3)
+    |_ b2: float64 = (1 <= 2)
+    |_ b3: float64 = (4 >= 5)
+    |_ a0: float64 = (x: float64 < y: float64)
+    |_ a1: float64 = (x: float64 > y: float64)
+    |_ a2: float64 = (x: float64 <= y: float64)
+    |_ a3: float64 = (x: float64 >= y: float64)
+    |_ w: float64 = (a0: float64 == a0: float64)
+    |_ z: float64 = (a0: float64 != a1: float64)
+    |_ mix0: float64 = (a0: float64 == 1)
+    |_ mix1: float64 = (1 != a0: float64)
+    |_ mix2: float64 = (a0: float64 < 1)
+    |_ mix3: float64 = (1 > a0: float64)
+    |_ mix4: float64 = (a0: float64 <= 1)
+    |_ mix5: float64 = (1 >= w: float64)
+    |_ (a0: float64 + (a1: float64 + (a2: float64 + a3: float64)))
+
+");
 
     test!("examples/toss.ql",
 "|_ toss			// @toss.ql:1:1
