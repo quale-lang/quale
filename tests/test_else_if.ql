@@ -6,11 +6,11 @@ fn main() {
     let choice = pseudo_random();
 
     if choice == 0 {
-        let _ = print("Heads");
+        let _ = print(0);
     } else if choice == 1 {
-        let _ = print("Tails");
+        let _ = print(1);
     } else if choice == 2 {
-        let _ = print("Don't know");
+        let _ = print(2);
     } else {
         let x = 42;
     }

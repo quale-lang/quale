@@ -222,10 +222,10 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ (choice == 0)
       |_ True
         |_ x = 42
-        |_ _ = print(\", Heads, \")
+        |_ _ = print(0)
       |_ False
         |_ x = 2
-        |_ _ = print(\", Tails, \")
+        |_ _ = print(1)
 
     |_ (1 != 2)
       |_ True
@@ -245,15 +245,15 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ choice: float64 = test_else_if$pseudo_random: float64 ()
     |_ (choice == 0)
       |_ True
-        |_ _ = print(\", Heads, \")
+        |_ _ = print(0)
       |_ False
         |_ (choice == 1)
       |_ True
-        |_ _ = print(\", Tails, \")
+        |_ _ = print(1)
       |_ False
         |_ (choice == 2)
       |_ True
-        |_ _ = print(\", Don, ', t, know, \")
+        |_ _ = print(2)
       |_ False
         |_ x = 42
 
