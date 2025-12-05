@@ -221,17 +221,15 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ choice: qubit = test_if$foo: qubit ()
     |_ (choice == 0)
       |_ True
-        |_ x = 42
-        |_ _ = print(0)
+        |_ x: float64 = 42
       |_ False
-        |_ x = 2
-        |_ _ = print(1)
+        |_ x: float64 = 2
 
     |_ (1 != 2)
       |_ True
-        |_ x = 42
+        |_ x: float64 = 42
       |_ False
-        |_ x = 32
+        |_ x: float64 = 32
 
 
 ");
@@ -245,17 +243,17 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ choice: float64 = test_else_if$pseudo_random: float64 ()
     |_ (choice == 0)
       |_ True
-        |_ _ = print(0)
+        |_ x: float64 = 42
       |_ False
         |_ (choice == 1)
       |_ True
-        |_ _ = print(1)
+        |_ x: float64 = 41
       |_ False
         |_ (choice == 2)
       |_ True
-        |_ _ = print(2)
+        |_ x: float64 = 40
       |_ False
-        |_ x = 42
+        |_ x: float64 = 0
 
 
 

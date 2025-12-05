@@ -115,7 +115,18 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
 
             Ok(val_type)
         }
-        Expr::Conditional(_, _, _) => Ok(Type::Bottom),
+        Expr::Conditional(ref conditional, ref truth_block, ref false_block) => {
+            for expr in truth_block {
+                check_expr(expr);
+            }
+
+            for expr in false_block {
+                check_expr(expr);
+            }
+
+            // TODO:
+            Ok(Type::Bottom)
+        }
         Expr::Literal(ref lit) => match *lit.as_ref().borrow() {
             LiteralAST::Lit_Digit(ref digit) => Ok(Type::F64),
             LiteralAST::Lit_Str(ref s) => Ok(Type::Bottom),
@@ -393,9 +404,15 @@ fn infer_expr(expr: &QccCell<Expr>) -> Option<Type> {
             }
         }
 
-        Expr::Conditional(_, _, _) =>
-        // TODO:
+        Expr::Conditional(ref conditional, ref truth_block, ref false_block) =>
         {
+            for expr in truth_block {
+                infer_expr(expr);
+            }
+            for expr in false_block {
+                infer_expr(expr);
+            }
+            // TODO: How to infer type for entire if block?
             return Some(Type::Bottom);
         }
 
@@ -591,7 +608,22 @@ fn infer_from_table(
             }
         }
         Expr::Conditional(ref mut conditional, ref mut truth_block, ref mut false_block) => {
-            // TODO
+            for expr in truth_block {
+                let info = infer_from_table(expr, param_st, local_st, function_st);
+
+                if info.is_some() {
+                    return info;
+                }
+            }
+
+            for expr in false_block {
+                let info = infer_from_table(expr, param_st, local_st, function_st);
+
+                if info.is_some() {
+                    return info;
+                }
+            }
+            // TODO: How to infer type for entire if block?
             None
         }
         Expr::Literal(ref mut l) => {

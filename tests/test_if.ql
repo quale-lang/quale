@@ -7,10 +7,8 @@ fn main() {
     let choice = foo();
     if choice == 0 {
         let x = 42;
-        let _ = print(0);
     } else {
         let x = 2;
-        let _ = print(1);
     }
 
     if 1 != 2 {
