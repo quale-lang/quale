@@ -1,21 +1,5 @@
-module lib {
-
-fn bar() : qbit {
-    return 0q(1.0, 0.0);
-}
-
-fn sin(r: f64) : f64 {
-    return (r / 180);
-}
-
-fn cos(r: f64) : f64 {
-    return (r / 90);
-}
-
-}
-
-import lib::sin;
-import lib::cos;
+import complex_expr_lib::sin;
+import complex_expr_lib::cos;
 
 #[nondeter]
 fn new (b: bit) {

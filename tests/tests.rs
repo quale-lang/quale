@@ -37,53 +37,45 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     // lexing/parsing stage, or at type checking stage).
     // test!("tests/attr-panic.ql", "");
 
-//     // FIXME: This is failing cargo test *randomly*.
-//     // This is a big bug where wrong types are being inferred. So based on the
-//     // code execution either one kind of type or other is inferred. Ambiguity in
-//     // type inference is due to the lack of support for measurement operator. So
-//     // if a function is returning a qubit, then the caller expression may be of
-//     // type qubit, or it may be of a concrete type if lhs is already typed
-//     // before. This should be fixed once the codegen will support addition of
-//     // measurement operator.
-//     test!("tests/complex-expr.ql",
-// "|_ lib			// @complex-expr.ql:1:1
-//   |_ fn bar () : qubit		// @complex-expr.ql:3:4
-//     |_ 0q1_0
+    test!("tests/complex_expr.ql",
+"|_ complex_expr			// @complex_expr.ql:1:1
+  |_ fn [[nondeter]] complex_expr$new (b: bit) : qubit		// @complex_expr.ql:5:4
+    |_ q: qubit = 0q1_0
+    |_ q: qubit
 
-//   |_ fn sin (r: float64) : float64		// @complex-expr.ql:7:4
-//     |_ (r: float64 / 180)
+  |_ fn complex_expr$bar (x: float64, y: float64) : float64		// @complex_expr.ql:11:4
+    |_ ((x: float64 + y: float64) / 42)
 
-//   |_ fn cos (r: float64) : float64		// @complex-expr.ql:11:4
-//     |_ (r: float64 / 90)
+  |_ fn complex_expr$main () : float64		// @complex_expr.ql:15:4
+    |_ a: float64 = 3.14
+    |_ e0: float64 = 1
+    |_ nonce: float64 = a: float64
+    |_ e1: float64 = e0: float64
+    |_ f2: float64 = complex_expr$bar: float64 (((e0: float64 * complex_expr_lib$cos: float64 (a: float64)) / nonce: float64), (-e1: float64 * complex_expr_lib$sin: float64 (a: float64)))
+    |_ f2: float64
 
-// |_ complex_expr			// @complex-expr.ql:1:1
-//   |_ fn [[nondeter]] new (b: bit) : qubit		// @complex-expr.ql:21:4
-//     |_ q: qubit = 0q1_0
-//     |_ q: qubit
+|_ complex_expr_lib			// @complex_expr_lib.ql:1:1
+  |_ fn complex_expr_lib$bar () : qubit		// @complex_expr_lib.ql:2:4
+    |_ 0q1_0
 
-//   |_ fn bar (x: float64, y: float64) : float64		// @complex-expr.ql:27:4
-//     |_ ((x: float64 + y: float64) / 42)
+  |_ fn complex_expr_lib$sin (r: float64) : float64		// @complex_expr_lib.ql:6:4
+    |_ (r: float64 / 180)
 
-//   |_ fn main () : qubit		// @complex-expr.ql:31:4
-//     |_ a: float64 = 3.14
-//     |_ e0: float64 = 1
-//     |_ nonce: float64 = a: float64
-//     |_ e1: float64 = e0: float64
-//     |_ f2: qubit = bar: qubit (((e0: float64 * lib$cos: float64 (a: float64)) / nonce: float64), (-e1: float64 * lib$sin: float64 (a: float64)))
-//     |_ f2: qubit
+  |_ fn complex_expr_lib$cos (r: float64) : float64		// @complex_expr_lib.ql:10:4
+    |_ (r: float64 / 90)
 
-// ");
+");
 
     // test!("tests/expected-attr.ql", "");
 
     // test!("tests/let-as-expr.ql", "");
 
-    test!("tests/let-both-typed.ql",
-"|_ let_both_typed			// @let-both-typed.ql:1:1
-  |_ fn let_both_typed$foo () : qubit		// @let-both-typed.ql:1:4
+    test!("tests/let_both_typed.ql",
+"|_ let_both_typed			// @let_both_typed.ql:1:1
+  |_ fn let_both_typed$foo () : qubit		// @let_both_typed.ql:1:4
     |_ q: qubit = 0q0_1
 
-  |_ fn let_both_typed$main () : <bottom>		// @let-both-typed.ql:6:4
+  |_ fn let_both_typed$main () : <bottom>		// @let_both_typed.ql:6:4
     |_ choice: qubit = let_both_typed$foo: qubit ()
     |_ (choice == 0)
 
@@ -92,26 +84,26 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     // test!("tests/let-fn-call.ql", "");
 
-    test!("tests/no-eof.ql",
-"|_ no_eof			// @no-eof.ql:1:1
-  |_ fn [[nondeter]] no_eof$main (param: qubit) : float64		// @no-eof.ql:2:20
+    test!("tests/no_eof.ql",
+"|_ no_eof			// @no_eof.ql:1:1
+  |_ fn [[nondeter]] no_eof$main (param: qubit) : float64		// @no_eof.ql:2:20
     |_ 0
 
 ");
 
-    test!("tests/only-whitespaces-no-eof.ql",
-"|_ only_whitespaces_no_eof			// @only-whitespaces-no-eof.ql:1:1
+    test!("tests/only_whitespaces_no_eof.ql",
+"|_ only_whitespaces_no_eof			// @only_whitespaces_no_eof.ql:1:1
 ");
 
-    test!("tests/qbit-float.ql",
-"|_ qbit_float			// @qbit-float.ql:1:1
-  |_ fn qbit_float$foo (q0: qubit) : qubit		// @qbit-float.ql:1:4
+    test!("tests/qbit_float.ql",
+"|_ qbit_float			// @qbit_float.ql:1:1
+  |_ fn qbit_float$foo (q0: qubit) : qubit		// @qbit_float.ql:1:4
     |_ q1: qubit = (2 * q0: qubit)
 
-  |_ fn qbit_float$bar (q0: qubit) : qubit		// @qbit-float.ql:6:4
+  |_ fn qbit_float$bar (q0: qubit) : qubit		// @qbit_float.ql:6:4
     |_ q1: qubit = (q0: qubit * 2)
 
-  |_ fn qbit_float$main () : qubit		// @qbit-float.ql:11:4
+  |_ fn qbit_float$main () : qubit		// @qbit_float.ql:11:4
     |_ x: qubit = qbit_float$foo: qubit ()
     |_ y: qubit = qbit_float$bar: qubit ()
 
@@ -119,9 +111,9 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     // test!("tests/tabbed-comments-fn.ql", "");
 
-    test!("tests/tabbed-comments.ql",
-"|_ _foo			// @tabbed-comments.ql:1:1
-|_ tabbed_comments			// @tabbed-comments.ql:1:1
+    test!("tests/tabbed_comments.ql",
+"|_ _foo			// @tabbed_comments.ql:1:1
+|_ tabbed_comments			// @tabbed_comments.ql:1:1
 ");
 
     // test!("tests/tensors.ql", "");
@@ -274,6 +266,8 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ choice: qubit = test_if_return_type$unfair_toss: qubit (1)
 
 ");
+
+    // test!("tests/test_if_return_mismatch.ql", "");
 
     test!("tests/test_binary_expressions.ql",
 "|_ test_binary_expressions			// @test_binary_expressions.ql:1:1
