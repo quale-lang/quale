@@ -124,8 +124,30 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
                 check_expr(expr);
             }
 
-            // TODO:
-            Ok(Type::Bottom)
+            let last_truth = truth_block.last();
+            let last_false = false_block.last();
+
+            if last_false.is_none() && last_truth.is_none() {
+                return Ok(Type::Bottom);
+            } else if last_false.is_none() ^ last_truth.is_none() {
+                let last_expr;
+                if last_false.is_none() {
+                    last_expr = last_truth;
+                } else {
+                    last_expr = last_false;
+                }
+
+                return Ok(last_expr.unwrap().as_ref().borrow().get_type());
+            } else {
+                let truth_block_type = last_truth.unwrap().as_ref().borrow().get_type();
+                let false_block_type = last_false.unwrap().as_ref().borrow().get_type();
+
+                if truth_block_type != false_block_type {
+                    return Err(QccErrorKind::TypeMismatch)?;
+                }
+
+                return Ok(truth_block_type);
+            }
         }
         Expr::Literal(ref lit) => match *lit.as_ref().borrow() {
             LiteralAST::Lit_Digit(ref digit) => Ok(Type::F64),
@@ -631,7 +653,7 @@ fn infer_from_table(
                     return info;
                 }
             }
-            // TODO: How to infer type for entire if block?
+
             None
         }
         Expr::Literal(ref mut l) => {
