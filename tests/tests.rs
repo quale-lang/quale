@@ -260,6 +260,21 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
 ");
 
+    test!("tests/test_if_return_type.ql",
+"|_ test_if_return_type			// @test_if_return_type.ql:1:1
+  |_ fn test_if_return_type$unfair_toss (b: bit) : qubit		// @test_if_return_type.ql:1:4
+    |_ b
+      |_ True
+        |_ 0q0_1
+      |_ False
+        |_ 0q1_0
+
+
+  |_ fn test_if_return_type$main () : qubit		// @test_if_return_type.ql:9:4
+    |_ choice: qubit = test_if_return_type$unfair_toss: qubit (1)
+
+");
+
     test!("tests/test_binary_expressions.ql",
 "|_ test_binary_expressions			// @test_binary_expressions.ql:1:1
   |_ fn test_binary_expressions$main () : float64		// @test_binary_expressions.ql:1:4
