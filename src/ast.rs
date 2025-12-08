@@ -635,11 +635,13 @@ impl Expr {
             }
             Self::FnCall(f, args) => *f.get_output_type(),
             Self::Let(var, val) => var.get_type(),
-            Self::Conditional(cond, _, _) => {
-                // TODO: Conditionals should be like functional languages, they
-                // must always return something. And how to accomodate
-                // conditionals with quantum variables in expressions?
-                Type::Bottom
+            Self::Conditional(conditional, truth_block, false_block) => {
+                let last_expr = truth_block.last();
+                if last_expr.is_none() {
+                    return Type::Bottom;
+                }
+
+                return last_expr.unwrap().as_ref().borrow().get_type();
             }
             Self::Literal(lit) => match *lit.as_ref().borrow() {
                 LiteralAST::Lit_Str(_) => Type::Bottom,

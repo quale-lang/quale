@@ -217,7 +217,7 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ x: qubit = 0q0_1
     |_ x: qubit
 
-  |_ fn test_if$main () : <bottom>		// @test_if.ql:6:4
+  |_ fn test_if$main () : float64		// @test_if.ql:6:4
     |_ choice: qubit = test_if$foo: qubit ()
     |_ (choice == 0)
       |_ True
@@ -239,7 +239,7 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
   |_ fn test_else_if$pseudo_random () : float64		// @test_else_if.ql:1:4
     |_ 42
 
-  |_ fn test_else_if$main () : <bottom>		// @test_else_if.ql:5:4
+  |_ fn test_else_if$main () : float64		// @test_else_if.ql:5:4
     |_ choice: float64 = test_else_if$pseudo_random: float64 ()
     |_ (choice == 0)
       |_ True

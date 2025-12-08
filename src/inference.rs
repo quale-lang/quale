@@ -404,16 +404,24 @@ fn infer_expr(expr: &QccCell<Expr>) -> Option<Type> {
             }
         }
 
-        Expr::Conditional(ref conditional, ref truth_block, ref false_block) =>
-        {
+        Expr::Conditional(ref conditional, ref truth_block, ref false_block) => {
+            let mut truth_block_type = Some(Type::Bottom);
             for expr in truth_block {
-                infer_expr(expr);
+                truth_block_type = infer_expr(expr);
             }
+
+            let mut false_block_type = Some(Type::Bottom);
             for expr in false_block {
-                infer_expr(expr);
+                false_block_type = infer_expr(expr);
             }
-            // TODO: How to infer type for entire if block?
-            return Some(Type::Bottom);
+
+            // Ensure both last expressions in truth_block and false_block are
+            // of same type.
+            if truth_block_type == false_block_type {
+                return truth_block_type;
+            } else {
+                return Some(Type::Bottom);
+            }
         }
 
         Expr::Literal(ref lit) => {
@@ -630,7 +638,7 @@ fn infer_from_table(
             // A literal is usually typed but if it isn't then it should follow
             // based on what the context says.
             match *l.as_ref().borrow() {
-                LiteralAST::Lit_Qbit(ref q) => todo!("{q} perhaps a qubit"),
+                LiteralAST::Lit_Qbit(ref q) => None,
                 // digits are trivially typed
                 LiteralAST::Lit_Digit(ref d) => None,
                 LiteralAST::Lit_Str(ref s) => todo!("{:?} perhaps a string", s),

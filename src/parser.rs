@@ -551,6 +551,8 @@ impl Parser {
             } else {
                 return Err(QccErrorKind::ExpectedExpr)?;
             }
+        } else if self.lexer.is_token(Token::If) {
+            return self.parse_if_block();
         } else {
             return Err(QccErrorKind::ExpectedExpr)?;
         }
