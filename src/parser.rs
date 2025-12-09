@@ -781,7 +781,8 @@ impl Parser {
                 Err(QccErrorKind::ParseError)?
             }
 
-            // TODO:
+            // TODO: This may not exist if the module was defined via the
+            // `module` keyword and not in a separate file.
             let import_file = delimited_dir_name.clone() + &import_module + ".ql";
             let import_session = Parser::new(vec![import_file.as_str()])?;
             match import_session {
