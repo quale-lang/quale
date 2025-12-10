@@ -28,7 +28,6 @@ fn init_session(args: Vec<&str>) -> Result<()> {
 
             let mut qast = parser.parse(&config.analyzer.src)?;
 
-            // TODO: Error handling and bug reporting
             infer(&mut qast)?;
 
             if config.print_ast_only {

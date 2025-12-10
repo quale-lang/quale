@@ -20,14 +20,17 @@ where
         }
     }
 
+    #[inline]
     fn push(&mut self, value: T) {
         self.table.insert(value);
     }
 
+    #[inline]
     fn extend(&mut self, values: Vec<T>) {
         self.table.extend(values);
     }
 
+    #[inline]
     fn iter(&self) -> impl Iterator<Item = &T> + '_ {
         self.table.iter()
     }

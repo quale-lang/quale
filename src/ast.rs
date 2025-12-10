@@ -658,38 +658,6 @@ impl From<Expr> for QccCell<Expr> {
     }
 }
 
-// TODO:
-// impl Iterator for &Expr {
-//     type Item = Self;
-//     fn next(&mut self) -> Option<Self::Item> {
-//         match *self {
-//             Expr::Var(_) => Some(self),
-//             Expr::BinaryExpr(lhs, op, rhs) => {
-//                 if let Some(l) = lhs.as_ref().next() {
-//                     return Some(l);
-//                 }
-//                 if let Some(r) = rhs.as_ref().next() {
-//                     return Some(r);
-//                 }
-//                 return None;
-//             }
-//             Expr::FnCall(f, args) => {
-//                 for arg in args {
-//                     if let Some(arg_iter) = arg.as_ref().next() {
-//                         return Some(arg_iter);
-//                     }
-//                 }
-//                 return None;
-//             }
-//             Expr::Let(var, val) => {
-//                 return None;
-//             }
-//             Expr::Literal(_) => Some(self),
-//             _ => None,
-//         }
-//     }
-// }
-
 impl std::fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

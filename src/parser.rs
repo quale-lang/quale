@@ -733,6 +733,19 @@ impl Parser {
                         err.report(self.lexer.line());
                     }
                 }
+            } else if self.lexer.is_token(Token::Import) {
+                let line = self.lexer.line();
+
+                match self.parse_import(&mut qast) {
+                    Ok((module, function)) => {
+                        self.modules_waitlist.insert(module.clone());
+                        imports.push((module, function));
+                    }
+                    Err(err) => {
+                        seen_errors = true;
+                        err.report(&line);
+                    }
+                }
             } else if self.lexer.is_token(Token::Hash) || self.lexer.is_token(Token::Function) {
                 match self.parse_function() {
                     Ok(f) => this.append_function(f),
@@ -744,22 +757,7 @@ impl Parser {
                     }
                 }
             } else {
-                if self.lexer.is_token(Token::Import) {
-                    let line = self.lexer.line();
-
-                    match self.parse_import(&mut qast) {
-                        Ok((module, function)) => {
-                            self.modules_waitlist.insert(module.clone());
-                            imports.push((module, function));
-                        }
-                        Err(err) => {
-                            seen_errors = true;
-                            err.report(&line);
-                        }
-                    }
-                } else {
-                    self.lexer.consume(self.lexer.token.unwrap())?;
-                }
+                self.lexer.consume(self.lexer.token.unwrap())?;
             }
         }
 
@@ -823,32 +821,6 @@ impl Parser {
                 }
             }
         }
-
-        //     if !found_module {
-        //         let import_file = module.clone() + ".ql";
-        //         // TODO: Pass other config options. If certain optimization
-        //         // levels are set for one module, it should be set of all other
-        //         // modules as well.
-        //         let import_sess = Parser::new(vec![import_file.as_str()])?;
-
-        //         match import_sess {
-        //             Some(mut parser) => {
-        //                 parser.extend_modules_ref(self.modules.clone());
-
-        //                 let config = parser.get_config();
-        //                 // FIXME: This will overflow stack if circular imports
-        //                 // are added in two files.
-
-        //                 if !parser.modules.contains(&module) {
-        //                     let mut import_qast: Qast = parser.parse(&import_file)?;
-        //                     qast.extend(&mut import_qast);
-        //                 }
-
-        //             }
-        //             None => {} // ??
-        //         }
-        //     }
-        // }
 
         if seen_errors {
             Err(QccErrorKind::ParseError)?
