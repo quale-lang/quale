@@ -252,13 +252,14 @@ impl QccErrorLoc {
         let row = self.1.borrow().row().to_string();
         let mut col = self.1.borrow().col();
 
-        let src_fmt = format!("\t{}\t{}", row, src);
+        let src_fmt = format!("        {} | {}", row, src);
 
         eprintln!("{}", self);
         eprint!("{src_fmt}");
 
-        col += 1 + row.len(); // +2 for inserted tabs, -1 for starting index
-                              // with 1, effectively +1
+        // +11 for chars for manual inserted whitespces in src_fmt, +length of
+        // row number, row is always > 0, in parse() it is initialized as (1,1)
+        col += 11 + row.len().ilog10() as usize;
 
         for c in src_fmt.chars() {
             if col > 0 {

@@ -65,7 +65,7 @@ impl fmt::Debug for Location {
 /// `Pointer` is a movable reference into a buffer.
 #[derive(Debug)]
 pub(crate) struct Pointer {
-    /// start of the line, as seen in source, points first non-whitespace char
+    /// start of the line, as seen in source, points first char
     start: usize,
     /// index at previous recognized token
     prev: usize,
@@ -423,10 +423,6 @@ Please report this bug to {}",
                 self.location.row += 1;
 
                 return Some(());
-            }
-            // Move Ptr::start to first non-whitespace char.
-            if self.buffer[self.ptr.start].is_ascii_whitespace() {
-                self.ptr.start += 1;
             }
             self.ptr.end += 1;
         }
