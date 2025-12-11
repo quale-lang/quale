@@ -716,9 +716,6 @@ impl Parser {
         );
         let mut imports = Vec::new();
 
-        // TODO: Move this entirely in parse_module, parse_module should return
-        // a Qast and it can recursively call itself when `module` is seen
-        // inside the file.
         self.lexer.next_token()?;
         loop {
             if self.lexer.token.is_none() {
@@ -816,7 +813,6 @@ impl Parser {
                         // Here and in the cyclic import case as well.
                         let err: QccError = QccErrorKind::UnknownImport.into();
                         err.report(&function);
-                        // err.report(format!("{} {}", function, self.lexer.location).as_str());
                         Err(QccErrorKind::ParseError)?
                     }
                 }

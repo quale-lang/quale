@@ -389,17 +389,17 @@ impl Lexer {
         Ok(self.token)
     }
 
+    #[deprecated(
+        since = "0.1.0",
+        note = "This function returns the next token, not the current token. Use `next_token` instead of this."
+    )]
     /// Get the current token.
     pub(crate) fn token(&mut self) -> Result<Option<Token>> {
-        // TODO: This shouldn't be used, next_token should be used instead.
-        // This gives a wrong meaning to what is happening. next_token is more
-        // verbose.
         Ok(self.next_token()?)
     }
 
     /// Consumes last set token and moves onto the next token in buffer.
     pub(crate) fn consume(&mut self, token: Token) -> Result<()> {
-        // TODO: use Lexer::is_token?
         if let Some(last_token) = &self.token {
             assert_eq!(
                 token, *last_token,
