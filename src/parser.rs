@@ -739,9 +739,11 @@ impl Parser {
                         self.modules_waitlist.insert(module.clone());
                         imports.push((module, function));
                     }
-                    Err(err) => {
+                    Err(e) => {
                         seen_errors = true;
-                        err.report(&line);
+
+                        let err: QccErrorLoc = (e, self.lexer.location.clone()).into();
+                        err.report(line);
                     }
                 }
             } else if self.lexer.is_token(Token::Hash) || self.lexer.is_token(Token::Function) {
