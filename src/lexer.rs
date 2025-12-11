@@ -244,6 +244,11 @@ impl Lexer {
     /// character at end, so we must keep calling `next_line` until a non-empty
     /// `self.line` is returned.
     pub(crate) fn next_token(&mut self) -> Result<Option<Token>> {
+        if self.buffer.is_empty() {
+            self.token = None;
+            return Ok(self.token);
+        }
+
         // Skip all leading whitespaces and trailing newlines.
         while self.buffer[self.ptr.current].is_ascii_whitespace() {
             self.ptr.current += 1;
