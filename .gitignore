@@ -6,3 +6,9 @@
 /images
 /json
 /.wiki
+/docs/_*
+/tests/_*.ql
+/tests/*.s
+/tests/bugs
+/tests/package/*.s
+/examples/*.s
