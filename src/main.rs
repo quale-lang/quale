@@ -9,6 +9,7 @@ mod config;
 mod error;
 mod inference;
 mod lexer;
+mod mangle;
 mod optimizer;
 mod parser;
 mod types;

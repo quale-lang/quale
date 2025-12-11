@@ -8,6 +8,7 @@ mod config;
 pub mod error;
 pub mod inference;
 mod lexer;
+mod mangle;
 mod optimizer;
 pub mod parser;
 mod types;

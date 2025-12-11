@@ -2,8 +2,8 @@
 use crate::attributes::Attributes;
 use crate::error::{QccError, QccErrorKind};
 use crate::lexer::Location;
+use crate::mangle::mangle_fns;
 use crate::types::Type;
-use crate::utils::mangle_fns;
 use std::borrow::Borrow;
 
 #[derive(Debug, PartialEq, Copy, Clone)]

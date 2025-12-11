@@ -1,8 +1,8 @@
 //! Type inference mechanism for qcc.
 use crate::ast::{Expr, FunctionAST, LiteralAST, Qast, QccCell, VarAST};
 use crate::error::{QccError, QccErrorKind, Result};
+use crate::mangle::{mangle, mangle_module};
 use crate::types::Type;
-use crate::utils::{mangle, mangle_module};
 use std::borrow::{Borrow, BorrowMut};
 
 /// A generic symbol table implementation.
