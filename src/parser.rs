@@ -251,6 +251,11 @@ impl Parser {
                 }
                 self.lexer.consume(Token::Colon)?;
 
+                // TODO: exponential type - linear logic
+                if self.lexer.is_token(Token::Bang) {
+                    self.lexer.consume(Token::Bang)?;
+                }
+
                 if !self.lexer.is_token(Token::Identifier) {
                     return Err(QccErrorKind::ExpectedParamType)?;
                 }
