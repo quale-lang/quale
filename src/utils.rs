@@ -65,9 +65,6 @@ pub(crate) fn usage() {
     );
 }
 
-/// RefSet is a wrapper over HashSet but with no Eq trait. Equality is assumed
-/// to be different because it only stores references.
-
 #[cfg(test)]
 mod tests {
     #[test]
