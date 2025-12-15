@@ -302,31 +302,36 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     test!("examples/toss.ql",
 "|_ toss			// @toss.ql:1:1
-  |_ fn toss$sin (x: float64) : float64		// @toss.ql:2:4
-
-  |_ fn toss$cos (x: float64) : float64		// @toss.ql:7:4
-
-  |_ fn toss$exp (x: float64) : float64		// @toss.ql:11:4
-
-  |_ fn toss$U (theta: float64, phi: float64, lambda: float64, q0: qubit) : qubit		// @toss.ql:15:4
-    |_ e0: float64 = toss$exp: float64 (((phi: float64 + lambda: float64) / 2))
-    |_ e1: float64 = toss$exp: float64 (((phi: float64 - lambda: float64) / 2))
-    |_ a: float64 = (theta: float64 / 2)
-    |_ transform: float64 = [[(e0: float64 * toss$cos: float64 (a: float64)), (-e1: float64 * toss$sin: float64 (a: float64))], [(e1: float64 * toss$sin: float64 (a: float64)), (e0: float64 * toss$cos: float64 (a: float64))]]
-    |_ (transform: float64 * q0: qubit)
-
-  |_ fn toss$Hadamard (q: qubit) : qubit		// @toss.ql:30:4
-    |_ pi: float64 = 3.14
-    |_ toss$U: qubit ((pi: float64 / 2), 0, 0, q: qubit)
-
-  |_ fn toss$toss () : qubit		// @toss.ql:35:4
+  |_ fn toss$toss () : qubit		// @toss.ql:3:4
     |_ zero_state: qubit = 0q0_1
-    |_ superpositioned: qubit = toss$Hadamard: qubit (zero_state: qubit)
+    |_ superpositioned: qubit = std$Hadamard: qubit (zero_state: qubit)
 
-  |_ fn toss$main () : <bottom>		// @toss.ql:41:4
+  |_ fn toss$main () : <bottom>		// @toss.ql:9:4
     |_ choice: qubit = toss$toss: qubit ()
     |_ (choice == 0)
 
+
+|_ std			// @std.ql:1:1
+  |_ fn std$U (theta: float64, phi: float64, lambda: float64, q0: qubit) : qubit		// @std.ql:5:4
+    |_ e0: float64 = math$exp: float64 (((phi: float64 + lambda: float64) / 2))
+    |_ e1: float64 = math$exp: float64 (((phi: float64 - lambda: float64) / 2))
+    |_ a: float64 = (theta: float64 / 2)
+    |_ transform: float64 = [[(e0: float64 * math$cos: float64 (a: float64)), (-e1: float64 * math$sin: float64 (a: float64))], [(e1: float64 * math$sin: float64 (a: float64)), (e0: float64 * math$cos: float64 (a: float64))]]
+    |_ (transform: float64 * q0: qubit)
+
+  |_ fn std$Hadamard (q: qubit) : qubit		// @std.ql:20:4
+    |_ pi: float64 = 3.14
+    |_ std$U: qubit ((pi: float64 / 2), 0, 0, q: qubit)
+
+|_ math			// @math.ql:1:1
+  |_ fn math$sin (x: float64) : float64		// @math.ql:1:4
+    |_ 0
+
+  |_ fn math$cos (x: float64) : float64		// @math.ql:5:4
+    |_ 1
+
+  |_ fn math$exp (x: float64) : float64		// @math.ql:9:4
+    |_ e: float64 = 2.718
 
 ");
     Ok(())
