@@ -751,7 +751,19 @@ impl Parser {
                 }
             } else if self.lexer.is_token(Token::Hash) || self.lexer.is_token(Token::Function) {
                 match self.parse_function() {
-                    Ok(f) => this.append_function(f),
+                    Ok(f) => {
+                        let name = f.get_name().clone();
+                        let loc = f.get_loc().clone();
+
+                        match this.append_function(f) {
+                            Ok(_) => {}
+                            Err(e) => {
+                                // TODO: Improve information.
+                                seen_errors = true;
+                                qcceprintln!("{} {} {}", e, name, loc);
+                            }
+                        }
+                    }
                     Err(e) => {
                         seen_errors = true;
 

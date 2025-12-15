@@ -1,6 +1,6 @@
 //! QAST is an abstract representation for quale language.
 use crate::attributes::Attributes;
-use crate::error::{QccError, QccErrorKind};
+use crate::error::{QccError, QccErrorKind, Result};
 use crate::lexer::Location;
 use crate::mangle::mangle_fns;
 use crate::types::Type;
@@ -190,8 +190,16 @@ impl ModuleAST {
         }
     }
 
-    pub(crate) fn append_function(&mut self, function: FunctionAST) {
-        self.functions.push(std::rc::Rc::new(function.into()));
+    pub(crate) fn append_function(&mut self, other: FunctionAST) -> Result<()> {
+        // TODO: Use HashSet to store functions in ModuleAST.
+        for function in &self.functions {
+            if function.as_ref().borrow().name == other.name {
+                return Err(QccErrorKind::DuplicateFunction.into());
+            }
+        }
+
+        self.functions.push(std::rc::Rc::new(other.into()));
+        Ok(())
     }
 
     #[inline]

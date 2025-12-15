@@ -298,6 +298,8 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 "|_ test_empty			// @test_empty.ql:1:1
 ");
 
+    // test!("tests/test_duplicate_functions.ql", "");
+
     test!("examples/toss.ql",
 "|_ toss			// @toss.ql:1:1
   |_ fn toss$sin (x: float64) : float64		// @toss.ql:2:4
