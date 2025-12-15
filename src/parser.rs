@@ -6,6 +6,7 @@ use crate::config::*;
 use crate::error::{QccError, QccErrorKind, QccErrorLoc, Result};
 use crate::lexer::{Lexer, Location};
 use crate::mangle::{mangle_module, sanitize};
+use crate::qcceprintln;
 use crate::types::Type;
 use crate::utils::usage;
 use std::collections::BTreeSet;
@@ -81,8 +82,7 @@ impl Parser {
                     "--print-qasm" => config.print_qasm = true,
                     "--debug" => config.debug = true,
                     _ => {
-                        let err: QccError = QccErrorKind::NoSuchArg.into();
-                        err.report(option);
+                        qcceprintln!("{}", QccErrorKind::NoSuchArg);
                         return Err(QccErrorKind::CmdlineErr)?;
                     }
                 }
@@ -100,8 +100,7 @@ impl Parser {
                         return Ok(None);
                     }
                     _ => {
-                        let err: QccError = QccErrorKind::NoSuchArg.into();
-                        err.report(option);
+                        qcceprintln!("{}", QccErrorKind::NoSuchArg);
                         return Err(QccErrorKind::CmdlineErr)?;
                     }
                 }
@@ -125,8 +124,7 @@ impl Parser {
 
         if !Path::new(&path).is_file() {
             let err: QccError = QccErrorKind::NoFile.into();
-            let s = format!("{}", path);
-            err.report(&s);
+            qcceprintln!("{} {}", err, path);
             return Err(QccErrorKind::CmdlineErr)?;
         }
 

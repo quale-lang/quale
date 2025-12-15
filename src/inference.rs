@@ -2,6 +2,7 @@
 use crate::ast::{Expr, FunctionAST, LiteralAST, Qast, QccCell, VarAST};
 use crate::error::{QccError, QccErrorKind, Result};
 use crate::mangle::{mangle, mangle_module};
+use crate::qcceprintln;
 use crate::types::Type;
 use std::borrow::{Borrow, BorrowMut};
 
@@ -266,20 +267,23 @@ pub fn infer(ast: &mut Qast) -> Result<()> {
                             match untyped {
                                 Ok(expr) => {
                                     // unknown type of expression err
-                                    let err: QccError = QccErrorKind::UnknownType.into();
                                     let expr = expr.as_ref().borrow();
-                                    err.report(
-                                        format!("for `{}` {}", expr, expr.get_location()).as_str(),
+                                    qcceprintln!(
+                                        "{} for `{}` {}",
+                                        QccErrorKind::UnknownType,
+                                        expr,
+                                        expr.get_location()
                                     );
                                 }
                                 Err(err) => {
                                     // err is returned
-                                    let row = instruction.as_ref().borrow().get_location().row();
-                                    err.report(&format!(
-                                        "on\n\t{}\t{}",
-                                        row,
-                                        instruction.as_ref().borrow()
-                                    ));
+                                    let instruction = instruction.as_ref().borrow();
+                                    qcceprintln!(
+                                        "{} on\n\t{}\t{}",
+                                        err,
+                                        instruction.get_location().row(),
+                                        instruction
+                                    );
                                 }
                             }
                         }
@@ -310,23 +314,25 @@ pub fn infer(ast: &mut Qast) -> Result<()> {
                         let err: QccError = QccErrorKind::TypeMismatch.into();
                         let last_expr = last.as_ref().borrow();
                         if last_instruction_type.is_none() {
-                            err.report(&format!(
-                                "between\n\t`{}` ({}) and `{}` ({}) {}",
+                            qcceprintln!(
+                                "{} between\n\t`{}` ({}) and `{}` ({}) {}",
+                                err,
                                 last_expr,
                                 Type::Bottom,
                                 fn_name,
                                 fn_return_type,
                                 last.as_ref().borrow().get_location()
-                            ));
+                            );
                         } else {
-                            err.report(&format!(
-                                "between\n\t`{}` ({}) and `{}` ({}) {}",
+                            qcceprintln!(
+                                "{} between\n\t`{}` ({}) and `{}` ({}) {}",
+                                err,
                                 last_expr,
                                 last_instruction_type.unwrap(),
                                 fn_name,
                                 fn_return_type,
                                 last.as_ref().borrow().get_location()
-                            ));
+                            );
                         }
                     }
                 }

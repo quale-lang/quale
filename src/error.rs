@@ -11,6 +11,7 @@
 //!    caller. It has various From<> traits deriving from both kinds and
 //!    location errors, often dropping the location and only carrying kind.
 use crate::lexer::Location;
+use crate::qcceprintln;
 use std::error::Error;
 use std::fmt::{Debug, Display};
 
@@ -141,7 +142,7 @@ impl QccError {
     #[inline]
     /// Report a message alongwith error.
     pub(crate) fn report(&self, msg: &str) {
-        eprintln!("{} {}", self, msg);
+        qcceprintln!("{} {}", self, msg);
     }
 
     #[inline]
@@ -153,11 +154,7 @@ impl QccError {
 
 impl Display for QccError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "\x1b[99;1mqcc\x1b[0m: \x1b[91;1merror:\x1b[0m {}",
-            self.0
-        )
+        write!(f, "{}", self.0)
     }
 }
 
@@ -247,14 +244,15 @@ impl QccErrorLoc {
         self.1.replace(new_loc);
     }
 
-    /// Reporter to print source with annotation.
+    /// Reporter to print source with annotation. This takes a source line and
+    /// calculates the exact location of the origin of error and marks it.
     pub(crate) fn report(&self, src: String) {
         let row = self.1.borrow().row().to_string();
         let mut col = self.1.borrow().col();
 
         let src_fmt = format!("        {} | {}", row, src);
 
-        eprintln!("{}", self);
+        qcceprintln!("{}", self);
         eprint!("{src_fmt}");
 
         // +11 for chars for manual inserted whitespces in src_fmt, +length of
@@ -350,6 +348,37 @@ impl From<&str> for QccErrorLoc {
     }
 }
 
+/// This is a wrapper to eprintln! but prepends a header of "qcc: error:" before
+/// printing the error. It also ensures that binary color codes aren't printed
+/// in non-terminal stderr.
+///
+/// # Examples
+///
+/// ```
+/// use qcc::error::QccErrorKind;
+/// use qcc::qcceprintln;
+///
+/// // You must always pass a formatter first, followed by a comma-separated
+/// // expressions to fill holes in the formatter.
+/// let err = QccErrorKind::TypeError;
+/// // qcceprintln!(err);  // Missing formatter will lead to error
+/// qcceprintln!("{}", err);
+/// ```
+#[macro_export]
+macro_rules! qcceprintln {
+    () => {
+        eprintln!();
+    };
+    ($fmt:literal $(, $args:expr)* $(,)?) => {{
+        use std::io::IsTerminal;
+        if std::io::stderr().is_terminal() {
+            eprintln!(concat!("\x1b[99;1mqcc\x1b[0m: \x1b[91;1merror:\x1b[0m ", $fmt), $($args),*);
+        } else {
+            eprintln!(concat!("qcc: error: ", $fmt), $($args),*);
+        }
+    }};
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -361,19 +390,13 @@ mod tests {
         let e1: Result<()> = Err(UnexpectedAttr.into());
         match e1 {
             Ok(_) => unreachable!(),
-            Err(ref e) => assert_eq!(
-                e.to_string(),
-                "\x1b[99;1mqcc\x1b[0m: \x1b[91;1merror:\x1b[0m unexpected attribute"
-            ),
+            Err(ref e) => assert_eq!(e.to_string(), "unexpected attribute"),
         }
 
         let e2: Result<()> = Err(NoFile.into());
         match e2 {
             Ok(_) => unreachable!(),
-            Err(ref e) => assert_eq!(
-                e.to_string(),
-                "\x1b[99;1mqcc\x1b[0m: \x1b[91;1merror:\x1b[0m no such file"
-            ),
+            Err(ref e) => assert_eq!(e.to_string(), "no such file"),
         }
         Ok(())
     }

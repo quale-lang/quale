@@ -60,7 +60,7 @@ fn main() -> Result<()> {
     let args = args.iter().map(|s| s.as_str()).collect();
 
     if let Err(err) = init_session(args) {
-        eprintln!("{err}");
+        qcceprintln!("{}", err);
     }
 
     Ok(())
