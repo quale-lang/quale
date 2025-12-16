@@ -73,6 +73,7 @@ pub enum QccErrorKind {
     ExpectedOpenCurly,
     ExpectedCloseCurly,
     DuplicateFunction,
+    ExpectedIdentifier,
 }
 
 impl Display for QccErrorKind {
@@ -127,6 +128,7 @@ impl Display for QccErrorKind {
                 ExpectedOpenCurly => "expected '{'",
                 ExpectedCloseCurly => "expected '}'",
                 DuplicateFunction => "duplicate function",
+                ExpectedIdentifier => "expected a variable name",
             }
         })(self))
     }

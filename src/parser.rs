@@ -255,6 +255,10 @@ impl Parser {
         self.lexer.consume(Token::OParenth)?;
 
         while !self.lexer.is_token(Token::CParenth) {
+            if !self.lexer.is_token(Token::Identifier) {
+                return Err(QccErrorKind::ExpectedIdentifier)?;
+            }
+
             if self.lexer.is_token(Token::Identifier) {
                 let name = self.lexer.identifier();
                 let location = self.lexer.location.clone();

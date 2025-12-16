@@ -304,6 +304,8 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     // test!("tests/test_duplicate_functions.ql", "");
 
+    // test!("tests/test_incomplete_fn.ql.ql", "");
+
     test!("examples/toss.ql",
 "|_ toss			// @toss.ql:1:1
   |_ fn toss$toss () : qubit		// @toss.ql:3:4
