@@ -286,7 +286,7 @@ impl Parser {
             }
 
             if !self.lexer.is_token(Token::Comma) && !self.lexer.is_token(Token::CParenth) {
-                return Err(QccErrorKind::ExpectedAttr)?;
+                return Err(QccErrorKind::ExpectedComma)?;
             }
 
             if self.lexer.is_token(Token::Comma) {
