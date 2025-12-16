@@ -31,6 +31,9 @@ pub(crate) fn mangle_expr(expr: &mut QccCell<Expr>, prefix: Ident) {
         Expr::Let(_, ref mut val) => {
             mangle_expr(val, prefix);
         }
+        Expr::Assign(_, ref mut val) => {
+            mangle_expr(val, prefix);
+        }
         Expr::FnCall(ref mut f, ref mut args) => {
             for arg in args {
                 mangle_expr(arg, prefix.clone());
@@ -64,6 +67,9 @@ pub(crate) fn mangle_fns(expr: &mut QccCell<Expr>, module_name: &String, functio
             mangle_fns(rhs, module_name, functions);
         }
         Expr::Let(ref mut var, ref mut val) => {
+            mangle_fns(val, module_name, functions);
+        }
+        Expr::Assign(ref mut var, ref mut val) => {
             mangle_fns(val, module_name, functions);
         }
         Expr::FnCall(ref mut f, ref mut args) => {
@@ -107,6 +113,9 @@ fn mangle_expr_check(expr: &mut QccCell<Expr>, mod_name: &Ident, fn_name: &Ident
             mangle_expr_check(rhs, mod_name, fn_name);
         }
         Expr::Let(_, ref mut val) => {
+            mangle_expr_check(val, mod_name, fn_name);
+        }
+        Expr::Assign(_, ref mut val) => {
             mangle_expr_check(val, mod_name, fn_name);
         }
         Expr::FnCall(ref mut f, ref mut args) => {

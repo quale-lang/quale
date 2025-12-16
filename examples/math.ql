@@ -8,6 +8,6 @@ fn cos(x: f64) : f64 {
 
 fn exp(x: f64) : f64 {
     let e = 2.718;
-    e * x
+    return e * x;
 }
 

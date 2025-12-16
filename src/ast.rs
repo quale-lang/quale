@@ -590,6 +590,7 @@ pub enum Expr {
     Tensor(Vec<QccCell<Expr>>),
     FnCall(FunctionAST, Vec<QccCell<Expr>>),
     Let(VarAST, QccCell<Expr>),
+    Assign(VarAST, QccCell<Expr>),
     Conditional(
         QccCell<Expr>,
         Vec<QccCell<Expr>>, /* truth_block */
@@ -606,6 +607,7 @@ impl Expr {
             Self::Tensor(_) => Default::default(), // TODO: This will require subtracting the dimension of tensor
             Self::FnCall(f, _) => f.get_loc().clone(),
             Self::Let(var, _) => var.location.clone(),
+            Self::Assign(v, _) => v.location().clone(),
             Self::Conditional(c, _, _) => c.as_ref().borrow().get_location(),
             Self::Literal(lit) =>
             /*TODO*/
@@ -643,6 +645,7 @@ impl Expr {
             }
             Self::FnCall(f, args) => *f.get_output_type(),
             Self::Let(var, val) => var.get_type(),
+            Self::Assign(var, val) => var.get_type(),
             Self::Conditional(conditional, truth_block, false_block) => {
                 let last_expr = truth_block.last();
                 if last_expr.is_none() {
@@ -709,6 +712,7 @@ impl std::fmt::Display for Expr {
 
             Self::Let(var, val) => write!(f, "{} = {}", var, *val.as_ref().borrow()),
 
+            Self::Assign(var, val) => write!(f, "{} = {}", var, *val.as_ref().borrow()),
             Self::Conditional(cond, _truth, _false) => {
                 writeln!(f, "{}", *cond.as_ref().borrow())?;
 

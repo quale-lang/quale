@@ -194,6 +194,22 @@ impl Parser {
             } else if self.lexer.is_token(Token::If) {
                 let expr = self.parse_if_block()?;
                 body.push(expr);
+            } else if self.lexer.is_token(Token::Identifier) {
+                // Normal assignment expressions
+                let name = self.lexer.identifier();
+                let location = self.lexer.location.clone();
+                self.lexer.consume(Token::Identifier)?;
+
+                let var = VarAST::new(name.clone(), location.clone());
+
+                if !self.lexer.is_token(Token::Assign) {
+                    return Err(QccErrorKind::ExpectedAssign)?;
+                }
+                self.lexer.consume(Token::Assign)?;
+
+                let val = self.parse_expr()?;
+                let expr = Expr::Assign(var, val).into();
+                body.push(expr);
             } else {
                 // function calls with no return or dropped return value.
                 if self.lexer.token.is_some() {

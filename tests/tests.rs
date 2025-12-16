@@ -99,9 +99,11 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 "|_ qbit_float			// @qbit_float.ql:1:1
   |_ fn qbit_float$foo (q0: qubit) : qubit		// @qbit_float.ql:1:4
     |_ q1: qubit = (2 * q0: qubit)
+    |_ q1: qubit
 
   |_ fn qbit_float$bar (q0: qubit) : qubit		// @qbit_float.ql:6:4
     |_ q1: qubit = (q0: qubit * 2)
+    |_ q1: qubit
 
   |_ fn qbit_float$main () : qubit		// @qbit_float.ql:11:4
     |_ x: qubit = qbit_float$foo: qubit ()
@@ -120,15 +122,17 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     test!("tests/tensors2.ql",
 "|_ tensors2			// @tensors2.ql:1:1
-  |_ fn tensors2$sin (x: float64) : float64		// @tensors2.ql:1:4
+  |_ fn tensors2$foo (x: float64) : float64		// @tensors2.ql:1:4
+    |_ x: float64
 
-  |_ fn tensors2$cos (x: float64) : float64		// @tensors2.ql:5:4
+  |_ fn tensors2$bar (x: float64) : float64		// @tensors2.ql:5:4
+    |_ x: float64
 
   |_ fn tensors2$main () : <bottom>		// @tensors2.ql:9:4
     |_ t1 = [[], []]
     |_ t2 = [[[], []], [[]]]
 
-  |_ fn tensors2$foo () : float64		// @tensors2.ql:14:4
+  |_ fn tensors2$foo2 () : float64		// @tensors2.ql:14:4
     |_ x: float64 = 42
     |_ e0: float64 = 2.718
     |_ e1: float64 = (e0: float64 * 2)
@@ -136,10 +140,10 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ t1 = []
     |_ t2: float64 = [x: float64]
     |_ t3: float64 = [t2: float64, t2: float64]
-    |_ t4: float64 = [(e0: float64 * tensors2$cos: float64 (a: float64)), (-e1: float64 * tensors2$sin: float64 (a: float64))]
+    |_ t4: float64 = [(e0: float64 * tensors2$bar: float64 (a: float64)), (-e1: float64 * tensors2$foo: float64 (a: float64))]
     |_ t5 = [[]]
     |_ t7: float64 = [[x: float64]]
-    |_ t8: float64 = [[(e0: float64 * tensors2$cos: float64 (a: float64)), (-e1: float64 * tensors2$sin: float64 (a: float64))], [(e1: float64 * tensors2$sin: float64 (a: float64)), (e0: float64 * tensors2$cos: float64 (a: float64))]]
+    |_ t8: float64 = [[(e0: float64 * tensors2$bar: float64 (a: float64)), (-e1: float64 * tensors2$foo: float64 (a: float64))], [(e1: float64 * tensors2$foo: float64 (a: float64)), (e0: float64 * tensors2$bar: float64 (a: float64))]]
     |_ t6 = [[], []]
     |_ t9 = [[[], []], [[]]]
     |_ t3: float64
@@ -305,6 +309,7 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
   |_ fn toss$toss () : qubit		// @toss.ql:3:4
     |_ zero_state: qubit = 0q0_1
     |_ superpositioned: qubit = std$Hadamard: qubit (zero_state: qubit)
+    |_ superpositioned: qubit
 
   |_ fn toss$main () : <bottom>		// @toss.ql:9:4
     |_ choice: qubit = toss$toss: qubit ()
@@ -332,6 +337,7 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
   |_ fn math$exp (x: float64) : float64		// @math.ql:9:4
     |_ e: float64 = 2.718
+    |_ (e: float64 * x: float64)
 
 ");
     Ok(())

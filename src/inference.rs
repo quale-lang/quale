@@ -119,6 +119,18 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
 
             Ok(val_type)
         }
+        Expr::Assign(ref var, ref val) => {
+            if !var.is_typed() {
+                return Err(QccErrorKind::UnknownType)?;
+            }
+            let val_type = check_expr(val)?;
+
+            if var.get_type() != val_type {
+                return Err(QccErrorKind::TypeMismatch)?;
+            }
+
+            Ok(val_type)
+        }
         Expr::Conditional(ref conditional, ref truth_block, ref false_block) => {
             for expr in truth_block {
                 check_expr(expr);
@@ -435,6 +447,23 @@ fn infer_expr(expr: &QccCell<Expr>) -> Option<Type> {
             }
         }
 
+        Expr::Assign(ref mut var, ref val) => {
+            // val is an expression and it must have the same type as var
+            if var.get_type() == Type::Bottom {
+                // we need to type check from expression first
+                let rhs_type = infer_expr(&val)?;
+                var.set_type(rhs_type);
+                return Some(rhs_type);
+            } else {
+                let lhs_type = var.get_type();
+                let rhs_type = infer_expr(&val)?;
+                if lhs_type != rhs_type {
+                    return None;
+                }
+                return Some(lhs_type);
+            }
+        }
+
         Expr::Conditional(ref conditional, ref truth_block, ref false_block) => {
             let mut truth_block_type = Some(Type::Bottom);
             for expr in truth_block {
@@ -598,6 +627,55 @@ fn infer_from_table(
             .into()))
         }
         Expr::Let(ref mut var, ref val) => {
+            let rhs_info = infer_from_table(val, param_st, local_st, function_st);
+
+            if rhs_info.is_some() {
+                return rhs_info;
+            }
+
+            let var_type = var.get_type();
+            let val_type = val.as_ref().borrow().get_type();
+
+            if !var.is_typed() {
+                var.set_type(val.as_ref().borrow().get_type());
+                None
+            } else if (var_type == Type::Qbit || var_type == Type::Bit)
+                && (val_type == Type::Qbit || val_type == Type::Bit)
+                && (var_type != val_type)
+            {
+                // If one of lhs or rhs is qbit while the other is bit, then we
+                // will put a measure operator before it is assigned during
+                // codegen.
+                //
+                //  let x: bit = y;     # y := qbit
+                //
+                // This holds according to our subtyping rules. Codegen will
+                // lower this to:
+                //
+                //  let x0: bit = measure(y);
+                //  let x: bit  = x0;
+                //
+                // Similarily,
+                //
+                //  let x: qbit = y;    # y := bit
+                //
+                // This is also fine. When codegen lowers this code, it
+                // automatically puts required stub to create a logical qubit.
+                None
+            } else if var_type == val_type {
+                None
+            } else if var_type != val_type {
+                // if one is qbit and other is bit, pass
+                Some(Err(QccErrorKind::TypeMismatch.into()))
+            } else {
+                Some(Ok(Expr::Var(VarAST::new(
+                    var.name().clone(),
+                    var.location().clone(),
+                ))
+                .into()))
+            }
+        }
+        Expr::Assign(ref mut var, ref val) => {
             let rhs_info = infer_from_table(val, param_st, local_st, function_st);
 
             if rhs_info.is_some() {
