@@ -333,13 +333,25 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ std$U: qubit ((pi: float64 / 2), 0, 0, q: qubit)
 
 |_ math			// @math.ql:1:1
-  |_ fn math$sin (x: float64) : float64		// @math.ql:1:4
-    |_ 0
+  |_ fn math$factorial (n: float64) : float64		// @math.ql:1:4
+    |_ (n <= 1)
+      |_ True
+        |_ 1
+      |_ False
+        |_ (n: float64 * math$factorial: float64 ((n: float64 - 1)))
 
-  |_ fn math$cos (x: float64) : float64		// @math.ql:5:4
-    |_ 1
 
-  |_ fn math$exp (x: float64) : float64		// @math.ql:9:4
+  |_ fn math$sin (x: float64) : float64		// @math.ql:11:4
+    |_ cube: float64 = (x: float64 * (x: float64 * x: float64))
+    |_ fact: float64 = math$factorial: float64 (3)
+    |_ (x: float64 - (cube: float64 / fact: float64))
+
+  |_ fn math$cos (x: float64) : float64		// @math.ql:17:4
+    |_ sqre: float64 = (x: float64 * x: float64)
+    |_ fact: float64 = math$factorial: float64 (2)
+    |_ (1 - (sqre: float64 / fact: float64))
+
+  |_ fn math$exp (x: float64) : float64		// @math.ql:23:4
     |_ e: float64 = 2.718
     |_ (e: float64 * x: float64)
 
