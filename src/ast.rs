@@ -194,7 +194,7 @@ impl ModuleAST {
         // TODO: Use HashSet to store functions in ModuleAST.
         for function in &self.functions {
             if function.as_ref().borrow().name == other.name {
-                return Err(QccErrorKind::DuplicateFunction.into());
+                return Err(QccErrorKind::RedefinedFunction.into());
             }
         }
 
