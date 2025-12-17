@@ -4,6 +4,7 @@ COMPFLAGS = --print-ast --print-qasm
 AS = $(COMP)
 
 main: toss.ql math.ql std.ql
+	cargo build --release
 	$(COMP) $(COMPFLAGS) toss.ql
 
 .DEFAULT_GOAL:=all
