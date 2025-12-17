@@ -254,44 +254,29 @@ impl Parser {
         }
         self.lexer.consume(Token::OParenth)?;
 
-        while !self.lexer.is_token(Token::CParenth) {
+        if !self.lexer.is_token(Token::CParenth) {
             if !self.lexer.is_token(Token::Identifier) {
                 return Err(QccErrorKind::ExpectedIdentifier)?;
             }
 
-            if self.lexer.is_token(Token::Identifier) {
-                let name = self.lexer.identifier();
-                let location = self.lexer.location.clone();
-                self.lexer.consume(Token::Identifier)?;
+            let param = self.parse_function_param()?;
+            input_type.push(param.get_type());
+            params.push(param);
 
-                if !self.lexer.is_token(Token::Colon) {
-                    return Err(QccErrorKind::ExpectedParamType)?;
-                }
-                self.lexer.consume(Token::Colon)?;
-
-                // TODO: exponential type - linear logic
-                if self.lexer.is_token(Token::Bang) {
-                    self.lexer.consume(Token::Bang)?;
-                }
+            while self.lexer.is_token(Token::Comma) {
+                self.lexer.consume(Token::Comma)?;
 
                 if !self.lexer.is_token(Token::Identifier) {
-                    return Err(QccErrorKind::ExpectedParamType)?;
+                    return Err(QccErrorKind::ExpectedIdentifier)?;
                 }
 
-                let type_ = self.lexer.identifier().parse::<Type>()?;
-                self.lexer.consume(Token::Identifier)?;
-
-                input_type.push(type_.clone());
-                params.push(VarAST::new_with_type(name, location, type_));
+                let param = self.parse_function_param()?;
+                input_type.push(param.get_type());
+                params.push(param);
             }
-
-            if !self.lexer.is_token(Token::Comma) && !self.lexer.is_token(Token::CParenth) {
-                return Err(QccErrorKind::ExpectedComma)?;
-            }
-
-            if self.lexer.is_token(Token::Comma) {
-                self.lexer.consume(Token::Comma)?;
-            }
+        }
+        if !self.lexer.is_token(Token::CParenth) {
+            return Err(QccErrorKind::ExpectedParenth)?;
         }
         self.lexer.consume(Token::CParenth)?;
 
@@ -637,6 +622,34 @@ impl Parser {
         }
 
         Ok(Expr::Conditional(conditional, truth_block, false_block).into())
+    }
+
+    /// Parses a variable with its type inside a function parameter list.
+    fn parse_function_param(&mut self) -> Result<VarAST> {
+        if !self.lexer.is_token(Token::Identifier) {
+            return Err(QccErrorKind::ExpectedIdentifier)?;
+        }
+        let name = self.lexer.identifier();
+        let location = self.lexer.location.clone();
+        self.lexer.consume(Token::Identifier)?;
+
+        if !self.lexer.is_token(Token::Colon) {
+            return Err(QccErrorKind::ExpectedColon)?;
+        }
+        self.lexer.consume(Token::Colon)?;
+
+        // TODO: exponential type - linear logic
+        if self.lexer.is_token(Token::Bang) {
+            self.lexer.consume(Token::Bang)?;
+        }
+
+        if !self.lexer.is_token(Token::Identifier) {
+            return Err(QccErrorKind::ExpectedParamType)?;
+        }
+        let type_ = self.lexer.identifier().parse::<Type>()?;
+        self.lexer.consume(Token::Identifier)?;
+
+        Ok(VarAST::new_with_type(name, location, type_))
     }
 
     fn parse_let(&mut self) -> Result<QccCell<Expr>> {

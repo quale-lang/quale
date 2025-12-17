@@ -302,6 +302,8 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 "|_ test_empty			// @test_empty.ql:1:1
 ");
 
+    // test!("tests/test_functions.ql.ql", "");
+
     // test!("tests/test_duplicate_functions.ql", "");
 
     // test!("tests/test_incomplete_fn.ql.ql", "");
