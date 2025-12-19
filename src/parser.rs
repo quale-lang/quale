@@ -76,6 +76,10 @@ impl Parser {
                         usage();
                         return Ok(None);
                     }
+                    "--version" => {
+                        println!("{}", config.version);
+                        return Ok(None);
+                    }
                     "--analyze" => config.analyzer.status = true,
                     "--print-ast" => config.print_ast = true,
                     "--print-ast-only" => config.print_ast_only = true,
@@ -97,6 +101,10 @@ impl Parser {
                     "-o" => output_direct |= 0x1,
                     "-h" => {
                         usage();
+                        return Ok(None);
+                    }
+                    "-v" => {
+                        println!("{}", config.version);
                         return Ok(None);
                     }
                     _ => {

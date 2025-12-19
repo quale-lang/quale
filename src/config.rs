@@ -8,17 +8,23 @@ pub struct Config {
     pub(crate) print_ast: bool,
     pub(crate) print_ast_only: bool,
     pub(crate) print_qasm: bool,
+    pub(crate) version: &'static str,
     pub analyzer: AnalyzerConfig,
     pub optimizer: OptConfig,
 }
 
 impl Config {
+    fn version() -> &'static str {
+        env!("CARGO_PKG_VERSION") // + add latest commit hash
+    }
+
     pub(crate) fn new() -> Self {
         Self {
             debug: false,
             print_ast: false,
             print_ast_only: false,
             print_qasm: false,
+            version: Self::version(),
             optimizer: OptConfig::new(),
             analyzer: AnalyzerConfig::new(),
         }
