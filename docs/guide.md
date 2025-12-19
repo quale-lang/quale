@@ -35,7 +35,7 @@ The help page can be viewed by using `--help` or `-h` command-line option.
 ```
 $ qcc --help
 usage: qcc [options] <quale-file>
-    --help              show this page
+    -h,--help           show this page
     --print-ast         print AST
     --print-ast-only    print AST without translating to assemmbly
     --print-qasm        print OpenQASM IR
@@ -45,6 +45,7 @@ usage: qcc [options] <quale-file>
     -Og                 enable all optimizations (NA)
     -d,--debug          run compiler in debug-mode
     -o                  compiled output
+    -v,--version        compiler version
 ```
 
 The options are pretty self-explanatory but the `--analyze` and all of

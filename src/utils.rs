@@ -43,7 +43,7 @@ pub(crate) fn usage() {
     {:14}\t{:<20}
     {:14}\t{:<20}
 ",
-        "--help",
+        "-h,--help",
         "show this page",
         "--print-ast",
         "print AST",
