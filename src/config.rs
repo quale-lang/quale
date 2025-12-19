@@ -14,8 +14,9 @@ pub struct Config {
 }
 
 impl Config {
+    #[inline]
     fn version() -> &'static str {
-        env!("CARGO_PKG_VERSION") // + add latest commit hash
+        concat!(env!("CARGO_PKG_VERSION"), "+", env!("GIT_HASH"))
     }
 
     pub(crate) fn new() -> Self {

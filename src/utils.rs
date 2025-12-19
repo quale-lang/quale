@@ -41,6 +41,7 @@ pub(crate) fn usage() {
     {:14}\t{:<20}
     {:14}\t{:<20}
     {:14}\t{:<20}
+    {:14}\t{:<20}
 ",
         "--help",
         "show this page",
@@ -61,7 +62,9 @@ pub(crate) fn usage() {
         "-d,--debug",
         "run compiler in debug-mode",
         "-o",
-        "compiled output"
+        "compiled output",
+        "-v,--version",
+        "compiler version"
     );
 }
 
