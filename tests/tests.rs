@@ -375,15 +375,18 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ std$U: qubit ((pi: float64 / 2), 0, 0, q: qubit)
 
 |_ toss			// @toss.ql:1:1
-  |_ fn toss$toss () : qubit		// @toss.ql:3:4
+  |_ fn toss$toss () : qubit		// @toss.ql:5:4
     |_ zero_state: qubit = 0q0_1
-    |_ superpositioned: qubit = std$Hadamard: qubit (zero_state: qubit)
+    |_ superpositioned: qubit = toss$H: qubit (zero_state: qubit)
     |_ superpositioned: qubit
 
-  |_ fn toss$main () : <bottom>		// @toss.ql:9:4
+  |_ fn toss$main () : <bottom>		// @toss.ql:11:4
     |_ choice: qubit = toss$toss: qubit ()
     |_ (choice == 0)
 
+
+  |_ fn toss$H (x0: qubit) : qubit		// @toss.ql:3:7
+    |_ std$Hadamard: qubit (x0: qubit)
 
 ");
     Ok(())

@@ -947,11 +947,7 @@ impl Parser {
 
                         for each_type in &input_type {
                             let name = format!("x{id}");
-                            let var= VarAST::new_with_type(
-                                name,
-                                Default::default(),
-                                *each_type,
-                            );
+                            let var = VarAST::new_with_type(name, Default::default(), *each_type);
                             params.push(var.clone());
                             args.push(Expr::Var(var).into());
 
