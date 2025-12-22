@@ -942,18 +942,21 @@ impl Parser {
 
                         // TODO:
                         let mut params = vec![];
+                        let mut args = vec![];
                         let mut id: u8 = 0;
 
                         for each_type in &input_type {
                             let name = format!("x{id}");
-                            params.push(VarAST::new_with_type(
+                            let var= VarAST::new_with_type(
                                 name,
                                 Default::default(),
                                 *each_type,
-                            ));
+                            );
+                            params.push(var.clone());
+                            args.push(Expr::Var(var).into());
+
                             id += 1;
                         }
-                        let args = vec![];
 
                         // TODO: FnCall should store a reference to the function,
                         // not a copy.

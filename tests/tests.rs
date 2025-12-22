@@ -329,10 +329,10 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ (x: float64 + y: float64)
 
   |_ fn test_alias$S (x0: float64) : float64		// @test_alias.ql:4:7
-    |_ complex_expr_lib$sin: float64 ()
+    |_ complex_expr_lib$sin: float64 (x0: float64)
 
   |_ fn test_alias$C (x0: float64) : float64		// @test_alias.ql:5:7
-    |_ complex_expr_lib$cos: float64 ()
+    |_ complex_expr_lib$cos: float64 (x0: float64)
 
 ");
 
