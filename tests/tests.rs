@@ -336,6 +336,8 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
 ");
 
+    // test!("tests/test_alias_missing.ql.ql.ql", "");
+
     test!("examples/toss.ql",
 "|_ math			// @math.ql:1:1
   |_ fn math$factorial (n: float64) : float64		// @math.ql:1:4

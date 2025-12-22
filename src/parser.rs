@@ -204,6 +204,7 @@ impl Parser {
             return Err(QccErrorKind::ExpectedFnName)?;
         }
         let function = self.lexer.identifier();
+        let function_location = self.lexer.location.clone();
         self.lexer.consume(Token::Identifier)?;
 
         if !self.lexer.is_token(Token::Semicolon) {
@@ -211,8 +212,8 @@ impl Parser {
         }
         self.lexer.consume(Token::Semicolon)?;
 
-        let alias = VarAST::new(alias, location.clone());
-        let function = VarAST::new(function, location);
+        let alias = VarAST::new(alias, location);
+        let function = VarAST::new(function, function_location);
 
         return Ok(AliasAST::new(alias, function));
     }
@@ -983,7 +984,7 @@ impl Parser {
             if !alias_resolved {
                 seen_errors = true;
                 let err = QccErrorKind::ExpectedFn;
-                qcceprintln!("{} {} {}", err, to_alias, to_alias.location());
+                qcceprintln!("{} '{}' {}", err, to_alias, to_alias.location());
             }
         }
 
