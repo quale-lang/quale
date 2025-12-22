@@ -378,6 +378,7 @@ impl Lexer {
                 "import" => Some(Token::Import),
                 "if" => Some(Token::If),
                 "else" => Some(Token::Else),
+                "alias" => Some(Token::Alias),
                 _ => Some(Token::Identifier),
             };
             return Ok(self.token);

@@ -38,7 +38,17 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     // test!("tests/attr-panic.ql", "");
 
     test!("tests/complex_expr.ql",
-"|_ complex_expr			// @complex_expr.ql:1:1
+"|_ complex_expr_lib			// @complex_expr_lib.ql:1:1
+  |_ fn complex_expr_lib$bar () : qubit		// @complex_expr_lib.ql:2:4
+    |_ 0q1_0
+
+  |_ fn complex_expr_lib$sin (r: float64) : float64		// @complex_expr_lib.ql:6:4
+    |_ (r: float64 / 180)
+
+  |_ fn complex_expr_lib$cos (r: float64) : float64		// @complex_expr_lib.ql:10:4
+    |_ (r: float64 / 90)
+
+|_ complex_expr			// @complex_expr.ql:1:1
   |_ fn [[nondeter]] complex_expr$new (b: bit) : qubit		// @complex_expr.ql:5:4
     |_ q: qubit = 0q1_0
     |_ q: qubit
@@ -53,16 +63,6 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ e1: float64 = e0: float64
     |_ f2: float64 = complex_expr$bar: float64 (((e0: float64 * complex_expr_lib$cos: float64 (a: float64)) / nonce: float64), (-e1: float64 * complex_expr_lib$sin: float64 (a: float64)))
     |_ f2: float64
-
-|_ complex_expr_lib			// @complex_expr_lib.ql:1:1
-  |_ fn complex_expr_lib$bar () : qubit		// @complex_expr_lib.ql:2:4
-    |_ 0q1_0
-
-  |_ fn complex_expr_lib$sin (r: float64) : float64		// @complex_expr_lib.ql:6:4
-    |_ (r: float64 / 180)
-
-  |_ fn complex_expr_lib$cos (r: float64) : float64		// @complex_expr_lib.ql:10:4
-    |_ (r: float64 / 90)
 
 ");
 
@@ -308,31 +308,36 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
     // test!("tests/test_incomplete_fn.ql.ql", "");
 
+    test!("tests/test_alias.ql",
+"|_ complex_expr_lib			// @complex_expr_lib.ql:1:1
+  |_ fn complex_expr_lib$bar () : qubit		// @complex_expr_lib.ql:2:4
+    |_ 0q1_0
+
+  |_ fn complex_expr_lib$sin (r: float64) : float64		// @complex_expr_lib.ql:6:4
+    |_ (r: float64 / 180)
+
+  |_ fn complex_expr_lib$cos (r: float64) : float64		// @complex_expr_lib.ql:10:4
+    |_ (r: float64 / 90)
+
+|_ test_alias			// @test_alias.ql:1:1
+  |_ fn test_alias$foo (q0: qubit) : qubit		// @test_alias.ql:8:4
+    |_ q0: qubit
+
+  |_ fn test_alias$main () : float64		// @test_alias.ql:10:4
+    |_ x: float64 = test_alias$S: float64 (1)
+    |_ y: float64 = test_alias$C: float64 (0)
+    |_ (x: float64 + y: float64)
+
+  |_ fn test_alias$S (x0: float64) : float64		// @test_alias.ql:4:7
+    |_ complex_expr_lib$sin: float64 ()
+
+  |_ fn test_alias$C (x0: float64) : float64		// @test_alias.ql:5:7
+    |_ complex_expr_lib$cos: float64 ()
+
+");
+
     test!("examples/toss.ql",
-"|_ toss			// @toss.ql:1:1
-  |_ fn toss$toss () : qubit		// @toss.ql:3:4
-    |_ zero_state: qubit = 0q0_1
-    |_ superpositioned: qubit = std$Hadamard: qubit (zero_state: qubit)
-    |_ superpositioned: qubit
-
-  |_ fn toss$main () : <bottom>		// @toss.ql:9:4
-    |_ choice: qubit = toss$toss: qubit ()
-    |_ (choice == 0)
-
-
-|_ std			// @std.ql:1:1
-  |_ fn std$U (theta: float64, phi: float64, lambda: float64, q0: qubit) : qubit		// @std.ql:5:4
-    |_ e0: float64 = math$exp: float64 (((phi: float64 + lambda: float64) / 2))
-    |_ e1: float64 = math$exp: float64 (((phi: float64 - lambda: float64) / 2))
-    |_ a: float64 = (theta: float64 / 2)
-    |_ transform: float64 = [[(e0: float64 * math$cos: float64 (a: float64)), (-e1: float64 * math$sin: float64 (a: float64))], [(e1: float64 * math$sin: float64 (a: float64)), (e0: float64 * math$cos: float64 (a: float64))]]
-    |_ (transform: float64 * q0: qubit)
-
-  |_ fn std$Hadamard (q: qubit) : qubit		// @std.ql:20:4
-    |_ pi: float64 = 3.14
-    |_ std$U: qubit ((pi: float64 / 2), 0, 0, q: qubit)
-
-|_ math			// @math.ql:1:1
+"|_ math			// @math.ql:1:1
   |_ fn math$factorial (n: float64) : float64		// @math.ql:1:4
     |_ (n <= 1)
       |_ True
@@ -354,6 +359,29 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
   |_ fn math$exp (x: float64) : float64		// @math.ql:23:4
     |_ e: float64 = 2.718
     |_ (e: float64 * x: float64)
+
+|_ std			// @std.ql:1:1
+  |_ fn std$U (theta: float64, phi: float64, lambda: float64, q0: qubit) : qubit		// @std.ql:5:4
+    |_ e0: float64 = math$exp: float64 (((phi: float64 + lambda: float64) / 2))
+    |_ e1: float64 = math$exp: float64 (((phi: float64 - lambda: float64) / 2))
+    |_ a: float64 = (theta: float64 / 2)
+    |_ transform: float64 = [[(e0: float64 * math$cos: float64 (a: float64)), (-e1: float64 * math$sin: float64 (a: float64))], [(e1: float64 * math$sin: float64 (a: float64)), (e0: float64 * math$cos: float64 (a: float64))]]
+    |_ (transform: float64 * q0: qubit)
+
+  |_ fn std$Hadamard (q: qubit) : qubit		// @std.ql:20:4
+    |_ pi: float64 = 3.14
+    |_ std$U: qubit ((pi: float64 / 2), 0, 0, q: qubit)
+
+|_ toss			// @toss.ql:1:1
+  |_ fn toss$toss () : qubit		// @toss.ql:3:4
+    |_ zero_state: qubit = 0q0_1
+    |_ superpositioned: qubit = std$Hadamard: qubit (zero_state: qubit)
+    |_ superpositioned: qubit
+
+  |_ fn toss$main () : <bottom>		// @toss.ql:9:4
+    |_ choice: qubit = toss$toss: qubit ()
+    |_ (choice == 0)
+
 
 ");
     Ok(())

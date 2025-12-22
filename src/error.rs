@@ -74,6 +74,7 @@ pub enum QccErrorKind {
     ExpectedCloseCurly,
     RedefinedFunction,
     ExpectedIdentifier,
+    ExpectedAlias,
 }
 
 impl Display for QccErrorKind {
@@ -129,6 +130,7 @@ impl Display for QccErrorKind {
                 ExpectedCloseCurly => "expected '}'",
                 RedefinedFunction => "redefined function",
                 ExpectedIdentifier => "expected a variable name",
+                ExpectedAlias => "expected 'alias' keyword",
             }
         })(self))
     }

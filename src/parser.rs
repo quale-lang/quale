@@ -181,6 +181,42 @@ impl Parser {
         Ok(attrs)
     }
 
+    /// Parse `alias` expression
+    fn parse_alias(&mut self) -> Result<AliasAST> {
+        if !self.lexer.is_token(Token::Alias) {
+            return Err(QccErrorKind::ExpectedAlias)?;
+        }
+        self.lexer.consume(Token::Alias)?;
+
+        if !self.lexer.is_token(Token::Identifier) {
+            return Err(QccErrorKind::ExpectedIdentifier)?;
+        }
+        let alias = self.lexer.identifier();
+        let location = self.lexer.location.clone();
+        self.lexer.consume(Token::Identifier)?;
+
+        if !self.lexer.is_token(Token::Assign) {
+            return Err(QccErrorKind::ExpectedAssign)?;
+        }
+        self.lexer.consume(Token::Assign)?;
+
+        if !self.lexer.is_token(Token::Identifier) {
+            return Err(QccErrorKind::ExpectedFnName)?;
+        }
+        let function = self.lexer.identifier();
+        self.lexer.consume(Token::Identifier)?;
+
+        if !self.lexer.is_token(Token::Semicolon) {
+            return Err(QccErrorKind::ExpectedSemicolon)?;
+        }
+        self.lexer.consume(Token::Semicolon)?;
+
+        let alias = VarAST::new(alias, location.clone());
+        let function = VarAST::new(function, location);
+
+        return Ok(AliasAST::new(alias, function));
+    }
+
     /// Parses a scope containing expressions. It is like parsing a function
     /// except the function header, parameter and return type. The scope must
     /// start and end with curly braces.
@@ -759,6 +795,7 @@ impl Parser {
             Default::default(),
         );
         let mut imports = Vec::new();
+        let mut aliases: Vec<AliasAST> = Vec::new();
 
         self.lexer.next_token()?;
         loop {
@@ -790,6 +827,10 @@ impl Parser {
                         err.report(line);
                     }
                 }
+            } else if self.lexer.is_token(Token::Alias) {
+                // constraint: should always be at function-level
+                let alias = self.parse_alias()?;
+                aliases.push(alias);
             } else if self.lexer.is_token(Token::Hash) || self.lexer.is_token(Token::Function) {
                 match self.parse_function() {
                     Ok(f) => {
@@ -817,12 +858,7 @@ impl Parser {
             }
         }
 
-        // Collect all import statements and mangle accordingly
-        for (mod_name, fn_name) in &imports {
-            mangle_module(&mut this, mod_name.clone(), fn_name.clone());
-        }
-        qast.append_module(this);
-
+        // Resolve imported modules.
         let mut imports_ast = ImportAST::new();
 
         self.parsed.insert(module_name.clone());
@@ -850,16 +886,16 @@ impl Parser {
             }
         }
 
-        for (module, function) in imports {
+        for (module, function) in &imports {
             let mut found_module = false;
             let mut found_function = false;
 
             for mut m in &qast {
-                if m.get_name() == module {
+                if m.get_name() == *module {
                     found_module = true;
 
                     for f in m.get_functions() {
-                        if *f.borrow().get_name() == function {
+                        if *f.borrow().get_name() == *function {
                             imports_ast.push(&m, f);
                             found_function = true;
                             break;
@@ -876,6 +912,86 @@ impl Parser {
                 }
             }
         }
+
+        // TODO: This should be moved to an AST optimizing module.
+        // Add function stubs for aliases
+        for alias in aliases {
+            // alias H = Hadamard;
+            // add a new function stub:
+            //  #[same-attrs-as-Hadamard]
+            //  fn H(same params as Hadamard): type { return Hadamard(params); }
+            let AliasAST(ref alias, ref to_alias) = alias;
+            let name = alias.name();
+            let location = alias.location();
+
+            let mut alias_resolved = false;
+            let mut stub: Option<FunctionAST> = None;
+
+            for mut module in &mut qast {
+                for function in &*module {
+                    if function.get_name() == to_alias.name() {
+                        // alias H = Hadamard;
+                        // fn Hadamard(q1:qbit, q2:qbit):qbit { return 0q(0,1); }
+                        //
+                        // fn H(x0:qbit, x1:qbit):qbit { return Hadamard(x0, x1); }
+                        // fn Hadamard(q1:qbit, q2:qbit):qbit { return 0q(0,1); }
+                        let input_type = function.get_input_type().clone();
+                        let output_type = function.get_output_type().clone();
+                        let attributes = function.get_attrs().clone();
+
+                        // TODO:
+                        let mut params = vec![];
+                        let mut id: u8 = 0;
+
+                        for each_type in &input_type {
+                            let name = format!("x{id}");
+                            params.push(VarAST::new_with_type(
+                                name,
+                                Default::default(),
+                                *each_type,
+                            ));
+                            id += 1;
+                        }
+                        let args = vec![];
+
+                        // TODO: FnCall should store a reference to the function,
+                        // not a copy.
+                        let return_expr: QccCell<Expr> =
+                            Expr::FnCall(function.clone(), args).into();
+
+                        // The location should be (row, 4); not (row, col);
+                        stub = Some(FunctionAST::new(
+                            name.clone(),
+                            location.clone(),
+                            params,
+                            input_type,
+                            output_type,
+                            attributes,
+                            vec![return_expr],
+                        ));
+                        alias_resolved = true;
+                        break;
+                    }
+                }
+
+                if alias_resolved && stub.is_some() {
+                    this.append_function(stub.unwrap());
+                    break;
+                }
+            }
+
+            if !alias_resolved {
+                seen_errors = true;
+                let err = QccErrorKind::ExpectedFn;
+                qcceprintln!("{} {} {}", err, to_alias, to_alias.location());
+            }
+        }
+
+        // Collect all import statements and mangle accordingly
+        for (mod_name, fn_name) in &imports {
+            mangle_module(&mut this, mod_name.clone(), fn_name.clone());
+        }
+        qast.append_module(this);
 
         if seen_errors {
             Err(QccErrorKind::ParseError)?

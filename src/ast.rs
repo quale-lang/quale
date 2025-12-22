@@ -42,12 +42,13 @@ pub(crate) enum Token {
     Qbit = -13,
     If = -14,
     Else = -15,
+    Alias = -16,
 
     // Comparison operators
-    Equal = -16,   // ==
-    Unequal = -17, // !=
-    LessThan = -18,
-    GreaterThan = -19,
+    Equal = -17,   // ==
+    Unequal = -18, // !=
+    LessThan = -19,
+    GreaterThan = -20,
 }
 
 impl Token {
@@ -584,6 +585,15 @@ impl std::fmt::Display for BinaryExprAST {
 pub(crate) type QccCell<T> = std::rc::Rc<std::cell::RefCell<T>>;
 
 #[derive(Debug)]
+pub(crate) struct AliasAST(pub(crate) VarAST, pub(crate) VarAST);
+
+impl AliasAST {
+    pub(crate) fn new(alias: VarAST, function: VarAST) -> Self {
+        Self(alias, function)
+    }
+}
+
+#[derive(Debug)]
 pub enum Expr {
     Var(VarAST),
     BinaryExpr(QccCell<Expr>, Opcode, QccCell<Expr>),
@@ -744,7 +754,8 @@ impl std::fmt::Display for Expr {
     }
 }
 
-#[derive(Debug)]
+// TODO: Remove Clone trait when FnCall supports reference to functions.
+#[derive(Debug, Clone)]
 pub struct FunctionAST {
     name: Ident,
     location: Location,
