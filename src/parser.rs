@@ -917,73 +917,42 @@ impl Parser {
         // TODO: This should be moved to an AST optimizing module.
         // Add function stubs for aliases
         for alias in aliases {
-            // alias H = Hadamard;
-            // add a new function stub:
-            //  #[same-attrs-as-Hadamard]
-            //  fn H(same params as Hadamard): type { return Hadamard(params); }
-            let AliasAST(ref alias, ref to_alias) = alias;
-            let name = alias.name();
-            let location = alias.location();
+            // let AliasAST(ref alias, ref to_alias) = alias;
+            // let name = alias.name();
+            // let location = alias.location();
 
-            let mut alias_resolved = false;
             let mut stub: Option<FunctionAST> = None;
 
-            for mut module in &mut qast {
-                for function in &*module {
-                    if function.get_name() == to_alias.name() {
-                        // alias H = Hadamard;
-                        // fn Hadamard(q1:qbit, q2:qbit):qbit { return 0q(0,1); }
-                        //
-                        // fn H(x0:qbit, x1:qbit):qbit { return Hadamard(x0, x1); }
-                        // fn Hadamard(q1:qbit, q2:qbit):qbit { return 0q(0,1); }
-                        let input_type = function.get_input_type().clone();
-                        let output_type = function.get_output_type().clone();
-                        let attributes = function.get_attrs().clone();
-
-                        // TODO:
-                        let mut params = vec![];
-                        let mut args = vec![];
-                        let mut id: u8 = 0;
-
-                        for each_type in &input_type {
-                            let name = format!("x{id}");
-                            let var = VarAST::new_with_type(name, Default::default(), *each_type);
-                            params.push(var.clone());
-                            args.push(Expr::Var(var).into());
-
-                            id += 1;
-                        }
-
-                        // TODO: FnCall should store a reference to the function,
-                        // not a copy.
-                        let return_expr: QccCell<Expr> =
-                            Expr::FnCall(function.clone(), args).into();
-
-                        // The location should be (row, 4); not (row, col);
-                        stub = Some(FunctionAST::new(
-                            name.clone(),
-                            location.clone(),
-                            params,
-                            input_type,
-                            output_type,
-                            attributes,
-                            vec![return_expr],
-                        ));
-                        alias_resolved = true;
-                        break;
-                    }
-                }
-
-                if alias_resolved && stub.is_some() {
-                    this.append_function(stub.unwrap());
+            // Search for module in the same module
+            for function in &this {
+                stub = create_alias_stub(&alias, &function);
+                if stub.is_some() {
                     break;
                 }
             }
 
-            if !alias_resolved {
+            if stub.is_none() {
+                // Search for function in other modules
+                for mut module in &mut qast {
+                    for function in &*module {
+                        stub = create_alias_stub(&alias, &function);
+                        if stub.is_some() {
+                            break;
+                        }
+                    }
+                    if stub.is_some() {
+                        break;
+                    }
+                }
+            }
+
+            if stub.is_none() {
                 seen_errors = true;
                 let err = QccErrorKind::ExpectedFn;
+                let AliasAST(_, ref to_alias) = alias;
                 qcceprintln!("{} '{}' {}", err, to_alias, to_alias.location());
+            } else {
+                this.append_function(stub.unwrap());
             }
         }
 
@@ -999,4 +968,66 @@ impl Parser {
             Ok(qast)
         }
     }
+}
+
+/// It receives an AliasAST and a FunctionAST. The alias structure stores both
+/// names of alias and to_alias function, the function is the callee. If both
+/// their names match, then this returns a stub function (a wrapper) which calls
+/// the callee and returns its output.
+///
+/// # Examples
+/// If the aliasing is:
+///     alias H = Hadamard;
+///
+/// The function will be called with the AliasAST and a FunctionAST, and it
+/// finds a match in to_alias and callee function's names, then it creates a
+/// stub calling Hadamard.
+///
+/// This will return:
+///     fn H(params): type { return Hadamard(args); }
+fn create_alias_stub(alias: &AliasAST, function: &FunctionAST) -> Option<FunctionAST> {
+    let mut stub = None;
+    let AliasAST(alias, to_alias) = alias;
+
+    if function.get_name() == to_alias.name() {
+        // alias H = Hadamard;
+        // fn Hadamard(q1:qbit, q2:qbit):qbit { return 0q(0,1); }
+        //
+        // fn H(x0:qbit, x1:qbit):qbit { return Hadamard(x0, x1); }
+        // fn Hadamard(q1:qbit, q2:qbit):qbit { return 0q(0,1); }
+        let input_type = function.get_input_type().clone();
+        let output_type = function.get_output_type().clone();
+        let attributes = function.get_attrs().clone();
+
+        // TODO:
+        let mut params = vec![];
+        let mut args = vec![];
+        let mut id: u8 = 0;
+
+        for each_type in &input_type {
+            let name = format!("x{id}");
+            let var = VarAST::new_with_type(name, Default::default(), *each_type);
+            params.push(var.clone());
+            args.push(Expr::Var(var).into());
+
+            id += 1;
+        }
+
+        // TODO: FnCall should store a reference to the function,
+        // not a copy.
+        let return_expr: QccCell<Expr> = Expr::FnCall(function.clone(), args).into();
+
+        // The location should be (row, 4); not (row, col);
+        stub = Some(FunctionAST::new(
+            alias.name().clone(),
+            alias.location().clone(),
+            params,
+            input_type,
+            output_type,
+            attributes,
+            vec![return_expr],
+        ));
+    }
+
+    stub
 }
