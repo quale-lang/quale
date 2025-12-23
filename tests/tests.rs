@@ -328,10 +328,10 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ y: float64 = test_alias$C: float64 (0)
     |_ (x: float64 + y: float64)
 
-  |_ fn test_alias$S (x0: float64) : float64		// @test_alias.ql:4:7
+  |_ fn test_alias$S (x0: float64) : float64		// @test_alias.ql:4:4
     |_ complex_expr_lib$sin: float64 (x0: float64)
 
-  |_ fn test_alias$C (x0: float64) : float64		// @test_alias.ql:5:7
+  |_ fn test_alias$C (x0: float64) : float64		// @test_alias.ql:5:4
     |_ complex_expr_lib$cos: float64 (x0: float64)
 
 ");
@@ -385,7 +385,7 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
     |_ (choice == 0)
 
 
-  |_ fn toss$H (x0: qubit) : qubit		// @toss.ql:3:7
+  |_ fn toss$H (x0: qubit) : qubit		// @toss.ql:3:4
     |_ std$Hadamard: qubit (x0: qubit)
 
 ");

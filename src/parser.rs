@@ -999,7 +999,6 @@ fn create_alias_stub(alias: &AliasAST, function: &FunctionAST) -> Option<Functio
         let output_type = function.get_output_type().clone();
         let attributes = function.get_attrs().clone();
 
-        // TODO:
         let mut params = vec![];
         let mut args = vec![];
         let mut id: u8 = 0;
@@ -1017,10 +1016,13 @@ fn create_alias_stub(alias: &AliasAST, function: &FunctionAST) -> Option<Functio
         // not a copy.
         let return_expr: QccCell<Expr> = Expr::FnCall(function.clone(), args).into();
 
+        let alias_location = alias.location().clone();
+        let stub_location = Location::new(&alias_location.path(), alias_location.row(), 4);
+
         // The location should be (row, 4); not (row, col);
         stub = Some(FunctionAST::new(
             alias.name().clone(),
-            alias.location().clone(),
+            stub_location,
             params,
             input_type,
             output_type,
