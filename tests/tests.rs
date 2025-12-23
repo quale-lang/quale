@@ -350,6 +350,24 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
 
 ");
 
+    test!("tests/test_import.ql",
+"|_ complex_expr_lib			// @complex_expr_lib.ql:1:1
+  |_ fn complex_expr_lib$bar () : qubit		// @complex_expr_lib.ql:2:4
+    |_ 0q1_0
+
+  |_ fn complex_expr_lib$sin (r: float64) : float64		// @complex_expr_lib.ql:6:4
+    |_ (r: float64 / 180)
+
+  |_ fn complex_expr_lib$cos (r: float64) : float64		// @complex_expr_lib.ql:10:4
+    |_ (r: float64 / 90)
+
+|_ test_import			// @test_import.ql:1:1
+  |_ fn test_import$main () : float64		// @test_import.ql:4:4
+    |_ x: float64 = 2
+    |_ complex_expr_lib$sin: float64 (x: float64)
+
+");
+
     test!("examples/toss.ql",
 "|_ math			// @math.ql:1:1
   |_ fn math$factorial (n: float64) : float64		// @math.ql:1:4
