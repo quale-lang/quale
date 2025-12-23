@@ -370,7 +370,6 @@ impl Parser {
         let module_loc = self.lexer.location.clone();
         self.lexer.consume(Token::Identifier)?;
 
-        // TODO: Colon location in error reporting is incorrect. (#testit)
         if !self.lexer.is_token(Token::Colon) {
             Err(QccErrorKind::ExpectedColon)?
         }
@@ -907,7 +906,7 @@ impl Parser {
                         // TODO: Improve information. Only return ParseError!
                         // Here and in the cyclic import case as well.
                         let err: QccError = QccErrorKind::UnknownImport.into();
-                        err.report(&function);
+                        qcceprintln!("{} '{}' in module '{}'", err, function, module);
                         Err(QccErrorKind::ParseError)?
                     }
                 }
@@ -917,10 +916,6 @@ impl Parser {
         // TODO: This should be moved to an AST optimizing module.
         // Add function stubs for aliases
         for alias in aliases {
-            // let AliasAST(ref alias, ref to_alias) = alias;
-            // let name = alias.name();
-            // let location = alias.location();
-
             let mut stub: Option<FunctionAST> = None;
 
             // Search for module in the same module
