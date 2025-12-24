@@ -1,3 +1,5 @@
+#[cfg(test)]
+use pretty_assertions::assert_eq;
 use qcc::assert_eq_any;
 use qcc::codegen::{qasm, Translator};
 use qcc::error::QccErrorKind;
