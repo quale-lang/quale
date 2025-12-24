@@ -30,7 +30,7 @@ macro_rules! test {
 // Always keep a newline between two test macro invocations.
 #[rustfmt::skip]
 #[test]
-fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>>  {
+fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>> {
     // TODO: error, but how to reflect this in
     // macro? We can do Result<&str, QccError>.
     // The commented out tests are those which fail compilation (either at
