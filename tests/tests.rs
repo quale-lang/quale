@@ -9,17 +9,12 @@ use qcc::parser::Parser;
 #[macro_export]
 macro_rules! test {
     ($path:expr, $repr:expr) => {{
-        println!(">> Testing {} ...", $path);
-
         let mut parser = Parser::new(vec![$path])?.unwrap();
         let config = parser.get_config();
         let mut ast = parser.parse(&config.analyzer.src)?;
 
         match infer(&mut ast) {
             Ok(_) => {
-                // TODO: write own macro to assert ast, so that diff is better
-                // presented at test failure. The stdlib macros just dump left
-                // and right strings without showing the diff.
                 assert_eq!(format!("{}", ast), $repr, "AST did not match for {}", $path);
             }
             Err(err) => {
