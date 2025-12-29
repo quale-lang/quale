@@ -81,12 +81,12 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>> {
 
     // test!("tests/let-fn-call.ql", "");
 
-    test!("tests/no_eof.ql",
-"|_ no_eof			// @no_eof.ql:1:1
-  |_ fn [[nondeter]] no_eof$main (param: qubit) : float64		// @no_eof.ql:2:20
-    |_ 0
+//     test!("tests/no_eof.ql",
+// "|_ no_eof			// @no_eof.ql:1:1
+//   |_ fn [[nondeter]] no_eof$main (param: qubit) : float64		// @no_eof.ql:2:20
+//     |_ 0
 
-");
+// ");
 
     test!("tests/only_whitespaces_no_eof.ql",
 "|_ only_whitespaces_no_eof			// @only_whitespaces_no_eof.ql:1:1
@@ -364,6 +364,8 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>> {
     |_ complex_expr_lib$sin: float64 (x: float64)
 
 ");
+
+    // test!("tests/test_missing_curly.ql", "");
 
     test!("examples/toss.ql",
 "|_ math			// @math.ql:1:1

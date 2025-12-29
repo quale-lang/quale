@@ -264,6 +264,9 @@ impl Parser {
                 }
             }
         }
+        if !self.lexer.is_token(Token::CCurly) {
+            return Err(QccErrorKind::ExpectedCloseCurly)?;
+        }
         self.lexer.consume(Token::CCurly)?;
 
         Ok(body)
@@ -395,20 +398,21 @@ impl Parser {
         Ok((module, function))
     }
 
+    /// Parses return followed by an expression, ending with a semicolon.
     fn parse_return(&mut self) -> Result<QccCell<Expr>> {
-        if self.lexer.is_token(Token::Return) {
-            self.lexer.consume(Token::Return)?;
-            let expr = self.parse_expr()?;
-            return Ok(expr);
-        } else {
-            let expr = self.parse_expr()?;
-
-            if !self.lexer.is_token(Token::CCurly) {
-                return Err(QccErrorKind::ExpectedFnBodyEnd)?;
-            }
-
-            return Ok(expr);
+        if !self.lexer.is_token(Token::Return) {
+            return Err(QccErrorKind::ExpectedFnReturnType)?;
         }
+        self.lexer.consume(Token::Return);
+
+        let expr = self.parse_expr()?;
+
+        if !self.lexer.is_token(Token::Semicolon) {
+            return Err(QccErrorKind::ExpectedSemicolon)?;
+        }
+        self.lexer.consume(Token::Semicolon)?;
+
+        Ok(expr)
     }
 
     /// It parses a function call with its arguments. The `name` and `location`
@@ -728,6 +732,11 @@ impl Parser {
         self.lexer.consume(Token::Assign)?;
 
         let val = self.parse_expr()?;
+
+        if !self.lexer.is_token(Token::Semicolon) {
+            return Err(QccErrorKind::ExpectedSemicolon)?;
+        }
+        self.lexer.consume(Token::Semicolon)?;
 
         Ok(Expr::Let(var, val).into())
     }
