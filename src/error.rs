@@ -87,7 +87,7 @@ impl Display for QccErrorKind {
                 NoSuchArg => "no such argument",
                 NoFile => "no such file",
                 ExpectedAttr => "expected attribute list as #[<attr>]",
-                UnexpectedAttr => "unexpected attribute",
+                UnexpectedAttr => "unexpected attribute [available: deter, nondeter]",
                 LexerError => "lexer failed to tokenize",
                 ParseError => "could not parse source",
                 ExpectedFnForAttr => "expected a function for attribute",
@@ -396,7 +396,10 @@ mod tests {
         let e1: Result<()> = Err(UnexpectedAttr.into());
         match e1 {
             Ok(_) => unreachable!(),
-            Err(ref e) => assert_eq!(e.to_string(), "unexpected attribute"),
+            Err(ref e) => assert_eq!(
+                e.to_string(),
+                "unexpected attribute [available: deter, nondeter]"
+            ),
         }
 
         let e2: Result<()> = Err(NoFile.into());
