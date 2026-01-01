@@ -9,10 +9,10 @@ pub(crate) enum Type {
     // Don't change the order. Partial ordering in place.
     #[default]
     Bottom,
-    Rad,
     Bit,
-    F64,
     Qbit,
+    Rad,
+    F64,
 }
 
 impl Type {
@@ -60,6 +60,6 @@ mod tests {
     use super::*;
     #[test]
     fn check_types() {
-        assert!(Type::Qbit > Type::F64);
+        assert!(Type::F64 > Type::Qbit);
     }
 }
