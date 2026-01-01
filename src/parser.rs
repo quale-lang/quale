@@ -182,7 +182,7 @@ impl Parser {
 
         while !self.lexer.is_token(Token::CBracket) {
             if self.lexer.is_token(Token::Identifier) {
-                let attr = self.identifier()?.parse::<Attribute>()?;
+                let attr = self.lexer.identifier().parse::<Attribute>()?;
                 attrs.push(attr);
                 self.lexer.consume(Token::Identifier)?;
             }
