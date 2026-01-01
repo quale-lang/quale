@@ -148,7 +148,7 @@ impl Parser {
         let identifier = self.lexer.identifier();
         let valids = [
             "fn", "return", "const", "extern", "module", "let", "import", "if", "else", "alias",
-            "rad", "qbit", "bit", "f64",
+            "true", "false", "rad", "qbit", "bit", "f64",
         ];
 
         if valids.iter().all(|&s| s != identifier) {
@@ -532,6 +532,12 @@ impl Parser {
 
     /// Returns the parsed expression.
     fn parse_expr(&mut self) -> Result<QccCell<Expr>> {
+        if self.lexer.is_token(Token::Boolean) {
+            let boolean = self.lexer.identifier().parse::<LiteralAST>()?;
+            self.lexer.consume(Token::Boolean)?;
+            return Ok(Expr::Literal(boolean.into()).into());
+        }
+
         if self.lexer.is_token(Token::OBracket) {
             return self.parse_tensor();
         }

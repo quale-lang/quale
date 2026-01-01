@@ -10,6 +10,7 @@ pub(crate) enum Type {
     #[default]
     Bottom,
     Bit,
+    Bool,
     Qbit,
     Rad,
     F64,
@@ -31,9 +32,10 @@ impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Bottom => write!(f, "<bottom>"),
-            Self::Rad => write!(f, "radians"),
-            Self::Qbit => write!(f, "qubit"),
             Self::Bit => write!(f, "bit"),
+            Self::Bool => write!(f, "bool"),
+            Self::Qbit => write!(f, "qubit"),
+            Self::Rad => write!(f, "radians"),
             Self::F64 => write!(f, "float64"),
         }
     }
@@ -46,9 +48,10 @@ impl std::str::FromStr for Type {
 
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         Ok(match s {
-            "rad" => Self::Rad,
-            "qbit" => Self::Qbit,
             "bit" => Self::Bit,
+            "bool" => Self::Bool,
+            "qbit" => Self::Qbit,
+            "rad" => Self::Rad,
             "f64" => Self::F64,
             _ => Err(QccErrorKind::UnexpectedType)?,
         })

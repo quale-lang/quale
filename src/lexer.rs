@@ -380,6 +380,8 @@ impl Lexer {
                 "if" => Some(Token::If),
                 "else" => Some(Token::Else),
                 "alias" => Some(Token::Alias),
+                "true" => Some(Token::Boolean),
+                "false" => Some(Token::Boolean),
                 _ => Some(Token::Identifier),
             };
             return Ok(self.token);

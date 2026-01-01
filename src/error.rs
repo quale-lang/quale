@@ -96,7 +96,7 @@ impl Display for QccErrorKind {
                 ExpectedFnArgs => "expected function arguments in parenthesis",
                 ExpectedParamType => "expected parameter type",
                 ExpectedType => "expected a type",
-                UnexpectedType => "unexpected type [available: bit, rad, f64, qbit]",
+                UnexpectedType => "unexpected type [available: bit, bool, rad, f64, qbit]",
                 ExpectedFnBody => "expected function body",
                 ExpectedFnReturnType => "expected function return type",
                 ExpectedFnBodyEnd => "expected end of function body",

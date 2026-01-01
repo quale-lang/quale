@@ -49,6 +49,8 @@ pub(crate) enum Token {
     Unequal = -18, // !=
     LessThan = -19,
     GreaterThan = -20,
+
+    Boolean = -21,
 }
 
 impl Token {
@@ -499,6 +501,7 @@ impl std::str::FromStr for Qbit {
 pub(crate) enum LiteralAST {
     Lit_Qbit(Qbit),
     Lit_Digit(f64),
+    Lit_Boolean(bool),
     Lit_Str(Vec<u8>), // does not store the quotations around str
 }
 
@@ -521,6 +524,8 @@ impl std::str::FromStr for LiteralAST {
             // quantum numeral
             let qn = s.parse::<Qbit>()?;
             Ok(Self::Lit_Qbit(qn))
+        } else if s == "true" || s == "false" {
+            return Ok(Self::Lit_Boolean(s == "true"));
         } else {
             // parse digit
             let d = s.parse::<f64>();
@@ -536,6 +541,7 @@ impl std::fmt::Display for LiteralAST {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
             LiteralAST::Lit_Digit(d) => write!(f, "{}", d),
+            LiteralAST::Lit_Boolean(b) => write!(f, "{b}"),
             LiteralAST::Lit_Str(s) => {
                 write!(f, "\"")?;
                 for &c in s {
@@ -667,6 +673,7 @@ impl Expr {
             Self::Literal(lit) => match *lit.as_ref().borrow() {
                 LiteralAST::Lit_Str(_) => Type::Bottom,
                 LiteralAST::Lit_Digit(_) => Type::F64,
+                LiteralAST::Lit_Boolean(_) => Type::Bool,
                 LiteralAST::Lit_Qbit(_) => Type::Qbit,
             },
         }

@@ -367,6 +367,30 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>> {
 
     // test!("tests/test_missing_curly.ql", "");
 
+    test!("tests/test_bool.ql",
+"|_ test_bool			// @test_bool.ql:1:1
+  |_ fn test_bool$BooleanConstant (b: bool) : bool		// @test_bool.ql:6:4
+    |_ b: bool
+
+  |_ fn test_bool$True () : bool		// @test_bool.ql:10:4
+    |_ true
+
+  |_ fn test_bool$False () : bool		// @test_bool.ql:14:4
+    |_ false
+
+  |_ fn test_bool$main () : bool		// @test_bool.ql:18:4
+    |_ x: bool = test_bool$True: bool ()
+    |_ y: bool = test_bool$False: bool ()
+    |_ (x == y)
+      |_ True
+        |_ _: bool = test_bool$BooleanConstant: bool (x: bool)
+      |_ False
+        |_ _: bool = test_bool$BooleanConstant: bool (y: bool)
+
+    |_ (x: bool + y: bool)
+
+");
+
     test!("examples/toss.ql",
 "|_ math			// @math.ql:1:1
   |_ fn math$factorial (n: float64) : float64		// @math.ql:1:4

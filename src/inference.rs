@@ -167,6 +167,7 @@ fn check_expr(expr: &QccCell<Expr>) -> Result<Type> {
         }
         Expr::Literal(ref lit) => match *lit.as_ref().borrow() {
             LiteralAST::Lit_Digit(ref digit) => Ok(Type::F64),
+            LiteralAST::Lit_Boolean(ref b) => Ok(Type::Bool),
             LiteralAST::Lit_Str(ref s) => Ok(Type::Bottom),
             LiteralAST::Lit_Qbit(_) => Ok(Type::Qbit),
         },
@@ -487,6 +488,7 @@ fn infer_expr(expr: &QccCell<Expr>) -> Option<Type> {
         Expr::Literal(ref lit) => {
             return match *lit.as_ref().borrow() {
                 LiteralAST::Lit_Digit(_) => Some(Type::F64),
+                LiteralAST::Lit_Boolean(_) => Some(Type::Bool),
                 LiteralAST::Lit_Str(_) => Some(Type::Bottom),
                 LiteralAST::Lit_Qbit(_) => Some(Type::Qbit),
             };
@@ -748,7 +750,8 @@ fn infer_from_table(
             // based on what the context says.
             match *l.as_ref().borrow() {
                 LiteralAST::Lit_Qbit(ref q) => None,
-                // digits are trivially typed
+                // digits and booleans are trivially typed
+                LiteralAST::Lit_Boolean(ref b) => None,
                 LiteralAST::Lit_Digit(ref d) => None,
                 LiteralAST::Lit_Str(ref s) => todo!("{:?} perhaps a string", s),
             }
