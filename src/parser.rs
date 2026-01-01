@@ -1,5 +1,6 @@
 //! Parser for quale language.
 //! It translates the given code into an AST.
+use crate::assert_eq_all;
 use crate::ast::*;
 use crate::attributes::{Attribute, Attributes};
 use crate::config::*;
@@ -139,6 +140,24 @@ impl Parser {
         Ok(Some(config))
     }
 
+    /// Checks the validity of an identifier and then returns it.
+    /// Internally, this calls the lexer to get the current identifier, but it
+    /// also checks if its not a reserved keyword, and only then it returns that
+    /// identifier. Otherwise, it returns an error.
+    fn identifier(&mut self) -> Result<String> {
+        let identifier = self.lexer.identifier();
+        let valids = [
+            "fn", "return", "const", "extern", "module", "let", "import", "if", "else", "alias",
+            "rad", "qbit", "bit", "f64",
+        ];
+
+        if valids.iter().all(|&s| s != identifier) {
+            Ok(identifier)
+        } else {
+            Err(QccErrorKind::ExpectedIdentifier)?
+        }
+    }
+
     /// Parses a list of comma-separated attributes.
     fn parse_attributes(&mut self) -> Result<Attributes> {
         if !self.lexer.is_token(Token::Hash) {
@@ -163,7 +182,7 @@ impl Parser {
 
         while !self.lexer.is_token(Token::CBracket) {
             if self.lexer.is_token(Token::Identifier) {
-                let attr = self.lexer.identifier().parse::<Attribute>()?;
+                let attr = self.identifier()?.parse::<Attribute>()?;
                 attrs.push(attr);
                 self.lexer.consume(Token::Identifier)?;
             }
@@ -290,7 +309,7 @@ impl Parser {
             return Err(QccErrorKind::ExpectedFnName)?;
         }
 
-        let name = self.lexer.identifier();
+        let name = self.identifier()?;
         let location = self.lexer.location.clone();
         let mut params: Vec<VarAST> = Default::default();
         let mut input_type: Vec<Type> = Default::default();
@@ -369,7 +388,7 @@ impl Parser {
         if !self.lexer.is_token(Token::Identifier) {
             Err(QccErrorKind::ExpectedMod)?
         }
-        let module = self.lexer.identifier();
+        let module = self.identifier()?;
         let module_loc = self.lexer.location.clone();
         self.lexer.consume(Token::Identifier)?;
 
@@ -386,7 +405,7 @@ impl Parser {
         if !self.lexer.is_token(Token::Identifier) {
             Err((QccErrorKind::ExpectedFnName))?
         }
-        let function = self.lexer.identifier();
+        let function = self.identifier()?;
         let func_loc = self.lexer.location.clone();
         self.lexer.consume(Token::Identifier)?;
 
@@ -463,7 +482,7 @@ impl Parser {
         if !self.lexer.is_token(Token::Identifier) {
             return Err(QccErrorKind::ExpectedFn)?;
         }
-        let name = self.lexer.identifier();
+        let name = self.identifier()?;
         let location = self.lexer.location.clone();
         self.lexer.consume(Token::Identifier)?;
 
@@ -531,7 +550,7 @@ impl Parser {
         }
 
         if self.lexer.is_token(Token::Identifier) {
-            let name = self.lexer.identifier();
+            let name = self.identifier()?;
             let location = self.lexer.location.clone();
             self.lexer.consume(Token::Identifier)?;
 
@@ -677,7 +696,7 @@ impl Parser {
         if !self.lexer.is_token(Token::Identifier) {
             return Err(QccErrorKind::ExpectedIdentifier)?;
         }
-        let name = self.lexer.identifier();
+        let name = self.identifier()?;
         let location = self.lexer.location.clone();
         self.lexer.consume(Token::Identifier)?;
 

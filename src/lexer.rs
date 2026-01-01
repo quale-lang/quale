@@ -180,6 +180,7 @@ impl Lexer {
     }
 
     /// Returns current identifier contained in `self.prev` and `self.current`.
+    #[inline]
     pub(crate) fn identifier(&self) -> String {
         self.slice(self.ptr.prev, self.ptr.current)
     }
