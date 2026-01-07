@@ -63,6 +63,13 @@ mod tests {
     use super::*;
     #[test]
     fn check_types() {
-        assert!(Type::F64 > Type::Qbit);
+        assert!(Type::Rad >= Type::Qbit);
+        assert!(Type::F64 >= Type::Qbit);
+
+        assert!(Type::Qbit >= Type::Bit);
+        assert!(Type::Qbit >= Type::Bool);
+
+        assert!(Type::F64 >= Type::Bit);
+        assert!(Type::F64 >= Type::Bool);
     }
 }
