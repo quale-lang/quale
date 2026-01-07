@@ -72,7 +72,7 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>> {
   |_ fn let_both_typed$foo () : qubit		// @let_both_typed.ql:1:4
     |_ q: qubit = 0q0_1
 
-  |_ fn let_both_typed$main () : <bottom>		// @let_both_typed.ql:6:4
+  |_ fn let_both_typed$main () : Nothing		// @let_both_typed.ql:6:4
     |_ choice: qubit = let_both_typed$foo: qubit ()
     |_ (choice == 0)
 
@@ -125,7 +125,7 @@ fn test_ast_gen() -> Result<(), Box<dyn std::error::Error>> {
   |_ fn tensors2$bar (x: float64) : float64		// @tensors2.ql:5:4
     |_ x: float64
 
-  |_ fn tensors2$main () : <bottom>		// @tensors2.ql:9:4
+  |_ fn tensors2$main () : Nothing		// @tensors2.ql:9:4
     |_ t1 = [[], []]
     |_ t2 = [[[], []], [[]]]
 

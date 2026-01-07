@@ -31,7 +31,7 @@ impl Type {
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Bottom => write!(f, "<bottom>"),
+            Self::Bottom => write!(f, "Nothing"),
             Self::Bit => write!(f, "bit"),
             Self::Bool => write!(f, "bool"),
             Self::Qbit => write!(f, "qubit"),
