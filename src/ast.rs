@@ -100,7 +100,7 @@ impl Qast {
 
     /// Merge all modules in AST to one monolith module. Ensure mangling happens
     /// and function calls are referenced to their definitions.
-    pub(crate) fn merge(&mut self) -> Qast {
+    pub(crate) fn merge(&mut self) -> ModuleAST {
         let flattened_ast = self
             .modules
             .iter()
@@ -133,7 +133,7 @@ impl Qast {
             functions: flattened_ast,
         };
 
-        Qast::new(vec![std::rc::Rc::new(module.into())])
+        module
     }
 }
 

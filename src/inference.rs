@@ -181,172 +181,170 @@ pub fn infer(ast: &mut Qast) -> Result<()> {
 
     // Merge all modules in one giant monolith module. Easier to do DCE and type
     // inference.
-    let mut ast = ast.merge();
+    let mut module = ast.merge();
 
-    for mut module in &mut ast {
-        let module_name = module.get_name();
-        // functions but only collect their names and return types.
-        for function in &*module {
-            function_table.push(VarAST::new_with_type(
-                function.get_name().clone(),
-                function.get_loc().clone(),
-                function.get_output_type().clone(),
-            ));
-            // A copy of function prepended with its module name is also added.
-            // If the function is used inside the module, then we check against
-            // the value pushed above, and it is called from other module, then
-            // we check against the value pushed below.
-            function_table.push(VarAST::new_with_type(
-                module_name.clone() + "$" + function.get_name(),
-                function.get_loc().clone(),
-                function.get_output_type().clone(),
-            ));
+    let module_name = module.get_name();
+    // functions but only collect their names and return types.
+    for function in &module {
+        function_table.push(VarAST::new_with_type(
+            function.get_name().clone(),
+            function.get_loc().clone(),
+            function.get_output_type().clone(),
+        ));
+        // A copy of function prepended with its module name is also added.
+        // If the function is used inside the module, then we check against
+        // the value pushed above, and it is called from other module, then
+        // we check against the value pushed below.
+        function_table.push(VarAST::new_with_type(
+            module_name.clone() + "$" + function.get_name(),
+            function.get_loc().clone(),
+            function.get_output_type().clone(),
+        ));
+    }
+
+    for mut function in &mut module {
+        // parameter symbols
+        let mut parameter_table: SymbolTable<VarAST> = SymbolTable::new();
+        for param in function.iter_params() {
+            parameter_table.push(param.clone());
         }
 
-        for mut function in &mut *module {
-            // parameter symbols
-            let mut parameter_table: SymbolTable<VarAST> = SymbolTable::new();
-            for param in function.iter_params() {
-                parameter_table.push(param.clone());
+        // local variables
+        let mut local_var_table: SymbolTable<VarAST> = SymbolTable::new();
+        for instruction in &*function {
+            // only add let-lhs and only if they are type checked
+            match *instruction.as_ref().borrow() {
+                Expr::Let(ref def, _) => {
+                    // don't type check lhs-rhs, otherwise along with a
+                    // mismatch error, an unknown type error would also be
+                    // raised if local st doesn't find typed lhs.
+                    let checked: Result<Type> = Ok(def.get_type());
+                    if checked.is_ok_and(|ty| ty != Type::Bottom) {
+                        local_var_table.push(def.clone());
+                    }
+                }
+                _ => {}
             }
+        }
 
-            // local variables
-            let mut local_var_table: SymbolTable<VarAST> = SymbolTable::new();
-            for instruction in &*function {
-                // only add let-lhs and only if they are type checked
+        // infer local var types
+        for instruction in &mut *function {
+            let instruction_type = infer_expr(instruction);
+
+            if instruction_type.is_some_and(|ty| ty != Type::Bottom) {
                 match *instruction.as_ref().borrow() {
-                    Expr::Let(ref def, _) => {
-                        // don't type check lhs-rhs, otherwise along with a
-                        // mismatch error, an unknown type error would also be
-                        // raised if local st doesn't find typed lhs.
-                        let checked: Result<Type> = Ok(def.get_type());
-                        if checked.is_ok_and(|ty| ty != Type::Bottom) {
-                            local_var_table.push(def.clone());
+                    Expr::Let(ref var, _) => {
+                        if var.is_typed() {
+                            local_var_table.push(var.clone());
                         }
                     }
                     _ => {}
                 }
             }
 
-            // infer local var types
-            for instruction in &mut *function {
-                let instruction_type = infer_expr(instruction);
-
-                if instruction_type.is_some_and(|ty| ty != Type::Bottom) {
-                    match *instruction.as_ref().borrow() {
-                        Expr::Let(ref var, _) => {
-                            if var.is_typed() {
-                                local_var_table.push(var.clone());
+            if instruction_type.is_none() || instruction_type == Some(Type::Bottom) {
+                // we couldn't infer all types for expression
+                // see if either symbol table contains any information
+                match infer_from_table(
+                    instruction,
+                    &parameter_table,
+                    &local_var_table,
+                    &function_table,
+                ) {
+                    None => {
+                        // This infers type for let expressions based on the
+                        // symbol table but doesn't update the table
+                        // entries. For e.g.,
+                        // ```quale
+                        //   let a: f64 = 42;
+                        //   let b = a;  // this is inferred as f64 type,
+                        //               // but symbol table
+                        //               // doesn't contain it after
+                        //               // inferring
+                        //   let c = b;  // hence, this would fail to be
+                        //               // inferred
+                        // ```
+                        // So we have to update symbol tables accordingly.
+                        match *instruction.as_ref().borrow() {
+                            Expr::Let(ref var, _) => {
+                                if var.is_typed() {
+                                    local_var_table.push(var.clone());
+                                }
                             }
+                            _ => {}
                         }
-                        _ => {}
                     }
-                }
-
-                if instruction_type.is_none() || instruction_type == Some(Type::Bottom) {
-                    // we couldn't infer all types for expression
-                    // see if either symbol table contains any information
-                    match infer_from_table(
-                        instruction,
-                        &parameter_table,
-                        &local_var_table,
-                        &function_table,
-                    ) {
-                        None => {
-                            // This infers type for let expressions based on the
-                            // symbol table but doesn't update the table
-                            // entries. For e.g.,
-                            // ```quale
-                            //   let a: f64 = 42;
-                            //   let b = a;  // this is inferred as f64 type,
-                            //               // but symbol table
-                            //               // doesn't contain it after
-                            //               // inferring
-                            //   let c = b;  // hence, this would fail to be
-                            //               // inferred
-                            // ```
-                            // So we have to update symbol tables accordingly.
-                            match *instruction.as_ref().borrow() {
-                                Expr::Let(ref var, _) => {
-                                    if var.is_typed() {
-                                        local_var_table.push(var.clone());
-                                    }
-                                }
-                                _ => {}
+                    Some(untyped) => {
+                        seen_errors = true;
+                        match untyped {
+                            Ok(expr) => {
+                                // unknown type of expression err
+                                let expr = expr.as_ref().borrow();
+                                qcceprintln!(
+                                    "{} for `{}` {}",
+                                    QccErrorKind::UnknownType,
+                                    expr,
+                                    expr.get_location()
+                                );
                             }
-                        }
-                        Some(untyped) => {
-                            seen_errors = true;
-                            match untyped {
-                                Ok(expr) => {
-                                    // unknown type of expression err
-                                    let expr = expr.as_ref().borrow();
-                                    qcceprintln!(
-                                        "{} for `{}` {}",
-                                        QccErrorKind::UnknownType,
-                                        expr,
-                                        expr.get_location()
-                                    );
-                                }
-                                Err(err) => {
-                                    // err is returned
-                                    let instruction = instruction.as_ref().borrow();
-                                    qcceprintln!(
-                                        "{} on\n\t{}\t{}",
-                                        err,
-                                        instruction.get_location().row(),
-                                        instruction
-                                    );
-                                }
+                            Err(err) => {
+                                // err is returned
+                                let instruction = instruction.as_ref().borrow();
+                                qcceprintln!(
+                                    "{} on\n\t{}\t{}",
+                                    err,
+                                    instruction.get_location().row(),
+                                    instruction
+                                );
                             }
                         }
                     }
                 }
             }
+        }
 
-            // type check between function return type and the last returned
-            // expression
-            let fn_return_type = *function.get_output_type();
-            let fn_name = function.borrow().get_name().clone();
+        // type check between function return type and the last returned
+        // expression
+        let fn_return_type = *function.get_output_type();
+        let fn_name = function.borrow().get_name().clone();
 
-            let last_instruction = function.last_mut();
-            if last_instruction.is_some() {
-                let last = last_instruction.unwrap();
+        let last_instruction = function.last_mut();
+        if last_instruction.is_some() {
+            let last = last_instruction.unwrap();
 
-                // get last expression's type
-                let last_instruction_type = infer_expr(last);
+            // get last expression's type
+            let last_instruction_type = infer_expr(last);
 
-                if fn_return_type == Type::Bottom
-                    && last_instruction_type.is_some()
-                    && last_instruction_type != Some(Type::Bottom)
-                {
-                    function.set_output_type(last_instruction_type.unwrap());
-                } else {
-                    if last_instruction_type != Some(fn_return_type) {
-                        seen_errors = true;
-                        let err: QccError = QccErrorKind::TypeMismatch.into();
-                        let last_expr = last.as_ref().borrow();
-                        if last_instruction_type.is_none() {
-                            qcceprintln!(
-                                "{} between\n\t`{}` ({}) and `{}` ({}) {}",
-                                err,
-                                last_expr,
-                                Type::Bottom,
-                                fn_name,
-                                fn_return_type,
-                                last.as_ref().borrow().get_location()
-                            );
-                        } else {
-                            qcceprintln!(
-                                "{} between\n\t`{}` ({}) and `{}` ({}) {}",
-                                err,
-                                last_expr,
-                                last_instruction_type.unwrap(),
-                                fn_name,
-                                fn_return_type,
-                                last.as_ref().borrow().get_location()
-                            );
-                        }
+            if fn_return_type == Type::Bottom
+                && last_instruction_type.is_some()
+                && last_instruction_type != Some(Type::Bottom)
+            {
+                function.set_output_type(last_instruction_type.unwrap());
+            } else {
+                if last_instruction_type != Some(fn_return_type) {
+                    seen_errors = true;
+                    let err: QccError = QccErrorKind::TypeMismatch.into();
+                    let last_expr = last.as_ref().borrow();
+                    if last_instruction_type.is_none() {
+                        qcceprintln!(
+                            "{} between\n\t`{}` ({}) and `{}` ({}) {}",
+                            err,
+                            last_expr,
+                            Type::Bottom,
+                            fn_name,
+                            fn_return_type,
+                            last.as_ref().borrow().get_location()
+                        );
+                    } else {
+                        qcceprintln!(
+                            "{} between\n\t`{}` ({}) and `{}` ({}) {}",
+                            err,
+                            last_expr,
+                            last_instruction_type.unwrap(),
+                            fn_name,
+                            fn_return_type,
+                            last.as_ref().borrow().get_location()
+                        );
                     }
                 }
             }
