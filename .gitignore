@@ -12,3 +12,4 @@
 /tests/bugs
 /tests/package/*.s
 /examples/*.s
+/.commit-msg
