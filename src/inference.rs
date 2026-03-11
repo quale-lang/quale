@@ -348,6 +348,13 @@ pub fn infer(ast: &mut Qast) -> Result<()> {
                     }
                 }
             }
+        } else {
+            if fn_return_type != Type::Bottom {
+                seen_errors = true;
+
+                let err = QccErrorKind::TypeMismatch;
+                qcceprintln!("{} for empty function\n\t{}", err, function);
+            }
         }
     }
 
